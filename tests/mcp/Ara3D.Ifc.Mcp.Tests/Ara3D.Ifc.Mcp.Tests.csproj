@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Ara3D.Ifc.Mcp\Ara3D.Ifc.Mcp.csproj" />
+    <ProjectReference Include="..\..\..\src\mcp\Ara3D.Ifc.Mcp\Ara3D.Ifc.Mcp.csproj" />
   </ItemGroup>
 
   <ItemGroup>
