@@ -1,0 +1,2 @@
+# IFC files are byte-exact: the IFC MCP tests and property-set editing compare bytes and hashes.
+samples/nrc/*.ifc -text
