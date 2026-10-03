@@ -1,6 +1,7 @@
 name: pages
 
-# Publishes site/ (this repository's page) to GitHub Pages.
+# Publishes site/ (this repository's page) to GitHub Pages, with the BOS explorer
+# built from site-src/ into site/explorer/.
 # Pages must be switched on in the repository settings with
 # "Source: GitHub Actions" before the deploy job can succeed.
 
@@ -9,6 +10,8 @@ on:
     branches: [main]
     paths:
       - "site/**"
+      - "site-src/**"
+      - "deps.json"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -29,6 +32,17 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: site-src/package-lock.json
+      # The explorer reads the viewer packages and the sample archive from deps/.
+      - run: node deps.mjs
+      - run: npm ci
+        working-directory: site-src
+      - run: npm run build
+        working-directory: site-src
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
