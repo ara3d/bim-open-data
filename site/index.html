@@ -35,6 +35,10 @@ th { font-weight: 600; background: var(--soft); }
 tr:last-child td { border-bottom: 0; }
 td code { white-space: nowrap; }
 @media (max-width: 600px) { td code { white-space: normal; overflow-wrap: anywhere; } th, td { padding: 8px; } td:first-child { width: 45%; } }
+.try { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; background: var(--soft); border: 1px solid #efc6d8; border-radius: 8px; padding: 16px 20px; margin: 20px 0; }
+.try p { margin: 0; flex: 1 1 320px; }
+.try a.cta { display: inline-block; background: var(--accent); color: #fff; font-weight: 600; text-decoration: none; border-radius: 6px; padding: 10px 18px; }
+.try a.cta:hover { background: #9d2a5e; }
 footer { margin-top: 48px; color: var(--dim); font-size: 13px; }
 footer a { color: var(--dim); }
 </style>
@@ -46,6 +50,11 @@ footer a { color: var(--dim); }
   <img class="lockup" src="assets/data-lockup.svg" alt="BIM Open Data">
   <p class="lede"><a href="https://github.com/ara3d/bim-open-schema">BIM Open Schema</a> is the specification; BIM Open Data is its .NET implementation: reading and writing BOS files, IFC loading, meshing, byte-exact property-set editing, conversion from IFC to BOS and to DuckDB, the IFC MCP server, and the BOS Browser.</p>
 </header>
+
+<div class="try">
+  <p><strong>Try it in your browser.</strong> The <a href="explorer/">BOS explorer</a> opens a sample <code>.bos</code> file from the specification repository, lists its tables with row counts and columns, shows their rows, and draws the model in 3D. You can open your own <code>.bos</code> file too; it is read on your device and never uploaded.</p>
+  <a class="cta" href="explorer/">Open the BOS explorer</a>
+</div>
 
 <div class="status">
   <p><strong>Status on 2026-10-03:</strong> the code is here. It moved from <a href="https://github.com/ara3d/bim-open-toolkit">bim-open-toolkit</a> with its history in phase 4 of the <a href="https://github.com/ara3d/bim-open-toolkit/blob/main/docs/plans/repository-split.md">repository split plan</a>: <code>src/data</code>, <code>tests/data</code>, <code>src/mcp/BimOpenMcp.Ifc</code>, <code>apps/</code>, and <code>tools/</code>. <code>node deps.mjs</code>, then <code>dotnet build BimOpenData.sln</code>, builds it on its own.</p>

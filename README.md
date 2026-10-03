@@ -4,6 +4,10 @@
 
 [`bim-open-schema`](https://github.com/ara3d/bim-open-schema) is the specification of BIM Open Schema; this repository is its .NET implementation: reading and writing BOS files, IFC loading, meshing, byte-exact property-set editing, conversion from IFC to BOS and to DuckDB, the IFC MCP server, and the BOS Browser.
 
+**Try it in the browser:** the [BOS explorer](https://ara3d.github.io/bim-open-data/explorer/) opens a sample `.bos` file, lists its tables with row counts and columns, shows their rows, and draws the model in 3D. It also opens a `.bos` file of your own, read on your device and never uploaded.
+
+[![The BOS explorer showing the Revit basic sample project: its tables, the model in 3D, and the first rows of Entities](docs/images/explorer.png)](https://ara3d.github.io/bim-open-data/explorer/)
+
 **Status on 2026-10-03: the code is here.** It moved from [`ara3d/bim-open-toolkit`](https://github.com/ara3d/bim-open-toolkit), with its git history, in phase 4 of the toolkit's [repository split plan](https://github.com/ara3d/bim-open-toolkit/blob/main/docs/plans/repository-split.md). The paths are the ones it had there (`src/data`, `tests/data`, `src/mcp/BimOpenMcp.Ifc`, `tests/mcp/BimOpenMcp.Ifc.Tests`, `apps/`, `tools/`), so `git log --follow` reaches back through the toolkit's history. The toolkit now takes this repository through its own `deps.json`, as `deps/bim-open-data`.
 
 ## Build and test
@@ -86,7 +90,25 @@ Node.js (for `deps.mjs`) and git, the .NET 8 SDK, and the .NET 10 SDK for the BO
 
 ## Web page
 
-`site/index.html` is the repository's page, deployed to `https://ara3d.github.io/bim-open-data/` by `.github/workflows/pages.yml` on each push to `main` that changes `site/`. The owner must first switch Pages on in this repository's settings (Settings, Pages, Source: GitHub Actions); until then the workflow's deploy step fails.
+`site/index.html` is the repository's page, deployed to `https://ara3d.github.io/bim-open-data/` by `.github/workflows/pages.yml` on each push to `main` that changes `site/`, `site-src/`, or `deps.json`. The owner must first switch Pages on in this repository's settings (Settings, Pages, Source: GitHub Actions); until then the workflow's deploy step fails.
+
+The BOS explorer at `explorer/` is a small Vite project in `site-src/` that builds into `site/explorer/` (git-ignored; the workflow builds it). The .NET code cannot run in a browser, so the explorer reads archives with the BIM Open Viewer's JavaScript packages instead: `@bim-open-viewer/loaders` for the geometry, `@bim-open-viewer/core` to draw it, and `@bim-open-viewer/controls` to orbit, taken as TypeScript source from `deps/bim-open-viewer` at the commit `deps.json` pins. The table list and rows come from the same Parquet reader those packages use (hyparquet). The "Show what the indices point to" option resolves string-table, entity, document, and descriptor indices and enum codes, following the record types in the specification's `BimOpenSchema.cs`.
+
+The bundled sample is `rac_basic_sample_project-2025.bos` (844 KB), the Revit basic sample project as published in [`bim-open-schema/examples`](https://github.com/ara3d/bim-open-schema/tree/main/examples) under that repository's MIT licence. The build copies it from `deps/bim-open-schema/examples/`, so no model file is committed here.
+
+```powershell
+node deps.mjs                     # adds bim-open-viewer (and its gratify pin) to deps/
+cd site-src
+npm ci
+npm run build                     # type-checks, then writes ../site/explorer/
+npm run dev                       # or serve it at http://127.0.0.1:5280/
+$env:PLAYWRIGHT_CORE = "<path to an installed playwright-core>"
+npm run smoke                     # headless Edge over the built site/; see scripts/smoke.mjs
+```
+
+The smoke check serves `site/` under `/bim-open-data/`, as Pages does, and fails on any console error or failed request. It opens the sample, checks the 18 tables and their row counts (Entities has 13,384), pages through rows, waits for the model to draw (19,443 instances), then opens `Technicalschoolcurrentm.bos` through the file input. `--screenshot docs/images/explorer.png` refreshes the picture above.
+
+Two things the explorer does around the viewer packages at the pinned commit: older archives such as this sample have no `InstanceFlags` column, which `bosToGroups` reads unguarded, so the explorer supplies zeros (nothing hidden); and BOS models are z-up while the viewer core's camera and lights are y-up, so it rotates each instance transform. Both live in `site-src/src/model-view.ts`.
 
 ## The family
 
