@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BOS Explorer · BIM Open Data</title>
+<meta name="description" content="Open a BIM Open Schema (.bos) file in the browser: its tables, row counts, columns, rows, and the model in 3D. Files are read on your device and never uploaded.">
+<link rel="icon" href="../assets/data-mark.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@600;700&family=Public+Sans:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+<div id="drop" aria-hidden="true"><p>Drop a <code>.bos</code> file to read it here. It stays on your device.</p></div>
+<header class="bar">
+  <a class="wordmark" href="../"><img src="../assets/data-mark.svg" alt="" width="22" height="22"><span class="family">BIM Open</span><span class="product">Data</span></a>
+  <span class="page-name">BOS Explorer</span>
+  <a class="repo" href="https://github.com/ara3d/bim-open-data">Source</a>
+</header>
+
+<main>
+  <section class="intro">
+    <h1>Look inside a BIM Open Schema file</h1>
+    <p>A <code>.bos</code> file is a zip of Parquet tables: entities, parameters, relations, and geometry. This page reads one with the <a href="https://github.com/ara3d/bim-open-viewer">BIM Open Viewer</a>'s JavaScript loaders and lists its tables, shows their rows, and draws the model.</p>
+    <div class="source">
+      <div class="source-text">
+        <strong id="archive-name">Loading the sample…</strong>
+        <span id="archive-origin"></span>
+      </div>
+      <div class="source-actions">
+        <label class="button primary">Open your own .bos<input id="file" type="file" accept=".bos,.zip,application/zip"></label>
+        <button id="load-sample" class="button" type="button">Reload the sample</button>
+      </div>
+    </div>
+    <p class="privacy">Your file is read by this page in your browser and is never uploaded; you can also drop it anywhere on the page.</p>
+    <p id="status" role="status" aria-live="polite"></p>
+  </section>
+
+  <section class="grid">
+    <nav class="panel tables-panel" aria-label="Tables">
+      <div class="panel-head"><h2>Tables</h2><span id="tables-summary" class="meta"></span></div>
+      <div id="tables" class="table-list"></div>
+    </nav>
+
+    <section class="panel model-panel" aria-label="3D model">
+      <div class="panel-head"><h2>Model</h2><span id="model-note" class="meta"></span></div>
+      <canvas id="model"></canvas>
+    </section>
+
+    <section class="panel detail-panel" aria-labelledby="table-title">
+      <div class="panel-head">
+        <h2 id="table-title">Table</h2>
+        <span id="table-meta" class="meta"></span>
+      </div>
+      <ul id="columns" class="columns"></ul>
+      <div class="rows-bar">
+        <label class="toggle"><input id="show-text" type="checkbox" checked> Show what the indices point to</label>
+        <span class="pager">
+          <button id="page-previous" class="button small" type="button">Previous</button>
+          <span id="page-label" class="meta"></span>
+          <button id="page-next" class="button small" type="button">Next</button>
+        </span>
+      </div>
+      <div class="rows-wrap"><table id="rows"></table></div>
+    </section>
+  </section>
+</main>
+
+<footer>
+  <p>Part of <a href="../">BIM Open Data</a>, the .NET implementation of <a href="https://github.com/ara3d/bim-open-schema">BIM Open Schema</a>. The explorer is static: no server sees your files. MIT licensed.</p>
+</footer>
+<script type="module" src="./src/main.ts"></script>
+</body>
+</html>

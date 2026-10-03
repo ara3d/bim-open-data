@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "allowJs": true,
+    "types": ["vite/client"],
+    "baseUrl": ".",
+    "paths": {
+      "@bim-open-viewer/core": ["../deps/bim-open-viewer/packages/core/src/index.ts"],
+      "@bim-open-viewer/controls": ["../deps/bim-open-viewer/packages/controls/src/index.ts"],
+      "@bim-open-viewer/loaders": ["../deps/bim-open-viewer/packages/loaders/src/index.ts"],
+      "three": ["node_modules/@types/three"],
+      "three/*": ["node_modules/@types/three/*"],
+      "jszip": ["node_modules/jszip"],
+      "hyparquet": ["node_modules/hyparquet"],
+      "hyparquet-compressors": ["node_modules/hyparquet-compressors"]
+    }
+  },
+  "include": ["src", "sample.mjs"]
+}
