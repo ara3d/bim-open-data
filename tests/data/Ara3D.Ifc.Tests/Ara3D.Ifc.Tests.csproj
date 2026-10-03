@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\BimOpenToolkit.TestSupport\BimOpenToolkit.TestSupport.csproj" />
+    <ProjectReference Include="..\..\BimOpenData.TestSupport\BimOpenData.TestSupport.csproj" />
     <ProjectReference Include="..\..\..\src\data\Ara3D.IfcLoader\Ara3D.IfcLoader.csproj" />
     <ProjectReference Include="..\..\..\src\data\Ara3D.Ifc.Editing\Ara3D.Ifc.Editing.csproj" />
     <!-- Added for TKT-30 C2's ConverterUnitAndAxisTagTests.cs: IfcToBosConverter and

@@ -4,7 +4,17 @@
 
 [`bim-open-schema`](https://github.com/ara3d/bim-open-schema) is the specification of BIM Open Schema; this repository is its .NET implementation: reading and writing BOS files, IFC loading, meshing, byte-exact property-set editing, conversion from IFC to BOS and to DuckDB, the IFC MCP server, and the BOS Browser.
 
-**Status on 2026-10-03: the code is not here yet.** It lives in [`ara3d/bim-open-toolkit`](https://github.com/ara3d/bim-open-toolkit) under `src/data`, with its tests in `tests/data`, the MCP server in `src/mcp/BimOpenMcp.Ifc`, the BOS Browser in `apps/`, and the IFC type generator in `tools/Ara3D.IfcTypeGen`. It moves here, with its git history, in phase 4 of the toolkit's [repository split plan](https://github.com/ara3d/bim-open-toolkit/blob/main/docs/plans/repository-split.md). Until then this README describes what will arrive, and the toolkit is where to build, test, and file issues.
+**Status on 2026-10-03: the code is here.** It moved from [`ara3d/bim-open-toolkit`](https://github.com/ara3d/bim-open-toolkit), with its git history, in phase 4 of the toolkit's [repository split plan](https://github.com/ara3d/bim-open-toolkit/blob/main/docs/plans/repository-split.md). The paths are the ones it had there (`src/data`, `tests/data`, `src/mcp/BimOpenMcp.Ifc`, `tests/mcp/BimOpenMcp.Ifc.Tests`, `apps/`, `tools/`), so `git log --follow` reaches back through the toolkit's history. The toolkit now takes this repository through its own `deps.json`, as `deps/bim-open-data`.
+
+## Build and test
+
+```powershell
+node deps.mjs                     # clone bim-open-schema, ara3d-sdk, and parakeet into deps/
+dotnet build BimOpenData.sln -c Release
+dotnet test BimOpenData.sln -c Release --no-build --filter "TestCategory!=RequiresTestData"
+```
+
+Tests tagged `RequiresTestData` read the IFC Test Kit and sample models from `data/`, which is never committed; `data/get-test-data.ps1` copies them from sibling checkouts (see `data/README.md`). The meshing comparison's corpus tests skip themselves when their models are absent. `samples/nrc/` holds the three Duplex files the IFC MCP server's tests read.
 
 ## What BIM Open Schema is
 
@@ -20,7 +30,7 @@ The tables load straight into DuckDB, an in-process analytical database, which i
 
 ## Projects
 
-These are the 21 projects in the toolkit's `src/data` on 2026-10-03, grouped by what they do. Most target `net8.0-windows` because the IFC loader does; the schema libraries target plain `net8.0`.
+These are the 21 projects in `src/data`, grouped by what they do. Most target `net8.0-windows` because the IFC loader does; the schema libraries target plain `net8.0`.
 
 ### BIM Open Schema
 
@@ -56,21 +66,23 @@ These are the 21 projects in the toolkit's `src/data` on 2026-10-03, grouped by 
 | `Ara3D.BimOpenSchema.Browser` | A WPF data-grid viewer for `.bos` files with glTF and Excel export (`net10.0-windows`) |
 | `Ara3D.IfcTypeGen` | The generator behind `Ara3D.IfcTypes` |
 
-Eleven test projects come with them from `tests/data`.
+Eleven test projects in `tests/data` and one in `tests/mcp` cover them; `tests/BimOpenData.TestSupport` holds the shared paths and the mini IFC fixture.
 
 ## Dependencies
 
-After the move, this repository will list its dependencies in `deps.json` and read them from a git-ignored `deps/` folder that `node deps.mjs` fills, as the viewer already does:
+This repository lists its dependencies in `deps.json` and reads them from the git-ignored `deps/` folder that `node deps.mjs` fills:
 
 - [`bim-open-schema`](https://github.com/ara3d/bim-open-schema), the specification;
 - [`ara3d-sdk`](https://github.com/ara3d/ara3d-sdk), general .NET utilities and the MCP protocol helpers;
 - [`parakeet`](https://github.com/ara3d/parakeet), the parser library the IFC type generator uses.
 
+`deps.mjs` is the same script in every BIM Open repository. When this repository is itself a dependency (in the toolkit, `deps/bim-open-data`), its own dependencies resolve to siblings in the host's `deps/` folder, so each repository is checked out once. `Directory.Build.props` states the same rule as the MSBuild property `DepsRoot`, and every reference into a dependency goes through it, so the host and this repository reach a shared project by one path and MSBuild builds it once. `Directory.Build.targets` turns each `Ara3D.*` package reference into a project reference into `deps/ara3d-sdk`, so the SDK builds from source at the pinned commit.
+
 Outside packages include Parquet.Net, DuckDB.NET, ClosedXML for Excel, and Xbim.InformationSpecifications for IDS; the IFC loader carries the native web-ifc library.
 
-## Prerequisites (after the move)
+## Prerequisites
 
-The .NET 8 SDK, plus the .NET 10 SDK for the BOS Browser. The IFC stack and the Browser target Windows, so the full repository builds on Windows only.
+Node.js (for `deps.mjs`) and git, the .NET 8 SDK, and the .NET 10 SDK for the BOS Browser. The IFC stack and the Browser target Windows, so the full repository builds on Windows only.
 
 ## Web page
 

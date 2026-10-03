@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Shared test support: repository paths and the mini IFC fixture. References no
+       src project and no test framework. bim-open-toolkit keeps its own copy
+       (tests/BimOpenToolkit.TestSupport), whose RepoPaths finds that repository's root. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+</Project>

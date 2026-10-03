@@ -426,3 +426,36 @@ FodyWeavers.xsd
 
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
+
+# ---- BIM Open Data ----
+
+# Dependencies filled by deps.mjs from deps.json (see README, "Dependencies")
+deps/
+
+# Test and model data: never committed (populate locally with data/get-test-data.ps1)
+data/**
+!data/README.md
+!data/get-test-data.ps1
+*.ifc
+*.bos
+*.parquet
+*.duckdb
+!samples/nrc/*.ifc
+
+# The patterns above match any path component by name, case-insensitively on
+# Windows, so a project directory such as src/data/Ara3D.Ifc.Bos would otherwise
+# be excluded whole. Re-include every directory under src/, tests/, apps/, and
+# tools/ so only actual data files stay ignored.
+!src/**/
+!tests/**/
+!apps/**/
+!tools/**/
+
+# Build output: last, so it wins over the re-includes above.
+bin/
+obj/
+artifacts/
+node_modules/
+
+# Local reference data for the meshing comparison (generated BFAST oracles and reports; see its README)
+tests/data/Ara3D.IfcMeshingComparison/data/

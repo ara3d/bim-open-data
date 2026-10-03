@@ -1,7 +1,7 @@
 using Ara3D.BimOpenSchema.IO;
 using Ara3D.Ifc.DuckDb;
 using Ara3D.Utils;
-using BimOpenToolkit.TestSupport;
+using BimOpenData.TestSupport;
 
 namespace Ara3D.BimOpenSchema.DuckDb.Tests;
 

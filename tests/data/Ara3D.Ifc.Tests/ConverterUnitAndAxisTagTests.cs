@@ -1,6 +1,6 @@
 using Ara3D.BimOpenSchema;
 using Ara3D.BimOpenSchema.IO;
-using BimOpenToolkit.TestSupport;
+using BimOpenData.TestSupport;
 
 namespace Ara3D.Ifc.Tests;
 

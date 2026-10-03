@@ -1,0 +1,26 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  dotnet:
+    # The IFC loader carries the native web-ifc library and the BOS Browser is WPF,
+    # so the full solution builds on Windows only.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      # bim-open-schema, ara3d-sdk, and parakeet (deps.json), cloned into deps/.
+      - run: node deps.mjs
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+      - run: dotnet build BimOpenData.sln -c Release
+      # Tests that need the IFC Test Kit or the meshing corpus (data/, never
+      # committed) are tagged RequiresTestData or skip themselves when the file
+      # is missing.
+      - run: dotnet test BimOpenData.sln -c Release --no-build --filter "TestCategory!=RequiresTestData"

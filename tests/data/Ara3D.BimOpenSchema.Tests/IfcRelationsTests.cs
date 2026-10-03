@@ -3,7 +3,7 @@ using Ara3D.BimOpenSchema.IO;
 using Ara3D.IfcLoader;
 using Ara3D.IO.StepParser;
 using Ara3D.Memory;
-using BimOpenToolkit.TestSupport;
+using BimOpenData.TestSupport;
 
 namespace Ara3D.BimOpenSchema.Tests;
 

@@ -2,7 +2,7 @@ using Ara3D.BimOpenSchema.IO;
 using Ara3D.Logging;
 using static Ara3D.BimOpenSchema.Tests.IfcBosJsonTestHelpers;
 using static Ara3D.BimOpenSchema.Tests.IfcToBosConverterDiagnosticsTests;
-using BimOpenToolkit.TestSupport;
+using BimOpenData.TestSupport;
 
 namespace Ara3D.BimOpenSchema.Tests;
 
@@ -24,6 +24,7 @@ public static class IfcToiletJsonTests
 
     public static IfcSample[] Samples => IfcToBosConverterDiagnosticsTests.Samples;
 
+    [Category("RequiresTestData")]
     [TestCaseSource(nameof(Samples))]
     [Category("Slow")]
     public static void ParseToilets(IfcSample sample)
