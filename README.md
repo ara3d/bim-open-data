@@ -94,7 +94,7 @@ Node.js (for `deps.mjs`) and git, the .NET 8 SDK, and the .NET 10 SDK for the BO
 
 The BOS explorer at `explorer/` is a small Vite project in `site-src/` that builds into `site/explorer/` (git-ignored; the workflow builds it). The .NET code cannot run in a browser, so the explorer reads archives with the BIM Open Viewer's JavaScript packages instead: `@bim-open-viewer/loaders` for the geometry, `@bim-open-viewer/core` to draw it, and `@bim-open-viewer/controls` to orbit, taken as TypeScript source from `deps/bim-open-viewer` at the commit `deps.json` pins. The table list and rows come from the same Parquet reader those packages use (hyparquet). The "Show what the indices point to" option resolves string-table, entity, document, and descriptor indices and enum codes, following the record types in the specification's `BimOpenSchema.cs`.
 
-The bundled sample is `rac_basic_sample_project-2025.bos` (844 KB), the Revit basic sample project as published in [`bim-open-schema/examples`](https://github.com/ara3d/bim-open-schema/tree/main/examples) under that repository's MIT licence. The build copies it from `deps/bim-open-schema/examples/`, so no model file is committed here.
+The bundled sample is `rac_basic_sample_project-2025.bos` (844 KB), the Revit basic sample project as published in [`bim-open-schema/examples`](https://github.com/ara3d/bim-open-schema/tree/main/examples). It derives from Autodesk's sample project; that repository's MIT licence covers Ara 3D's code, and whether the model content may be redistributed is an open question ([bim-open-toolkit TKT-144](https://github.com/ara3d/bim-open-toolkit/blob/main/tickets/TKT-144-sample-model-redistribution.md)). The build copies it from `deps/bim-open-schema/examples/`, so no model file is committed here.
 
 ```powershell
 node deps.mjs                     # adds bim-open-viewer (and its gratify pin) to deps/
@@ -108,7 +108,7 @@ npm run smoke                     # headless Edge over the built site/; see scri
 
 The smoke check serves `site/` under `/bim-open-data/`, as Pages does, and fails on any console error or failed request. It opens the sample, checks the 18 tables and their row counts (Entities has 13,384), pages through rows, waits for the model to draw (19,443 instances), then opens `Technicalschoolcurrentm.bos` through the file input. `--screenshot docs/images/explorer.png` refreshes the picture above.
 
-Two things the explorer does around the viewer packages at the pinned commit: older archives such as this sample have no `InstanceFlags` column, which `bosToGroups` reads unguarded, so the explorer supplies zeros (nothing hidden); and BOS models are z-up while the viewer core's camera and lights are y-up, so it rotates each instance transform. Both live in `site-src/src/model-view.ts`.
+The explorer loads archives with `bosToGroups(..., { sourceUp: 'Z' })`: BOS models are z-up and the viewer is y-up, and since viewer `b0ec646` the loader also treats a missing `InstanceFlags` column (older archives, including this sample) as nothing hidden.
 
 ## The family
 

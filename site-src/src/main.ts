@@ -175,7 +175,7 @@ const loadSample = () => load(
     if (!response.ok) throw new Error(`the sample could not be fetched (HTTP ${response.status})`);
     return response.arrayBuffer();
   },
-  `${SAMPLE.title}, from <a href="${SAMPLE.source}">bim-open-schema/examples</a> (MIT licence), bundled with this page.`,
+  `${SAMPLE.title}, from <a href="${SAMPLE.source}">bim-open-schema/examples</a>, derived from Autodesk's Revit basic sample project, bundled with this page.`,
 );
 
 const loadFile = (file: File) => load(file.name, () => file.arrayBuffer(), 'Your file, read on this device. Nothing was uploaded.');
