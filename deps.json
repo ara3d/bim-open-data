@@ -10,5 +10,9 @@
   "parakeet": {
     "url": "https://github.com/ara3d/parakeet",
     "commit": "5116089e4589c6c287ece4f58a9f065306943a50"
+  },
+  "bim-open-viewer": {
+    "url": "https://github.com/ara3d/bim-open-viewer",
+    "commit": "5a992e41385ae277f4e8ec0eb37b46a2da07f040"
   }
 }
