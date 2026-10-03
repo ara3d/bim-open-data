@@ -46,6 +46,7 @@ namespace Ara3D.BIMOpenSchema.Tests
 
         public static FilePath InputFile => DataFolder.RelativeFile("rac_basic_sample_project-2025.bos");
 
+        [Category("RequiresTestData")]
         [Test]
         public static void TestInputFileExists()
         {
@@ -62,6 +63,7 @@ namespace Ara3D.BIMOpenSchema.Tests
             Console.WriteLine($"Has size: {fp.GetFileSizeAsString()}");
         }
 
+        [Category("RequiresTestData")]
         [Test, Category("Slow")]
         public static void TestReadInputFile()
         {
@@ -78,6 +80,7 @@ namespace Ara3D.BIMOpenSchema.Tests
             Console.WriteLine($"Wrote {sz} to {outputFile.GetFileName()} in {sw.Elapsed.Seconds:F} seconds");
         }
 
+        [Category("RequiresTestData")]
         [Test, Category("Slow")]
         public static void TestWriter()
         {
@@ -111,6 +114,7 @@ namespace Ara3D.BIMOpenSchema.Tests
             dt.WriteToExcel(outputFile);
         }
 
+        [Category("RequiresTestData")]
         [Test, Category("Slow")]
         public static void BimDataObjectModel()
         {

@@ -67,10 +67,12 @@ public static class HarmonizerTests
     // Source detection
     // =====================
 
+    [Category("RequiresTestData")]
     [Test, Category("Slow")]
     public static void DetectsIfcSource()
         => Assert.That(BosHarmonizer.DetectSource(IfcData), Is.EqualTo(SourceKind.Ifc));
 
+    [Category("RequiresTestData")]
     [Test, Category("Slow")]
     public static void DetectsRevitSource()
         => Assert.That(BosHarmonizer.DetectSource(RevitData), Is.EqualTo(SourceKind.Revit));
@@ -79,6 +81,7 @@ public static class HarmonizerTests
     // IFC pipeline
     // =====================
 
+    [Category("RequiresTestData")]
     [Test, Category("Slow")]
     public static void IfcHarmonizationAddsCanonicalData()
     {
@@ -103,6 +106,7 @@ public static class HarmonizerTests
         }
     }
 
+    [Category("RequiresTestData")]
     [Test, Category("Slow")]
     public static void HarmonizationIsLossless()
     {
@@ -124,6 +128,7 @@ public static class HarmonizerTests
         Assert.That(output.Geometry, Is.SameAs(input.Geometry));
     }
 
+    [Category("RequiresTestData")]
     [Test, Category("Slow")]
     public static void HarmonizationIsIdempotent()
     {
@@ -139,6 +144,7 @@ public static class HarmonizerTests
     // Revit pipeline
     // =====================
 
+    [Category("RequiresTestData")]
     [Test, Category("Slow")]
     public static void RevitHarmonizationAddsCanonicalData()
     {
@@ -157,6 +163,7 @@ public static class HarmonizerTests
         Assert.That(numbers.ToHashSet(), Is.EquivalentTo(sourceNumbers));
     }
 
+    [Category("RequiresTestData")]
     [Test, Category("Slow")]
     public static void RevitAreasAreConvertedToSquareMeters()
     {
@@ -192,6 +199,7 @@ public static class HarmonizerTests
     // Diagnostics (prints actual data content; useful when extending mappings)
     // =====================
 
+    [Category("RequiresTestData")]
     [Test, Category("Slow")]
     public static void DumpDataOverview()
     {

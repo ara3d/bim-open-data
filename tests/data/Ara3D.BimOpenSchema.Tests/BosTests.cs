@@ -12,6 +12,7 @@ public static class BosTests
 
     public static FilePath TestFile => DataFolder.RelativeFile("rac_basic_sample_project-2025.bos");
     
+    [Category("RequiresTestData")]
     [Test, Category("Slow")]
     public static void TestLoadBimDataAndBimGeometry()
     {

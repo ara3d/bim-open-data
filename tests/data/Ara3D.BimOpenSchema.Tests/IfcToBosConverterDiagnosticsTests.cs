@@ -46,6 +46,7 @@ public static class IfcToBosConverterDiagnosticsTests
         int VertexCount,
         int FaceCount);
 
+    [Category("RequiresTestData")]
     [Test]
     public static void IfcSampleFilesExist()
     {
@@ -56,6 +57,7 @@ public static class IfcToBosConverterDiagnosticsTests
         }
     }
 
+    [Category("RequiresTestData")]
     [TestCaseSource(nameof(Samples))]
     [Category("Slow")]
     public static void LoadIfcSample(IfcSample sample)
@@ -88,6 +90,7 @@ public static class IfcToBosConverterDiagnosticsTests
     public static IEnumerable<IfcSample> ConvertibleSamples()
         => Samples.Where(s => s.ExpectLoadSuccess);
 
+    [Category("RequiresTestData")]
     [TestCaseSource(nameof(ConvertibleSamples))]
     [Category("Slow")]
     public static void ConvertIfcSample(IfcSample sample)

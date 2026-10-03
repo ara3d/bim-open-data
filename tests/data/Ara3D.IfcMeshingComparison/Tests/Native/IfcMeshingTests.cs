@@ -23,6 +23,7 @@ public sealed class IfcMeshingTests
         Assert.That(SampleFile.GetFileSize(), Is.GreaterThan(0));
     }
 
+    [Category("RequiresTestData")]
     [Test]
     public void NonGeometryLoadReadsSchemaAndEntitiesWithoutNativeMeshing()
     {

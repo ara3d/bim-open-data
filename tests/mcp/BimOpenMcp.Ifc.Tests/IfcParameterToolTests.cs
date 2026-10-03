@@ -16,9 +16,10 @@ public sealed class IfcParameterToolTests
     [SetUp]
     public void SetUp()
     {
-        _path = TestModel.RequirePath(TestModel.FzkHaus);
+        // Create what TearDown disposes before RequirePath, which skips the test when the model is absent.
         _cache = new IfcSessionCache();
         _mcp = IfcMcpServer.Create(_cache, McpTransport.Stdio);
+        _path = TestModel.RequirePath(TestModel.FzkHaus);
     }
 
     [TearDown]
