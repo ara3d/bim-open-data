@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BIM Open Data</title>
+<meta name="description" content="The .NET implementation of BIM Open Schema and the IFC stack. On 2026-10-03 the code is still in bim-open-toolkit/src/data.">
+<link rel="icon" href="assets/data-mark.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@600;700&family=Public+Sans:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --font-brand: "Instrument Sans", "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --font-ui: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Fira Code", "Cascadia Mono", Consolas, ui-monospace, monospace;
+  --text: #171a1f; --dim: #5a606c; --surface: #ffffff; --bg: #f4f5f7; --border: #e3e6ea;
+  --accent: #b8326e; --soft: #f9e6ef; --amber: #d97706;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 400 15px/1.55 var(--font-ui); }
+main { max-width: 860px; margin: 0 auto; padding: 32px 16px 64px; }
+h1, h2 { font-family: var(--font-brand); line-height: 1.2; }
+h2 { font-size: 20px; margin: 40px 0 12px; }
+p { margin: 0 0 12px; max-width: 72ch; }
+a { color: var(--accent); text-underline-offset: 2px; }
+code { font: 400 13px var(--font-mono); background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; }
+.lockup { width: 320px; max-width: 100%; height: auto; display: block; margin: 0 0 16px -8px; }
+.lede { font-size: 17px; }
+.status { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--amber); border-radius: 6px; padding: 12px 16px; margin: 20px 0; }
+.status p { margin: 0; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; font-size: 14px; width: 100%; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { font-weight: 600; background: var(--soft); }
+tr:last-child td { border-bottom: 0; }
+td code { white-space: nowrap; }
+@media (max-width: 600px) { td code { white-space: normal; overflow-wrap: anywhere; } th, td { padding: 8px; } td:first-child { width: 45%; } }
+footer { margin-top: 48px; color: var(--dim); font-size: 13px; }
+footer a { color: var(--dim); }
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <img class="lockup" src="assets/data-lockup.svg" alt="BIM Open Data">
+  <p class="lede"><a href="https://github.com/ara3d/bim-open-schema">BIM Open Schema</a> is the specification; BIM Open Data is its .NET implementation: reading and writing BOS files, IFC loading, meshing, byte-exact property-set editing, conversion from IFC to BOS and to DuckDB, the IFC MCP server, and the BOS Browser.</p>
+</header>
+
+<div class="status">
+  <p><strong>Status on 2026-10-03:</strong> the code is not in this repository yet. It lives in <a href="https://github.com/ara3d/bim-open-toolkit">bim-open-toolkit</a> under <code>src/data</code> (with <code>tests/data</code>, <code>src/mcp/BimOpenMcp.Ifc</code>, <code>apps/</code>, and <code>tools/Ara3D.IfcTypeGen</code>) and moves here with its history in phase 4 of the <a href="https://github.com/ara3d/bim-open-toolkit/blob/main/docs/plans/repository-split.md">repository split plan</a>.</p>
+</div>
+
+<h2>What BOS is</h2>
+<p>BIM Open Schema (BOS) stores a building model as plain tables. Entities, parameters, relations, and geometry are each a list; each list is one Parquet file, and a <code>.bos</code> file is those Parquet files in a zip. Parameters are stored entity-attribute-value, one table per primitive type. Relations use a closed vocabulary (<code>PartOf</code>, <code>ContainedIn</code>, <code>HostedBy</code>, <code>BoundedBy</code>) that covers both the Revit API and IFC, the open exchange format for building models. The tables load straight into DuckDB, an in-process analytical database.</p>
+
+<h2>What will arrive</h2>
+<p>21 projects from the toolkit's <code>src/data</code>, plus the MCP server, the Browser, the type generator, and 11 test projects.</p>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Project</th><th>Role</th></tr></thead>
+  <tbody>
+    <tr><td><code>Ara3D.BimOpenSchema.IO</code></td><td>Reading and writing <code>.bos</code> archives</td></tr>
+    <tr><td><code>Ara3D.BimOpenSchema.ObjectModel</code></td><td>Builders, accessors, and a navigable object graph over the specification's types</td></tr>
+    <tr><td><code>Ara3D.BimOpenSchema.IO.Export</code>, <code>.IO.Bfast</code></td><td>Excel, CSV, Markdown, HTML, SQLite, and BFAST output</td></tr>
+    <tr><td><code>Ara3D.BimOpenSchema.DuckDb</code></td><td>Loading BOS into DuckDB, with views and table helpers</td></tr>
+    <tr><td><code>Ara3D.BimOpenSchema.Harmonizer</code>, <code>.Federation</code></td><td>Canonical names and SI units across tools; several models unioned into one</td></tr>
+    <tr><td><code>Ara3D.BimOpenSchema.DataModel</code>, <code>.BuildingModel</code> and related</td><td>A relational snapshot model and a typed building model with a DuckDB projection</td></tr>
+    <tr><td><code>Ara3D.IfcLoader</code>, <code>Ara3D.IfcTypes</code></td><td>STEP parsing with geometry from web-ifc; generated IFC entity types</td></tr>
+    <tr><td><code>Ara3D.Ifc.Mesher</code></td><td>Tessellation in pure C#</td></tr>
+    <tr><td><code>Ara3D.Ifc.Editing</code></td><td>Property-set patching that leaves every unedited byte of the IFC file identical</td></tr>
+    <tr><td><code>Ara3D.Ifc.Bos</code>, <code>Ara3D.Ifc.DuckDb</code></td><td>IFC to BOS; IFC to a queryable DuckDB database in one call</td></tr>
+    <tr><td><code>Ara3D.Ids</code></td><td>buildingSMART IDS 1.0 checks over BOS tables, as a verdict table</td></tr>
+    <tr><td><code>BimOpenMcp.Ifc</code></td><td>An MCP server with 29 tools so an AI agent can query an IFC file: properties, quantities, spatial structure, SQL, geometry</td></tr>
+    <tr><td><code>Ara3D.BimOpenSchema.Browser</code></td><td>A WPF data-grid viewer for <code>.bos</code> files with glTF and Excel export</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>What it does not do</h2>
+<p>It does not author geometry; IFC editing is limited to property sets. It has no live connection to Revit or any other authoring tool. It knows nothing about graphs: <a href="https://github.com/ara3d/bim-open-flow">BIM Open Flow</a> builds on it, never the other way round.</p>
+
+<footer>
+  <p>Part of the BIM Open family: <a href="https://github.com/ara3d/bim-open-toolkit">Toolkit</a>, <a href="https://github.com/ara3d/bim-open-flow">Flow</a>, <a href="https://github.com/ara3d/bim-open-notebook">Notebook</a>, <a href="https://github.com/ara3d/bim-open-viewer">Viewer</a>, <a href="https://github.com/ara3d/bim-open-schema">Schema</a>. Source: <a href="https://github.com/ara3d/bim-open-data">ara3d/bim-open-data</a>. MIT licensed.</p>
+</footer>
+
+</main>
+</body>
+</html>
