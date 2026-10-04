@@ -53,6 +53,33 @@
       "path": "IFC 2.3.0.1 (IFC 2x3)/Duplex Apartment/Duplex_A_20110907.ifc",
       "bytes": 2380763,
       "sha256": "b347a2c8aa8fff6db896a4417a9c50c22ac0ccd7c5cfc22b99b8d29336c606ed"
+    },
+    "duplex-mep": {
+      "file": "Duplex_MEP_20110907.ifc",
+      "url": "https://media.githubusercontent.com/media/buildingsmart-community/Community-Sample-Test-Files/7ddf57a201f88a0c213d5322b02ed15e94a60a40/IFC%202.3.0.1%20(IFC%202x3)/Duplex%20Apartment/Duplex_MEP_20110907.ifc",
+      "repository": "https://github.com/buildingsmart-community/Community-Sample-Test-Files",
+      "commit": "7ddf57a201f88a0c213d5322b02ed15e94a60a40",
+      "path": "IFC 2.3.0.1 (IFC 2x3)/Duplex Apartment/Duplex_MEP_20110907.ifc",
+      "bytes": 17871432,
+      "sha256": "13976a8e223f177a6d7123679e4b02e750cd90c13f7bb20c593be125d9407119"
+    },
+    "duplex-electrical": {
+      "file": "Duplex_Electrical_20121207.ifc",
+      "url": "https://media.githubusercontent.com/media/buildingsmart-community/Community-Sample-Test-Files/7ddf57a201f88a0c213d5322b02ed15e94a60a40/IFC%202.3.0.1%20(IFC%202x3)/Duplex%20Apartment/Duplex_Electrical_20121207.ifc",
+      "repository": "https://github.com/buildingsmart-community/Community-Sample-Test-Files",
+      "commit": "7ddf57a201f88a0c213d5322b02ed15e94a60a40",
+      "path": "IFC 2.3.0.1 (IFC 2x3)/Duplex Apartment/Duplex_Electrical_20121207.ifc",
+      "bytes": 1602758,
+      "sha256": "d47b014ed5b3428496683ee75e4664013f6df8237ea571b8d13f877cea0b7a94"
+    },
+    "duplex-rooms": {
+      "file": "Duplex_M_20111024_ROOMS_AND_SPACES.ifc",
+      "url": "https://media.githubusercontent.com/media/buildingsmart-community/Community-Sample-Test-Files/7ddf57a201f88a0c213d5322b02ed15e94a60a40/IFC%202.3.0.1%20(IFC%202x3)/Duplex%20Apartment/Duplex_M_20111024_ROOMS_AND_SPACES.ifc",
+      "repository": "https://github.com/buildingsmart-community/Community-Sample-Test-Files",
+      "commit": "7ddf57a201f88a0c213d5322b02ed15e94a60a40",
+      "path": "IFC 2.3.0.1 (IFC 2x3)/Duplex Apartment/Duplex_M_20111024_ROOMS_AND_SPACES.ifc",
+      "bytes": 8781887,
+      "sha256": "3cd577ecff9daf91632789a408070251a431b198de7be47f64e01c7fda1be92b"
     }
   },
   "samples": [
@@ -100,6 +127,42 @@
       "counts": { "IFCBUILDINGSTOREY": 4, "IFCSPACE": 21, "IFCDOOR": 14, "IFCWINDOW": 24, "IFCWALL": 1, "IFCWALLSTANDARDCASE": 56 },
       "relations": {},
       "entities": 4721
+    },
+    {
+      "name": "duplex-mep",
+      "title": "Duplex Apartment, mechanical, plumbing, and fire protection",
+      "sources": ["duplex-mep"],
+      "geometry": true,
+      "counts": { "IFCBUILDINGSTOREY": 3, "IFCSPACE": 42, "IFCFLOWSEGMENT": 427, "IFCFLOWFITTING": 358, "IFCFLOWTERMINAL": 105, "IFCFLOWCONTROLLER": 14, "IFCENERGYCONVERSIONDEVICE": 16, "IFCFLOWMOVINGDEVICE": 4, "IFCDISTRIBUTIONCONTROLELEMENT": 2 },
+      "relations": { "ContainedIn": 926, "MemberOf": 47 },
+      "entities": 5826
+    },
+    {
+      "name": "duplex-electrical",
+      "title": "Duplex Apartment, electrical",
+      "sources": ["duplex-electrical"],
+      "geometry": true,
+      "counts": { "IFCBUILDINGSTOREY": 3, "IFCSPACE": 1, "IFCFLOWTERMINAL": 82, "IFCFLOWCONTROLLER": 8, "IFCDISTRIBUTIONCONTROLELEMENT": 3, "IFCBUILDINGELEMENTPROXY": 4, "IFCENERGYCONVERSIONDEVICE": 2, "IFCFLOWMOVINGDEVICE": 4 },
+      "relations": { "ContainedIn": 103, "HasMaterial": 36, "MemberOf": 6 },
+      "entities": 553
+    },
+    {
+      "name": "duplex-rooms",
+      "title": "Duplex Apartment, rooms and spaces",
+      "sources": ["duplex-rooms"],
+      "geometry": true,
+      "counts": { "IFCBUILDINGSTOREY": 3, "IFCSPACE": 37, "IFCFLOWSEGMENT": 246, "IFCFLOWFITTING": 207, "IFCENERGYCONVERSIONDEVICE": 22, "IFCFLOWCONTROLLER": 8, "IFCFLOWMOVINGDEVICE": 4 },
+      "relations": { "ContainedIn": 487, "MemberOf": 42 },
+      "entities": 2977
+    },
+    {
+      "name": "duplex-federated",
+      "title": "Duplex Apartment, architecture, MEP, electrical, and rooms federated",
+      "sources": ["duplex", "duplex-mep", "duplex-electrical", "duplex-rooms"],
+      "geometry": false,
+      "counts": { "IFCBUILDINGSTOREY": 13, "IFCSPACE": 101, "IFCDOOR": 14, "IFCWINDOW": 24, "IFCWALL": 1, "IFCWALLSTANDARDCASE": 56, "IFCFLOWSEGMENT": 673, "IFCFLOWFITTING": 565, "IFCFLOWTERMINAL": 187, "IFCFLOWCONTROLLER": 30, "IFCENERGYCONVERSIONDEVICE": 40, "IFCFLOWMOVINGDEVICE": 12, "IFCDISTRIBUTIONCONTROLELEMENT": 5, "IFCBUILDINGELEMENTPROXY": 4 },
+      "relations": { "ConnectsTo": 82, "ContainedIn": 1723, "HasMaterial": 307 },
+      "entities": 14077
     }
   ]
 }
