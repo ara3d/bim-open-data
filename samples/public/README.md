@@ -1,6 +1,6 @@
 # Public sample buildings
 
-Three openly licensed buildings, converted to BIM Open Schema (BOS) and to DuckDB, for demos, tests, and the BOS explorer in every BIM Open repository. They replace the Autodesk-derived models in `bim-open-schema/examples`, whose redistribution terms are unsettled (bim-open-toolkit TKT-144). Licences and attribution are in [`NOTICE.md`](NOTICE.md); anything that ships one of these files ships that notice too.
+Three openly licensed buildings (the Duplex in four discipline models), converted to BIM Open Schema (BOS) and to DuckDB, for demos, tests, and the BOS explorer in every BIM Open repository. They replace the Autodesk-derived models in `bim-open-schema/examples`, whose redistribution terms are unsettled (bim-open-toolkit TKT-144). Licences and attribution are in [`NOTICE.md`](NOTICE.md); anything that ships one of these files ships that notice too.
 
 | File | Building | Source IFC | `.bos` | `.duckdb` |
 |---|---|---|---:|---:|
@@ -8,9 +8,13 @@ Three openly licensed buildings, converted to BIM Open Schema (BOS) and to DuckD
 | `digitalhub-arc` | DigitalHub, an office building of RWTH Aachen University: architecture (Revit) | IFC4 Reference View, 9 MB | 0.4 MB | 2.1 MB |
 | `digitalhub-hzg` | DigitalHub: heating | IFC4 Reference View, 21 MB | 1.0 MB | 2.9 MB |
 | `digitalhub-federated` | DigitalHub: architecture, heating, ventilation, and plumbing in one union, no geometry | four IFC4 files, 68 MB | 1.1 MB | 6.8 MB |
-| `duplex` | Duplex Apartment, a two-unit house (Revit 2011) | IFC2X3, 2.4 MB | 0.1 MB | 1.8 MB |
+| `duplex` | Duplex Apartment, a two-unit house: architecture (Revit 2011) | IFC2X3, 2.4 MB | 0.1 MB | 1.8 MB |
+| `duplex-mep` | Duplex: mechanical, plumbing, electrical, and fire-alarm fixtures in one model (Revit MEP 2011) | IFC2X3, 17.9 MB | 0.4 MB | 1.8 MB |
+| `duplex-electrical` | Duplex: electrical (a 2012 re-export) | IFC2X3, 1.6 MB | 0.1 MB | 1.8 MB |
+| `duplex-rooms` | Duplex: rooms and spaces, with the heating system (file `Duplex_M_..._ROOMS_AND_SPACES`) | IFC2X3, 8.8 MB | 0.2 MB | 1.8 MB |
+| `duplex-federated` | Duplex: all four models in one union, no geometry | four IFC2X3 files, 30.6 MB | 0.2 MB | 2.4 MB |
 
-Each `.bos` holds the entities, parameters, relations, and (except the federated union) tessellated geometry. Each `.duckdb` holds the same tables plus the text views `EntityText`, `ParameterText`, `RelationText`, `StoreyOfEntity`, and `StoreyOfElement`; it was written by DuckDB 1.3.2, so open it with 1.3.2 or later. The files are committed because each is under 10 MB.
+Each `.bos` holds the entities, parameters, relations, and (except the federated union) tessellated geometry. Each `.duckdb` holds the same tables plus the text views `EntityText`, `ParameterText`, `RelationText`, `StoreyOfEntity`, and `StoreyOfElement`; it was written by DuckDB 1.3.2, so open it with 1.3.2 or later. The files are committed because each is under 10 MB; the largest, `digitalhub-federated.duckdb`, is 6.8 MB.
 
 ## What each contains
 
@@ -33,6 +37,41 @@ Counts are IFC entities by class in `EntityText.Category`, measured on 2026-10-0
 | Duct segments | | | | 595 | |
 | Air terminals | | | | 148 | |
 | Sanitary terminals | | | | 72 | |
+
+### Duplex models
+
+The four Duplex files come from one Revit project and were exported by different disciplines between 2011 and 2012. IFC2X3 has no pipe, duct, or cable segment classes, so every run of pipe, duct, or conduit is an `IfcFlowSegment`; its kind shows only in the element name and in the type class (`IfcPipeSegmentType`, `IfcDuctSegmentType`, `IfcCableSegmentType`).
+
+| | Architecture (`duplex`) | MEP | Electrical | Rooms | Federated |
+|---|---:|---:|---:|---:|---:|
+| Entities (all rows) | 4,721 | 5,826 | 553 | 2,977 | 14,077 |
+| Storeys | 4 | 3 | 3 | 3 | 13 (3 or 4 per model) |
+| Spaces | 21 | 42 | 1 | 37 | 101 |
+| Doors, windows | 14, 24 | | | | 14, 24 |
+| Walls (`IfcWall` + `IfcWallStandardCase`) | 1 + 56 | | | | 1 + 56 |
+| Flow segments (`IfcFlowSegment`) | | 427 | | 246 | 673 |
+| Flow fittings (`IfcFlowFitting`) | | 358 | | 207 | 565 |
+| Flow terminals (`IfcFlowTerminal`) | | 105 | 82 | | 187 |
+| Flow controllers (`IfcFlowController`) | | 14 | 8 | 8 | 30 |
+| Energy conversion devices (boilers, radiators) | | 16 | 2 | 22 | 40 |
+| Flow moving devices (pumps, fans) | | 4 | 4 | 4 | 12 |
+| Distribution control elements | | 2 | 3 | | 5 |
+| Building element proxies | | | 4 | | 4 |
+| Systems, zones, distribution ports, port connections | | 0 | 0 | 0 | 0 |
+| `ConnectsTo` relations | 82 | 0 | 0 | 0 | 82 |
+| `ContainedIn` relations | 207 | 926 | 103 | 487 | 1,723 |
+
+What the measurements show:
+
+- None of the three engineering models has an `IfcSystem`, `IfcZone`, `IfcDistributionPort`, or circuit. Pipes, ducts, and fittings are not connected to each other: the Revit export carries no port connectivity, so the MEP model cannot answer which fitting joins which pipe. The 82 `ConnectsTo` relations are the architecture's wall joins.
+- The MEP model's 407 pipe segments, 2 round ducts, and 18 conduit pieces (10 `Conduit with Fittings`, 8 `M_Conduit Elbow - Steel`) are all `IfcFlowSegment`. Its 358 fittings are mostly generic elbows (220), tees (78), and transitions (44).
+- The "MEP" model also holds the electrical and fire-alarm fixtures (47 duplex receptacles, 14 light switches, 14 lights, 6 smoke detectors, 2 panelboards) and the plumbing fixtures (6 lavatories, 4 water closets, 2 baths, 2 showers, 2 sinks), all as `IfcFlowTerminal` or `IfcFlowController`. Its 14 radiators and 2 boilers are `IfcEnergyConversionDevice`.
+- The electrical model repeats most of those fixtures: 104 of its elements have the same GlobalId as an element in the MEP model. It has no cable or conduit runs, and its single space is the roof.
+- The model named "rooms and spaces" is not a copy of the architecture. It has 37 `IfcSpace` rows and the heating system (22 radiators and boilers, 246 flow segments, 207 fittings, 8 valves, pumps, and fans), and no walls, doors, or windows. 344 of its elements are also in the MEP model under the same GlobalId.
+- The three engineering models use different GlobalIds from the architecture for everything, spaces included, so no element is shared between the architecture and any other model. Space counts differ per model (21, 42, 1, 37), and several rooms occur on both levels under one name, so counts by name overcount rooms (the rooms model has 11 distinct space names in 37 spaces, and one misspelling, `Hallyway`).
+- The electrical file declares feet (`Ifc:LengthUnitToMetre` is 0.3048); the other three declare metres. `duplex-federated` keeps each unit and does not rescale.
+- `duplex-federated` is a plain union, like `digitalhub-federated`: it does not merge the 344 and 104 elements that two models share, so they count twice, and storeys appear once per model (4 + 3 + 3 + 3 = 13).
+- All `.duckdb` files are under 3 MB, so none is kept out of git.
 
 Notes on the data:
 

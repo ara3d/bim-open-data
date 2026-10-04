@@ -2,7 +2,7 @@
 
 The `.bos` and `.duckdb` files in `samples/public/` are converted from openly licensed IFC files. Ara 3D's code in this repository is MIT licensed (`LICENSE` at the root); the building data keeps its own licence, given below. The source IFC files are not in this repository: `fetch.mjs` downloads them from the commits named here.
 
-What was changed, for every file: each source IFC file was read by this repository's IFC loader and written out as BIM Open Schema tables (entities, parameters, relations, and tessellated geometry, as Parquet in a zip), then loaded into a DuckDB database with text views. Nothing was added to or removed from the building's data on purpose; IFC content the converter does not map (for example 2D annotation) is absent, geometry is triangulated, and repeated meshes are stored once. `digitalhub-federated` is the union of four DigitalHub models into one geometry-free document set, each source kept as its own document.
+What was changed, for every file: each source IFC file was read by this repository's IFC loader and written out as BIM Open Schema tables (entities, parameters, relations, and tessellated geometry, as Parquet in a zip), then loaded into a DuckDB database with text views. Nothing was added to or removed from the building's data on purpose; IFC content the converter does not map (for example 2D annotation) is absent, geometry is triangulated, and repeated meshes are stored once. `digitalhub-federated` and `duplex-federated` are unions of four models each (DigitalHub, Duplex) into one geometry-free document set, each source kept as its own document.
 
 ## Schependomlaan
 
@@ -48,9 +48,9 @@ SOFTWARE.
 
 ## Duplex Apartment
 
-Files: `duplex.bos`, `duplex.duckdb` here, and `samples/nrc/duplex-base.ifc` and `samples/nrc/duplex-enriched.ifc`.
+Files: `duplex.bos`, `duplex.duckdb`, `duplex-mep.bos`, `duplex-mep.duckdb`, `duplex-electrical.bos`, `duplex-electrical.duckdb`, `duplex-rooms.bos`, `duplex-rooms.duckdb`, `duplex-federated.bos`, and `duplex-federated.duckdb` here, and `samples/nrc/duplex-base.ifc` and `samples/nrc/duplex-enriched.ifc`.
 
-- Source: `IFC 2.3.0.1 (IFC 2x3)/Duplex Apartment/Duplex_A_20110907.ifc` in https://github.com/buildingsmart-community/Community-Sample-Test-Files at commit `7ddf57a201f88a0c213d5322b02ed15e94a60a40`.
+- Source: `IFC 2.3.0.1 (IFC 2x3)/Duplex Apartment/Duplex_A_20110907.ifc` (architecture), `Duplex_MEP_20110907.ifc`, `Duplex_Electrical_20121207.ifc`, and `Duplex_M_20111024_ROOMS_AND_SPACES.ifc` in https://github.com/buildingsmart-community/Community-Sample-Test-Files at commit `7ddf57a201f88a0c213d5322b02ed15e94a60a40`.
 - Licence: Creative Commons Attribution 4.0 International, https://creativecommons.org/licenses/by/4.0/ ("(C) original authors").
 
 Attribution:
