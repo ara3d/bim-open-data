@@ -8,6 +8,8 @@
 // The comparator's verdict is kept in `auto`. When results/<run>/review.json holds a
 // reviewer's verdict for a question ({ "<id>": { "verdict": "correct", "note": "..." } }),
 // `verdict` takes it and `reviewedBy` names its source; otherwise `verdict` is `auto`.
+// A reviewer's `failure` label (or the file's `failures` map, for questions whose comparator
+// verdict stands) names why a wrong answer is wrong.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { compare } from "./compare.mjs";
@@ -57,6 +59,7 @@ const rows = subset.map((s) => {
     question: q.question, groundTruth: q.ground_truth, answer,
     auto, verdict: reviewed?.verdict ?? auto.verdict, reviewNote: reviewed?.note ?? null,
     reviewedBy: reviewed ? review.reviewer : null,
+    failure: reviewed?.failure ?? review.failures?.[s.id] ?? null,
     costUsd: t?.result?.total_cost_usd ?? null, seconds: t?.result ? Math.round(t.result.duration_ms / 1000) : null,
     turns: t?.result?.num_turns ?? null, toolCalls: t?.calls.length ?? 0, tools: t?.calls ?? [],
     steps: t?.steps ?? [],
@@ -81,7 +84,7 @@ const summary = {
 };
 
 const csvCell = (v) => (/[",\n]/.test(String(v)) ? `"${String(v).replaceAll('"', '""')}"` : String(v ?? ""));
-const columns = ["id", "project", "model", "category", "auto", "autoReason", "verdict", "reviewedBy", "costUsd", "seconds", "turns", "toolCalls"];
+const columns = ["id", "project", "model", "category", "auto", "autoReason", "verdict", "failure", "reviewedBy", "costUsd", "seconds", "turns", "toolCalls"];
 const csv = [columns.join(","), ...rows.map((r) => columns.map((c) => csvCell(
   c === "auto" ? r.auto.verdict : c === "autoReason" ? r.auto.reason : r[c])).join(","))].join("\n") + "\n";
 

@@ -1,0 +1,82 @@
+{
+  "run": "2026-10-03",
+  "dataset": "sylvainHellin/ifc-bench",
+  "revision": "df630deb761efcb184f1a30ab374da7dbae38225",
+  "model": "claude-haiku-4-5-20251001",
+  "effort": "medium",
+  "claudeVersion": "2.1.286 (Claude Code)",
+  "questions": 100,
+  "reviewer": "Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",
+  "auto": {
+    "total": {
+      "correct": 20,
+      "wrong": 16,
+      "review": 62,
+      "error": 2
+    },
+    "byCategory": {
+      "1": {
+        "correct": 3,
+        "wrong": 1,
+        "review": 10,
+        "error": 1
+      },
+      "2": {
+        "correct": 10,
+        "wrong": 1,
+        "review": 44,
+        "error": 0
+      },
+      "3": {
+        "correct": 0,
+        "wrong": 3,
+        "review": 8,
+        "error": 0
+      },
+      "4": {
+        "correct": 7,
+        "wrong": 11,
+        "review": 0,
+        "error": 1
+      }
+    }
+  },
+  "final": {
+    "total": {
+      "correct": 62,
+      "wrong": 29,
+      "review": 7,
+      "error": 2
+    },
+    "byCategory": {
+      "1": {
+        "correct": 8,
+        "wrong": 5,
+        "review": 1,
+        "error": 1
+      },
+      "2": {
+        "correct": 39,
+        "wrong": 14,
+        "review": 2,
+        "error": 0
+      },
+      "3": {
+        "correct": 3,
+        "wrong": 8,
+        "review": 0,
+        "error": 0
+      },
+      "4": {
+        "correct": 12,
+        "wrong": 2,
+        "review": 4,
+        "error": 1
+      }
+    }
+  },
+  "costUsd": 6.79,
+  "sessionSecondsTotal": 7270,
+  "wallSeconds": 2738,
+  "toolCalls": 1036
+}

@@ -1,0 +1,327 @@
+{
+  "reviewer": "Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",
+  "rule": "Correct when the answer gives the ground truth's facts (numbers within about 1 %, the same items); partial answers are wrong; 'review' where the file must be checked or the question is ambiguous.",
+  "verdicts": {
+    "51": {
+      "verdict": "wrong",
+      "note": "Answered for Erdgeschoss (18 spaces, 455.8 m2); the question's first floor is 1. Obergeschoss (22 spaces, 428.4 m2).",
+      "failure": "wrong storey"
+    },
+    "74": {
+      "verdict": "wrong",
+      "note": "Named Stahlbeton on two Decke slabs; ground truth is Aluminium on the 21 roof slabs read as ceilings.",
+      "failure": "wrong element set"
+    },
+    "85": {
+      "verdict": "correct",
+      "note": "Category 4, but the honest answer is 'none': the answer says there are no beams."
+    },
+    "89": {
+      "verdict": "correct",
+      "note": "21 roof slabs (IFCSLAB 'Dach-001'), as the ground truth."
+    },
+    "97": {
+      "verdict": "correct",
+      "note": "All 29 room types with matching counts."
+    },
+    "117": {
+      "verdict": "correct",
+      "note": "8 toilet rooms on the second floor."
+    },
+    "134": {
+      "verdict": "correct",
+      "note": "Concrete, cast in situ."
+    },
+    "141": {
+      "verdict": "correct",
+      "note": "Space names and areas match the ground truth list."
+    },
+    "146": {
+      "verdict": "correct",
+      "note": "64 doors in 5 types, 44/8/8/2/2, names translated."
+    },
+    "161": {
+      "verdict": "correct",
+      "note": "4,565.49 m2 of external wall gross side area; ground truth adds an 18 m2 estimate for one curtain wall (0.4 %)."
+    },
+    "168": {
+      "verdict": "correct",
+      "note": "Aufzug Ost and West at 10.77 m, then the shafts at 7.77 m."
+    },
+    "180": {
+      "verdict": "correct",
+      "note": "Category 4: counts match the ground truth (62 columns, beams) and the load path is the one the ground truth infers; it does not flag the load path as inferred."
+    },
+    "202": {
+      "verdict": "wrong",
+      "note": "914 copper segments is right; total length 1,006,977 against 1,207,377 (both in mm, though the ground truth labels it m).",
+      "failure": "wrong total"
+    },
+    "206": {
+      "verdict": "correct",
+      "note": "63 radiators of one type, 29 and 34 by level."
+    },
+    "207": {
+      "verdict": "correct",
+      "note": "4 inline and 1 double pump, all in B01."
+    },
+    "210": {
+      "verdict": "review",
+      "note": "Category 4, but the answer cites real values (Energieanalyse.Leistung Heizung, 43,822 W total). The ground truth may be wrong; check the file."
+    },
+    "213": {
+      "verdict": "wrong",
+      "note": "Total 602.21 m is twice the ground truth's 301,106 mm (301.1 m); the comparator matched the basement figure by unit scaling.",
+      "failure": "double count"
+    },
+    "218": {
+      "verdict": "correct",
+      "note": "16 instantaneous heaters, 10 and 6 by level."
+    },
+    "221": {
+      "verdict": "correct",
+      "note": "19 systems: 16 hot water, 1 cold, 1 waste, 1 rain."
+    },
+    "230": {
+      "verdict": "wrong",
+      "note": "Type counts right (13 fire, 5 chamber); level distribution 7/5/6 against the ground truth's 7/0/11.",
+      "failure": "level assignment"
+    },
+    "233": {
+      "verdict": "correct",
+      "note": "2 F7 filters, both in B01."
+    },
+    "235": {
+      "verdict": "correct",
+      "note": "4 ventilation systems, one of each type."
+    },
+    "236": {
+      "verdict": "wrong",
+      "note": "Level totals sum to 2,267.8 m2, twice the ground truth's 1,133.9; the answer itself notes two area records per duct.",
+      "failure": "double count"
+    },
+    "250": {
+      "verdict": "wrong",
+      "note": "Said two steel beams span the living rooms; ground truth says none span the Duplex B living room.",
+      "failure": "spatial reasoning"
+    },
+    "280": {
+      "verdict": "correct",
+      "note": "Heights match; the answer splits the 819x759 type into casement and fixed and adds a skylight."
+    },
+    "291": {
+      "verdict": "wrong",
+      "note": "Said 0 radiators in A202; ground truth: room A202-M has one.",
+      "failure": "name matching"
+    },
+    "294": {
+      "verdict": "correct",
+      "note": "Two thermostats, one in each unit's living room (A102 and B102), though named by room name, not number."
+    },
+    "328": {
+      "verdict": "wrong",
+      "note": "Latitude and longitude swapped; missed that the usage is a motel.",
+      "failure": "misread attributes"
+    },
+    "337": {
+      "verdict": "correct",
+      "note": "25 doors in 5 types with matching counts."
+    },
+    "342": {
+      "verdict": "wrong",
+      "note": "Said there are no interior walls because all are flagged external; ground truth infers 28 interior walls from type and thickness.",
+      "failure": "no inference"
+    },
+    "343": {
+      "verdict": "review",
+      "note": "Category 4; the answer cites material associations on one wall type. Check the file before scoring."
+    },
+    "348": {
+      "verdict": "review",
+      "note": "Names an 'Acoustic Ceiling Tile' material; ground truth says no ceiling materials. Needs a look at the file."
+    },
+    "361": {
+      "verdict": "review",
+      "note": "Mentions 29 light fixtures and 10 flow terminals, but frames the answer around 48 distribution ports by SystemType."
+    },
+    "374": {
+      "verdict": "correct",
+      "note": "6 spaces with matching areas, total 145.0 m2."
+    },
+    "375": {
+      "verdict": "wrong",
+      "note": "10 spaces with the right areas; the stated total 388.24 m2 is wrong (they sum to 334.06).",
+      "failure": "arithmetic"
+    },
+    "387": {
+      "verdict": "wrong",
+      "note": "Layer materials and thicknesses do not match; the answer says layer thicknesses are not available.",
+      "failure": "material layers"
+    },
+    "392": {
+      "verdict": "correct",
+      "note": "38 curtain walls, 34 and 4."
+    },
+    "396": {
+      "verdict": "correct",
+      "note": "Category 4: counts match (34 columns, 8 beams) and the frame structure is the one the ground truth infers."
+    },
+    "410": {
+      "verdict": "correct",
+      "note": "Elevations 11.1, 14.8, 18.5 m."
+    },
+    "420": {
+      "verdict": "correct",
+      "note": "KS 115: 24, GK 125: 17, KS 175: 10."
+    },
+    "421": {
+      "verdict": "wrong",
+      "note": "Reports 'Generisch' for every type; ground truth names Ortbeton and Kalksandstein layers.",
+      "failure": "material layers"
+    },
+    "429": {
+      "verdict": "correct",
+      "note": "STB 200: 5 at 200 mm, Podest: 8 at 40 mm."
+    },
+    "434": {
+      "verdict": "wrong",
+      "note": "Areas right (239.26 and 90.16 m2); layer materials do not match the ground truth.",
+      "failure": "material layers"
+    },
+    "440": {
+      "verdict": "wrong",
+      "note": "17 spaces with the right areas; the stated total 355.30 m2 is wrong (they sum to 299.30).",
+      "failure": "arithmetic"
+    },
+    "444": {
+      "verdict": "correct",
+      "note": "Six elevations, 0 to 18.5 m in 3.7 m steps."
+    },
+    "450": {
+      "verdict": "correct",
+      "note": "Toilet men 8.34, Toilet women 8.77 m2."
+    },
+    "465": {
+      "verdict": "correct",
+      "note": "17 slabs, 7 types, thicknesses and counts match."
+    },
+    "479": {
+      "verdict": "correct",
+      "note": "101 doors in 7 types with matching counts."
+    },
+    "493": {
+      "verdict": "correct",
+      "note": "138 items; some types are merged into families (kitchen units 12, mirrors 12) but the counts add up."
+    },
+    "497": {
+      "verdict": "wrong",
+      "note": "6 bathrooms; ground truth counts toilets too (12).",
+      "failure": "wrong filter"
+    },
+    "502": {
+      "verdict": "review",
+      "note": "Category 4: the answer computed 736 m3 from geometry with ifc_volume, which the ground truth did not consider. Not invented; not what the benchmark expects."
+    },
+    "513": {
+      "verdict": "correct",
+      "note": "Elevations, floor heights and floor-to-floor height match."
+    },
+    "555": {
+      "verdict": "correct",
+      "note": "Everything is existing construction (Bestand)."
+    },
+    "610": {
+      "verdict": "wrong",
+      "note": "Upper floors summarised with approximate areas instead of listed room by room.",
+      "failure": "incomplete"
+    },
+    "653": {
+      "verdict": "correct",
+      "note": "300 x 300 mm, 14 columns."
+    },
+    "661": {
+      "verdict": "correct",
+      "note": "21 toilet rooms with 2 terminals each."
+    },
+    "740": {
+      "verdict": "correct",
+      "note": "Category 4: one storey and element counts consistent with the ground truth."
+    },
+    "760": {
+      "verdict": "correct",
+      "note": "100 % non-load-bearing; counts 648 walls where the ground truth counts 880 (missed IfcWallStandardCase)."
+    },
+    "765": {
+      "verdict": "review",
+      "note": "Ground truth lists all 1,214 coverings; the answer picks 509 it judges interior. The question is ambiguous."
+    },
+    "782": {
+      "verdict": "correct",
+      "note": "19 slab types with matching thicknesses, 279 slabs."
+    },
+    "880": {
+      "verdict": "wrong",
+      "note": "Three counts off by one (132/15/13 against 133/16/14).",
+      "failure": "wrong count"
+    },
+    "883": {
+      "verdict": "correct",
+      "note": "Total 392.1 m against 390.0 m (0.5 %); merges the two HE types (196.9 m, as their sum in the ground truth)."
+    },
+    "905": {
+      "verdict": "correct",
+      "note": "Project, building and site names match; storeys listed as five levels including the roof; no space count."
+    },
+    "925": {
+      "verdict": "wrong",
+      "note": "100 slabs grouped by name, not the ground truth's 110 slabs by type.",
+      "failure": "wrong grouping"
+    },
+    "928": {
+      "verdict": "wrong",
+      "note": "20 slabs on 1.OG; ground truth has 30 (20 at 120 mm, 10 at 180 mm).",
+      "failure": "incomplete"
+    },
+    "946": {
+      "verdict": "review",
+      "note": "Category 4; the answer cites Pset_SpaceThermalRequirements.NaturalVentilation on 20 spaces. Check the file."
+    },
+    "953": {
+      "verdict": "correct",
+      "note": "102 doors in 5 types with matching counts."
+    },
+    "965": {
+      "verdict": "correct",
+      "note": "All walls non-load-bearing."
+    },
+    "1001": {
+      "verdict": "wrong",
+      "note": "245 terminals and 2,033 'CFM'; ground truth has 490 terminals and 4,066.5 L/s.",
+      "failure": "incomplete"
+    },
+    "1004": {
+      "verdict": "wrong",
+      "note": "643 segments by shape; ground truth has 1,284 by system.",
+      "failure": "wrong grouping"
+    },
+    "1008": {
+      "verdict": "correct",
+      "note": "Category 4, honest 'none': no dampers in the model."
+    },
+    "1019": {
+      "verdict": "correct",
+      "note": "4 beam types, 182/121/45/8."
+    }
+  },
+  "failures": {
+    "55": "wrong measure",
+    "103": "invented estimate",
+    "122": "wrong element",
+    "135": "incomplete sum",
+    "253": "wrong element set",
+    "471": "missing detail",
+    "490": "wrong method",
+    "457": "turn limit",
+    "460": "turn limit"
+  }
+}

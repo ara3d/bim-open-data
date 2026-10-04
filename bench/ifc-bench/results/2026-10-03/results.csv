@@ -1,0 +1,101 @@
+id,project,model,category,auto,autoReason,verdict,failure,reviewedBy,costUsd,seconds,turns,toolCalls
+51,ac20,arc,2,review,ground truth is long or lists many numbers,wrong,wrong storey,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.1809959,65,14,13
+55,ac20,arc,2,wrong,"expected 6, 128.3, 2.7; none in the answer",wrong,wrong measure,,0.056349199999999995,25,7,6
+61,ac20,arc,2,correct,found 0.9,correct,,,0.0432811,12,5,4
+69,ac20,arc,4,correct,says the information is not available,correct,,,0.036875700000000004,37,9,8
+74,ac20,arc,1,review,ground truth is long or lists many numbers,wrong,wrong element set,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.16564720000000002,88,26,25
+85,ac20,arc,4,wrong,gives an answer without saying the information is not available,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.053191300000000004,23,6,5
+89,ac20,arc,3,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0721188,22,8,7
+97,dental_clinic,arc,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0693223,29,6,5
+103,dental_clinic,arc,4,wrong,gives an answer without saying the information is not available,wrong,invented estimate,,0.062476199999999996,124,8,7
+104,dental_clinic,arc,2,correct,found 2.8,correct,,,0.0236064,59,5,4
+115,dental_clinic,arc,4,correct,says the information is not available,correct,,,0.0771556,150,11,10
+117,dental_clinic,arc,2,review,expected small number appears among many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.030017299999999997,165,7,6
+119,dental_clinic,arc,1,correct,"found 0, 1.735, 1",correct,,,0.0269911,16,6,5
+122,dental_clinic,arc,3,wrong,"expected 2, 84.8; none in the answer",wrong,wrong element,,0.0314441,22,9,8
+126,dental_clinic,str,4,correct,says the information is not available,correct,,,0.09222699999999999,54,20,19
+134,dental_clinic,str,1,review,ground truth has no number,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0488255,22,6,5
+135,dental_clinic,str,3,wrong,expected 167.61; none in the answer,wrong,incomplete sum,,0.053314799999999996,36,9,8
+141,digital_hub,arc,1,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0330361,30,5,4
+146,digital_hub,arc,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0478154,111,7,6
+161,digital_hub,arc,3,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0826134,202,14,13
+167,digital_hub,arc,2,correct,"found 13, 13",correct,,,0.0323726,165,7,6
+168,digital_hub,arc,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0438292,98,6,5
+180,digital_hub,arc,4,wrong,gives an answer without saying the information is not available,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.06914840000000001,150,11,10
+202,digital_hub,heating,2,review,found 1 of 2 expected numbers,wrong,wrong total,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.08721649999999999,135,10,9
+206,digital_hub,heating,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.049128700000000004,117,9,8
+207,digital_hub,heating,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0525548,45,14,13
+210,digital_hub,heating,4,wrong,gives an answer without saying the information is not available,review,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0641209,56,9,8
+213,digital_hub,plumbing,2,correct,"found 301106.02, 301106.02, 100",wrong,double count,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.049082100000000004,59,8,7
+218,digital_hub,plumbing,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.05803380000000001,64,13,12
+221,digital_hub,plumbing,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.051342200000000005,84,11,10
+230,digital_hub,ventilation,2,review,ground truth is long or lists many numbers,wrong,level assignment,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0668904,101,14,13
+233,digital_hub,ventilation,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0868021,57,17,16
+235,digital_hub,ventilation,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0337853,49,7,6
+236,digital_hub,ventilation,3,review,ground truth is long or lists many numbers,wrong,double count,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0470919,35,7,6
+239,duplex,arc,1,correct,found 2.58,correct,,,0.0451326,33,10,9
+250,duplex,arc,3,review,ground truth has no number,wrong,spatial reasoning,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.1019209,44,19,18
+253,duplex,arc,4,wrong,gives an answer without saying the information is not available,wrong,wrong element set,,0.028047000000000002,21,6,5
+274,duplex,arc,2,correct,found 10,correct,,,0.055329699999999996,26,8,7
+279,duplex,arc,2,correct,found 10,correct,,,0.0582656,43,10,9
+280,duplex,arc,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0889069,50,21,20
+291,duplex,mep,2,review,ground truth has no number,wrong,name matching,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.1847091,105,28,27
+294,duplex,mep,2,review,ground truth has no number,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0285181,25,6,5
+300,duplex,mep,4,correct,says the information is not available,correct,,,0.0560474,28,8,7
+302,duplex,mep,2,correct,"found 14, 8, 6",correct,,,0.050661599999999994,62,8,7
+305,duplex,mep,1,correct,found 6.1,correct,,,0.1301437,75,19,18
+328,fantasy_hotel_1,arc,1,review,ground truth is long or lists many numbers,wrong,misread attributes,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0498274,31,17,16
+337,fantasy_hotel_1,arc,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0458565,61,9,8
+342,fantasy_hotel_1,arc,3,review,ground truth is long or lists many numbers,wrong,no inference,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.07777710000000002,95,14,13
+343,fantasy_hotel_1,arc,4,wrong,gives an answer without saying the information is not available,review,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.061631500000000006,102,18,17
+348,fantasy_hotel_1,arc,2,review,ground truth has no number,review,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0256047,28,6,5
+361,fantasy_hotel_1,arc,2,review,found 2 of 3 expected numbers,review,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.049653699999999995,202,10,9
+374,fantasy_office_building_1,arc,3,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0337471,50,9,8
+375,fantasy_office_building_1,arc,2,review,ground truth is long or lists many numbers,wrong,arithmetic,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0560514,52,14,13
+381,fantasy_office_building_1,arc,2,correct,"found 28, 7, 7",correct,,,0.03772829999999999,29,7,6
+387,fantasy_office_building_1,arc,1,review,ground truth is long or lists many numbers,wrong,material layers,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.1575763,450,20,19
+392,fantasy_office_building_1,arc,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0442465,375,7,6
+396,fantasy_office_building_1,arc,4,wrong,gives an answer without saying the information is not available,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.11467170000000004,214,20,19
+410,fantasy_office_building_2,arc,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.031196,27,6,5
+420,fantasy_office_building_2,arc,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0360761,60,9,8
+421,fantasy_office_building_2,arc,1,review,ground truth is long or lists many numbers,wrong,material layers,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.042154399999999995,47,8,7
+427,fantasy_office_building_2,arc,4,correct,says the information is not available,correct,,,0.19745490000000002,163,30,29
+429,fantasy_office_building_2,arc,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0339374,40,7,6
+434,fantasy_office_building_2,arc,3,review,ground truth is long or lists many numbers,wrong,material layers,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.12995679999999998,117,26,25
+440,fantasy_office_building_3,arc,3,review,ground truth is long or lists many numbers,wrong,arithmetic,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0456358,77,7,6
+444,fantasy_office_building_3,arc,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.048334800000000004,25,15,14
+450,fantasy_office_building_3,arc,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0338991,18,7,6
+457,fantasy_office_building_3,arc,1,error,error_max_turns,error,turn limit,,0.15418719999999997,112,31,30
+460,fantasy_office_building_3,arc,4,error,error_max_turns,error,turn limit,,0.20065539999999998,111,31,30
+465,fantasy_office_building_3,arc,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.06597130000000001,40,10,9
+471,fantasy_residential_building_1,arc,1,wrong,"expected 2025, 2025; none in the answer",wrong,missing detail,,0.0354109,16,6,5
+479,fantasy_residential_building_1,arc,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.040937600000000005,33,5,4
+490,fantasy_residential_building_1,arc,3,wrong,expected 630; none in the answer,wrong,wrong method,,0.07969699999999999,199,16,15
+493,fantasy_residential_building_1,arc,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0597147,178,9,8
+497,fantasy_residential_building_1,arc,2,review,ground truth is long or lists many numbers,wrong,wrong filter,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.032444,129,6,5
+502,fantasy_residential_building_1,arc,4,wrong,gives an answer without saying the information is not available,review,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0397719,30,5,4
+513,fzk_house,arc,1,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0408127,30,12,11
+530,fzk_house,arc,2,correct,found 24.06,correct,,,0.0642124,34,11,10
+543,fzk_house,arc,4,correct,says the information is not available,correct,,,0.0510853,18,6,5
+555,fzk_house,arc,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.21453130000000004,78,25,24
+610,molio,arc,2,review,ground truth is long or lists many numbers,wrong,incomplete,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.06432710000000001,51,8,7
+653,molio,arc,1,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0502436,30,7,6
+661,molio,arc,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0451192,53,7,6
+662,molio,arc,4,correct,says the information is not available,correct,,,0.17443789999999998,103,28,27
+740,schependomlaan,arc,4,wrong,gives an answer without saying the information is not available,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0193213,19,5,4
+760,schependomlaan,arc,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.04582649999999999,53,11,10
+765,schependomlaan,arc,1,review,ground truth is long or lists many numbers,review,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.1146498,73,17,16
+782,schependomlaan,arc,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0405183,45,7,6
+880,sixty5,str,2,review,ground truth is long or lists many numbers,wrong,wrong count,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0373797,25,7,6
+883,sixty5,str,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0703084,50,9,8
+905,smiley_west,arc,1,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0567406,35,12,11
+925,smiley_west,arc,2,review,ground truth is long or lists many numbers,wrong,wrong grouping,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0881717,47,9,8
+928,smiley_west,arc,2,review,ground truth is long or lists many numbers,wrong,incomplete,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.1652217,46,12,11
+946,smiley_west,arc,4,wrong,gives an answer without saying the information is not available,review,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.026857899999999997,21,6,5
+953,wbdg_office,arc,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.054676,22,9,8
+965,wbdg_office,arc,2,review,ground truth has no number,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.020749600000000003,16,5,4
+1001,wbdg_office,mep,2,review,ground truth is long or lists many numbers,wrong,incomplete,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0637254,66,11,10
+1004,wbdg_office,mep,2,review,ground truth is long or lists many numbers,wrong,wrong grouping,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.0675206,68,13,12
+1008,wbdg_office,mep,4,wrong,gives an answer without saying the information is not available,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.14752890000000002,74,21,20
+1019,wbdg_office,str,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that ran the evaluation, on 2026-10-03; not the owner",0.05166950000000001,44,9,8
+1020,wbdg_office,str,2,correct,found 80,correct,,,0.04176119999999999,39,10,9
