@@ -8,6 +8,11 @@ namespace Ara3D.Ifc.DuckDb;
 /// <c>IfcBosArtifacts</c>, for callers that may not reference <c>src/mcp</c>.</summary>
 public static class IfcDuckDbBuild
 {
+    /// <summary>Identifies this builder's output format for stamp files that decide whether a
+    /// prepared database or BOS file is current. Bump whenever the output changes for the same
+    /// input.</summary>
+    public const string Version = "ifc-duckdb/1";
+
     /// <summary>Converts the IFC to BOS, loads it into a new DuckDB file, and creates the text
     /// views. Overwrites the database. Returns the database path.</summary>
     public static FilePath Build(FilePath ifc, FilePath duckDb)
