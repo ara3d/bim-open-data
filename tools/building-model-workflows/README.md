@@ -45,13 +45,15 @@ dotnet run --project tools/building-model-workflows -c Release -- convert-ifc sa
 
 `federate-union <out-dir> (<file.ifc>... | --example)` converts one or more IFC files with
 `Ara3D.BimOpenSchema.Federation`'s `BosUnion` — one file at a time, disposing each `IfcFile`
-before the next — and unions the results into a single, geometry-free document. `--example`
+before the next — and unions the results, geometry included, into a single document. Each model
+stays its own document and keeps all its entities; nothing is merged on a matching GlobalId. `--example`
 skips the IFC files and unions `FederationExample`'s five built-in documents instead, so the
 verb can be exercised without private data.
 
 It writes three files to `<out-dir>`:
 
-- `union.bos`, a geometry-free parquet zip of the union;
+- `union.bos`, a parquet zip of the union's tables and geometry (`Instances`, `Meshes`, ...), which
+  the 3D viewer opens like a single converted file (`--example` has no geometry);
 - `union.duckdb`, a raw DuckDB database loaded from the union's BOS tables (`EntityText`,
   `ParameterText`, `RelationText`, `StoreyOfEntity`, and so on);
 - `union-summary.json`, `{ documents: DocumentSummary[], seconds: number, peakWorkingSetBytes: number }`,

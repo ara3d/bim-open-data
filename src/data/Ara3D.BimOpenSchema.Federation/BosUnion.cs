@@ -1,7 +1,9 @@
+using System.IO.Compression;
 using Ara3D.BimOpenSchema.DuckDb;
 using Ara3D.BimOpenSchema.IO;
 using Ara3D.Logging;
 using Ara3D.Utils;
+using Parquet;
 
 namespace Ara3D.BimOpenSchema.Federation;
 
@@ -13,8 +15,8 @@ public sealed record UnionInput(IBimData Data, string Title, string Path);
 /// none, which storey matching treats as unknown rather than guessing metres.</summary>
 public sealed record DocumentSummary(string Title, string Path, int Entities, string? LengthUnit, double? LengthUnitToMetre);
 
-/// <summary>Converts IFC files one at a time and unions the results into one geometry-free
-/// document, with no matching or federation logic: that lives in the match graph (C5, C6) and
+/// <summary>Converts IFC files one at a time and unions the results, tables and geometry, into
+/// one document, with no matching or federation logic: that lives in the match graph (C5, C6) and
 /// the studio views (C8). Keeping the two apart lets the union stay mechanical and the rules
 /// stay in SQL.</summary>
 public static class BosUnion
@@ -47,20 +49,37 @@ public static class BosUnion
         return result;
     }
 
-    /// <summary>One document per input, in input order, via AddBimData(bd, title, path).
-    /// Geometry is never merged: AddBimData does not touch it, so the result's Geometry is
-    /// always null.</summary>
+    /// <summary>One document per input, in input order, via AddBimData(bd, title, path), and
+    /// the inputs' geometry concatenated by GeometryUnion so each instance still points at its
+    /// own document's entity. Every entity of every input is kept: nothing is merged on a
+    /// matching GlobalId, so an element two models share appears, and is drawn, once per model.
+    /// Geometry is null only when no input has any; an input without geometry adds none.</summary>
     public static BimData Union(IReadOnlyList<UnionInput> inputs)
     {
         var builder = new BimDataBuilder();
         foreach (var input in inputs)
             builder.AddBimData(input.Data, input.Title, input.Path);
+        builder.Geometry = inputs.Any(HasGeometry)
+            ? GeometryUnion.Union(inputs.Select(i => new GeometryUnion.Part(i.Data.Geometry ?? new BimGeometry(), i.Data.Entities.Length)).ToArray())
+            : null!;
         return builder.Build();
     }
 
-    /// <summary>Parquet zip of the non-geometry tables; ReadBimDataFromParquetZip reads it back.</summary>
+    private static bool HasGeometry(UnionInput input)
+        => input.Data.Geometry is { InstanceEntityIndex.Length: > 0 };
+
+    /// <summary>Parquet zip of the tables, plus the geometry tables (Instances, Meshes, ...)
+    /// when the union has geometry, laid out as IfcToBosConverter.SaveToBos lays out one
+    /// converted file; ReadBimDataFromParquetZip reads both back.</summary>
     public static void WriteBos(IBimData union, FilePath output)
-        => union.WriteToParquetZip(output);
+    {
+        using (var fs = new FileStream(output, FileMode.Create, FileAccess.Write, FileShare.None))
+        using (var zip = new ZipArchive(fs, ZipArchiveMode.Create, leaveOpen: false))
+        {
+            union.ToDataSet().WriteParquetToZip(zip, CompressionMethod.Brotli, CompressionLevel.Optimal, CompressionLevel.Fastest);
+            union.Geometry?.WriteParquetToZip(zip, CompressionMethod.Brotli, CompressionLevel.Optimal, CompressionLevel.Fastest);
+        }
+    }
 
     /// <summary>Deletes then writes a DuckDB file: BOS tables via BosDuckDb.LoadBimData, then
     /// BosDuckDbViews.CreateViews. This load path avoids the enum shift the DuckDb README warns

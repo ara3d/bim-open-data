@@ -8,7 +8,7 @@
     <Nullable>enable</Nullable>
     <PlatformTarget>x64</PlatformTarget>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Description>Unions several BIM Open Schema documents (typically converted from IFC) into one geometry-free BOS and a raw DuckDB database.</Description>
+    <Description>Unions several BIM Open Schema documents (typically converted from IFC) into one BOS (tables and geometry) and a raw DuckDB database.</Description>
   </PropertyGroup>
 
   <ItemGroup>

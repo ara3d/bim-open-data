@@ -1,7 +1,7 @@
 # Ara3D.BimOpenSchema.Federation
 
 Unions several BIM Open Schema documents into one, and writes that union as a
-geometry-free BOS and a raw DuckDB database. Built for TKT-30, the Snowdon
+BOS (tables and geometry) and a raw DuckDB database (tables only). Built for TKT-30, the Snowdon
 federation: seven discipline IFC files unioned into one model, with matching
 handled separately by a SQL graph (`samples/snowdon-analyses/federation-match.json`)
 and federated views (`FederationStore`, `FederationViews`, added in C8).
@@ -21,11 +21,17 @@ other project reference to convert, union, and load a set of IFC files.
   `IfcFile` before moving to the next, so peak memory reflects one file
   rather than all of them.
 - `Union` combines the converted documents with `BimDataBuilder.AddBimData`,
-  one call per input, in input order. `AddBimData` never touches `Geometry`,
-  so the union's `Geometry` is always null — federating geometry is future
-  work (see the plan's extension points).
-- `WriteBos` writes the union's non-geometry tables as a parquet zip that
-  `ReadBimDataFromParquetZip` reads back.
+  one call per input, in input order, and their geometry with
+  `GeometryUnion.Union`, which appends each input's instances, meshes,
+  materials, and transforms and shifts every index past the inputs before it,
+  so each instance still points at its own document's entity. Nothing is
+  merged on a matching GlobalId: an element that two models both contain is
+  two entities, and is drawn twice, once per model. The union's `Geometry` is
+  null only when no input has geometry (as in `FederationExample`).
+- `WriteBos` writes the union's tables and, when it has geometry, the six
+  geometry tables (`Instances`, `Meshes`, ...), laid out as
+  `IfcToBosConverter.SaveToBos` lays out a single converted file, so the 3D
+  viewer opens a union like any other BOS.
 - `WriteDuckDb` deletes any existing file at the output path, then loads the
   union with `BosDuckDb.LoadBimData` and adds `BosDuckDbViews.CreateViews`
   (`EntityText`, `ParameterText`, `RelationText`, `StoreyOfEntity`). Loading
