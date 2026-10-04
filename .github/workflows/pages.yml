@@ -11,6 +11,7 @@ on:
     paths:
       - "site/**"
       - "site-src/**"
+      - "samples/public/*.bos"
       - "deps.json"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
@@ -37,7 +38,7 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: site-src/package-lock.json
-      # The explorer reads the viewer packages and the sample archive from deps/.
+      # The explorer reads the viewer packages from deps/ and the sample archives from samples/public/.
       - run: node deps.mjs
       - run: npm ci
         working-directory: site-src

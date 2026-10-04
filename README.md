@@ -4,9 +4,11 @@
 
 [`bim-open-schema`](https://github.com/ara3d/bim-open-schema) is the specification of BIM Open Schema; this repository is its .NET implementation: reading and writing BOS files, IFC loading, meshing, byte-exact property-set editing, conversion from IFC to BOS and to DuckDB, the IFC MCP server, and the BOS Browser.
 
-**Try it in the browser:** the [BOS explorer](https://ara3d.github.io/bim-open-data/explorer/) opens a sample `.bos` file, lists its tables with row counts and columns, shows their rows, and draws the model in 3D. It also opens a `.bos` file of your own, read on your device and never uploaded.
+**Try it in the browser:** the [BOS explorer](https://ara3d.github.io/bim-open-data/explorer/) opens one of four openly licensed sample buildings, lists its tables with row counts and columns, shows their rows, and draws the model in 3D. It also opens a `.bos` file of your own, read on your device and never uploaded.
 
-[![The BOS explorer showing the Revit basic sample project: its tables, the model in 3D, and the first rows of Entities](docs/images/explorer.png)](https://ara3d.github.io/bim-open-data/explorer/)
+[![The BOS explorer showing the Schependomlaan design model: its tables, the model in 3D, and the first rows of Entities](docs/images/explorer.png)](https://ara3d.github.io/bim-open-data/explorer/)
+
+**Sample buildings:** [`samples/public/`](samples/public/README.md) holds Schependomlaan (CC BY 4.0), DigitalHub architecture, heating, and a four-model federation (MIT), and the Duplex Apartment (CC BY 4.0), each as a `.bos` and a `.duckdb` file with measured counts. Their licences and required attribution are in [`samples/public/NOTICE.md`](samples/public/NOTICE.md).
 
 **Status on 2026-10-03: the code is here.** It moved from [`ara3d/bim-open-toolkit`](https://github.com/ara3d/bim-open-toolkit), with its git history, in phase 4 of the toolkit's [repository split plan](https://github.com/ara3d/bim-open-toolkit/blob/main/docs/plans/repository-split.md). The paths are the ones it had there (`src/data`, `tests/data`, `src/mcp/BimOpenMcp.Ifc`, `tests/mcp/BimOpenMcp.Ifc.Tests`, `apps/`, `tools/`), so `git log --follow` reaches back through the toolkit's history. The toolkit now takes this repository through its own `deps.json`, as `deps/bim-open-data`.
 
@@ -18,7 +20,7 @@ dotnet build BimOpenData.sln -c Release
 dotnet test BimOpenData.sln -c Release --no-build --filter "TestCategory!=RequiresTestData"
 ```
 
-Tests tagged `RequiresTestData` read the IFC Test Kit and sample models from `data/`, which is never committed; `data/get-test-data.ps1` copies them from sibling checkouts (see `data/README.md`). The meshing comparison's corpus tests skip themselves when their models are absent. `samples/nrc/` holds the three Duplex files the IFC MCP server's tests read.
+Tests tagged `RequiresTestData` read the IFC Test Kit and sample models from `data/`, which is never committed; `data/get-test-data.ps1` copies them from sibling checkouts (see `data/README.md`). The meshing comparison's corpus tests skip themselves when their models are absent. `samples/nrc/` holds the three Duplex files the IFC MCP server's tests read. `samples/public/` holds the converted sample buildings; `node samples/public/fetch.mjs` and `node samples/public/convert.mjs` regenerate them, and `PublicSampleTests` checks their counts.
 
 ## What BIM Open Schema is
 
@@ -94,7 +96,7 @@ Node.js (for `deps.mjs`) and git, the .NET 8 SDK, and the .NET 10 SDK for the BO
 
 The BOS explorer at `explorer/` is a small Vite project in `site-src/` that builds into `site/explorer/` (git-ignored; the workflow builds it). The .NET code cannot run in a browser, so the explorer reads archives with the BIM Open Viewer's JavaScript packages instead: `@bim-open-viewer/loaders` for the geometry, `@bim-open-viewer/core` to draw it, and `@bim-open-viewer/controls` to orbit, taken as TypeScript source from `deps/bim-open-viewer` at the commit `deps.json` pins. The table list and rows come from the same Parquet reader those packages use (hyparquet). The "Show what the indices point to" option resolves string-table, entity, document, and descriptor indices and enum codes, following the record types in the specification's `BimOpenSchema.cs`.
 
-The bundled sample is `rac_basic_sample_project-2025.bos` (844 KB), the Revit basic sample project as published in [`bim-open-schema/examples`](https://github.com/ara3d/bim-open-schema/tree/main/examples). It derives from Autodesk's sample project; that repository's MIT licence covers Ara 3D's code, and whether the model content may be redistributed is an open question ([bim-open-toolkit TKT-144](https://github.com/ara3d/bim-open-toolkit/blob/main/tickets/TKT-144-sample-model-redistribution.md)). The build copies it from `deps/bim-open-schema/examples/`, so no model file is committed here.
+The bundled samples are four files from [`samples/public/`](samples/public/README.md), listed in `site-src/sample.mjs`: `schependomlaan.bos` (1.1 MB, opened first), `digitalhub-arc.bos` (0.4 MB), `digitalhub-hzg.bos` (1.0 MB), and `duplex.bos` (0.1 MB). The build copies them from there. The page shows the credit for the building on screen and links to `samples/public/NOTICE.md`; the Autodesk-derived `bim-open-schema/examples` models are no longer bundled, since their redistribution terms are unsettled ([bim-open-toolkit TKT-144](https://github.com/ara3d/bim-open-toolkit/blob/main/tickets/TKT-144-sample-model-redistribution.md)).
 
 ```powershell
 node deps.mjs                     # adds bim-open-viewer (and its gratify pin) to deps/
@@ -106,9 +108,9 @@ $env:PLAYWRIGHT_CORE = "<path to an installed playwright-core>"
 npm run smoke                     # headless Edge over the built site/; see scripts/smoke.mjs
 ```
 
-The smoke check serves `site/` under `/bim-open-data/`, as Pages does, and fails on any console error or failed request. It opens the sample, checks the 18 tables and their row counts (Entities has 13,384), pages through rows, waits for the model to draw (19,443 instances), then opens `Technicalschoolcurrentm.bos` through the file input. `--screenshot docs/images/explorer.png` refreshes the picture above.
+The smoke check serves `site/` under `/bim-open-data/`, as Pages does, and fails on any console error or failed request. It opens Schependomlaan, checks its tables and the Entities row count that `samples/public/samples.json` records (38,947), shows parameter values as text, pages through rows, and waits for the model to draw (5,972 instances). It then picks each other bundled sample (DigitalHub architecture 3,681 instances, heating 4,119, Duplex 660) and checks its Entities count, its drawing, and its credit, and finally opens the geometry-free `digitalhub-federated.bos` through the file input. `--screenshot docs/images/explorer.png` refreshes the picture above.
 
-The explorer loads archives with `bosToGroups(..., { sourceUp: 'Z' })`: BOS models are z-up and the viewer is y-up, and since viewer `b0ec646` the loader also treats a missing `InstanceFlags` column (older archives, including this sample) as nothing hidden.
+The explorer loads archives with `bosToGroups(..., { sourceUp: 'Z' })`: BOS models are z-up and the viewer is y-up, and since viewer `b0ec646` the loader also treats a missing `InstanceFlags` column (older archives) as nothing hidden. It reads both the current single `Parameters` table, whose `Value` it resolves through the row's descriptor type, and the older per-type parameter tables.
 
 ## The family
 
@@ -116,4 +118,4 @@ BIM Open Data is one of the BIM Open repositories, alongside [BIM Open Flow](htt
 
 ## License
 
-MIT. See `LICENSE`.
+MIT. See `LICENSE`. The sample buildings in `samples/public/` and `samples/nrc/` keep their own licences (CC BY 4.0 and MIT); see `samples/public/NOTICE.md`.

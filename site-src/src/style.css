@@ -27,7 +27,9 @@ main { max-width: 1400px; margin: 0 auto; padding: 20px 16px 32px; }
 .source-text { display: flex; flex-direction: column; min-width: 0; }
 .source-text strong { font-family: var(--font-mono); font-weight: 500; overflow-wrap: anywhere; }
 .source-text span { color: var(--dim); }
-.source-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.source-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.sample-choice { display: inline-flex; align-items: center; gap: 6px; color: var(--dim); font-weight: 600; }
+.sample-choice select { font-weight: 500; }
 .intro .privacy { color: var(--dim); font-size: 13px; }
 #status { min-height: 1.5em; color: var(--dim); font-size: 12px; }
 #status[data-kind="error"] { color: var(--red); font-weight: 500; }

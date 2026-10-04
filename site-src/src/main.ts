@@ -1,5 +1,5 @@
 import './style.css';
-import { SAMPLE } from '../sample.mjs';
+import { SAMPLES } from '../sample.mjs';
 import { openArchive, readRows, type Archive, type Row, type Table } from './archive.js';
 import { createResolver, hasMeaning, type Resolver } from './schema.js';
 import { createModelView, hasGeometry, type ModelView } from './model-view.js';
@@ -75,10 +75,11 @@ function renderColumns(table: Table) {
   }));
 }
 
-function cell(table: Table, column: string, value: unknown, resolver: Resolver): HTMLTableCellElement {
+function cell(table: Table, column: string, row: Row, resolver: Resolver): HTMLTableCellElement {
+  const value = row[column];
   const td = make('td');
   const raw = formatValue(value);
-  const text = showText() ? resolver.describe(table.name, column, value) : undefined;
+  const text = showText() ? resolver.describe(table.name, column, value, row) : undefined;
   if (text === undefined) {
     td.textContent = raw;
     if (value === null || value === undefined) td.className = 'null';
@@ -97,7 +98,7 @@ function renderRows(table: Table, rows: Row[], start: number, resolver: Resolver
   }));
   const body = rows.map((row, offset) => {
     const tr = make('tr');
-    tr.append(make('td', 'row-number', String(start + offset)), ...table.columns.map((column) => cell(table, column.name, row[column.name], resolver)));
+    tr.append(make('td', 'row-number', String(start + offset)), ...table.columns.map((column) => cell(table, column.name, row, resolver)));
     return tr;
   });
   const thead = make('thead');
@@ -168,22 +169,35 @@ async function load(name: string, source: () => Promise<ArrayBuffer>, origin: st
   }
 }
 
-const loadSample = () => load(
-  SAMPLE.file,
+type Sample = (typeof SAMPLES)[number];
+
+const loadSample = (sample: Sample) => load(
+  sample.file,
   async () => {
-    const response = await fetch(`samples/${encodeURIComponent(SAMPLE.file)}`);
+    const response = await fetch(`samples/${encodeURIComponent(sample.file)}`);
     if (!response.ok) throw new Error(`the sample could not be fetched (HTTP ${response.status})`);
     return response.arrayBuffer();
   },
-  `${SAMPLE.title}, from <a href="${SAMPLE.source}">bim-open-schema/examples</a>, derived from Autodesk's Revit basic sample project, bundled with this page.`,
+  `${sample.title}. ${sample.credit}; converted to BIM Open Schema tables by Ara 3D.`,
 );
+
+const chosenSample = (): Sample =>
+  SAMPLES.find((sample) => sample.file === element<HTMLSelectElement>('sample').value) ?? SAMPLES[0];
+
+function renderSampleChoices() {
+  element('sample').replaceChildren(...SAMPLES.map((sample) => {
+    const option = make('option', undefined, sample.title);
+    option.value = sample.file;
+    return option;
+  }));
+}
 
 const loadFile = (file: File) => load(file.name, () => file.arrayBuffer(), 'Your file, read on this device. Nothing was uploaded.');
 
 function wireInputs() {
   const input = element<HTMLInputElement>('file');
   input.onchange = () => { if (input.files?.[0]) void loadFile(input.files[0]); input.value = ''; };
-  element<HTMLButtonElement>('load-sample').onclick = () => void loadSample();
+  element<HTMLSelectElement>('sample').onchange = () => void loadSample(chosenSample());
   element<HTMLButtonElement>('page-previous').onclick = () => void showPage(Math.max(0, (state?.start ?? 0) - PAGE_SIZE));
   element<HTMLButtonElement>('page-next').onclick = () => void showPage((state?.start ?? 0) + PAGE_SIZE);
   element<HTMLInputElement>('show-text').onchange = () => void showPage(state?.start ?? 0);
@@ -208,5 +222,6 @@ try {
 } catch {
   modelView = undefined;
 }
+renderSampleChoices();
 wireInputs();
-void loadSample();
+void loadSample(SAMPLES[0]);

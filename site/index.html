@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>BIM Open Data</title>
-<meta name="description" content="The .NET implementation of BIM Open Schema and the IFC stack. On 2026-10-03 the code is still in bim-open-toolkit/src/data.">
+<meta name="description" content="The .NET implementation of BIM Open Schema and the IFC stack, with openly licensed sample buildings and a browser BOS explorer.">
 <link rel="icon" href="assets/data-mark.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@600;700&family=Public+Sans:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
@@ -52,7 +52,7 @@ footer a { color: var(--dim); }
 </header>
 
 <div class="try">
-  <p><strong>Try it in your browser.</strong> The <a href="explorer/">BOS explorer</a> opens a sample <code>.bos</code> file from the specification repository, lists its tables with row counts and columns, shows their rows, and draws the model in 3D. You can open your own <code>.bos</code> file too; it is read on your device and never uploaded.</p>
+  <p><strong>Try it in your browser.</strong> The <a href="explorer/">BOS explorer</a> opens one of four openly licensed sample buildings (Schependomlaan, DigitalHub architecture and heating, and the Duplex Apartment), lists its tables with row counts and columns, shows their rows, and draws the model in 3D. You can open your own <code>.bos</code> file too; it is read on your device and never uploaded.</p>
   <a class="cta" href="explorer/">Open the BOS explorer</a>
 </div>
 
@@ -88,6 +88,9 @@ footer a { color: var(--dim); }
 
 <h2>What it does not do</h2>
 <p>It does not author geometry; IFC editing is limited to property sets. It has no live connection to Revit or any other authoring tool. It knows nothing about graphs: <a href="https://github.com/ara3d/bim-open-flow">BIM Open Flow</a> builds on it, never the other way round.</p>
+
+<h2>Sample buildings</h2>
+<p><a href="https://github.com/ara3d/bim-open-data/tree/main/samples/public">samples/public</a> holds each sample as a <code>.bos</code> file and a <code>.duckdb</code> database, with the counts of storeys, spaces, doors, windows, walls, and heating parts measured in each. Schependomlaan dataset, (C) original owners, licensed <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. DigitalHub, (c) 2020 RWTH Aachen University, E3D Institute of Energy Efficiency and Sustainable Building, MIT licensed. BSI (2020) Duplex Apartment Test Files, buildingSMART International, licensed <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Each was converted to BIM Open Schema tables by Ara 3D; sources, commits, and full notices are in <a href="https://github.com/ara3d/bim-open-data/blob/main/samples/public/NOTICE.md">NOTICE.md</a>.</p>
 
 <footer>
   <p>Part of the BIM Open family: <a href="https://github.com/ara3d/bim-open-toolkit">Toolkit</a>, <a href="https://github.com/ara3d/bim-open-flow">Flow</a>, <a href="https://github.com/ara3d/bim-open-notebook">Notebook</a>, <a href="https://github.com/ara3d/bim-open-viewer">Viewer</a>, <a href="https://ara3d.github.io/bim-open-schema/">Schema</a>. Source: <a href="https://github.com/ara3d/bim-open-data">ara3d/bim-open-data</a>. MIT licensed.</p>

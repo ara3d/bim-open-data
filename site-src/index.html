@@ -28,7 +28,7 @@
       </div>
       <div class="source-actions">
         <label class="button primary">Open your own .bos<input id="file" type="file" accept=".bos,.zip,application/zip"></label>
-        <button id="load-sample" class="button" type="button">Reload the sample</button>
+        <label class="sample-choice">Sample building <select id="sample" class="button"></select></label>
       </div>
     </div>
     <p class="privacy">Your file is read by this page in your browser and is never uploaded; you can also drop it anywhere on the page.</p>
@@ -66,7 +66,8 @@
 </main>
 
 <footer>
-  <p>Part of <a href="../">BIM Open Data</a>, the .NET implementation of <a href="https://github.com/ara3d/bim-open-schema">BIM Open Schema</a>. The explorer is static: no server sees your files. MIT licensed.</p>
+  <p>Part of <a href="../">BIM Open Data</a>, the .NET implementation of <a href="https://github.com/ara3d/bim-open-schema">BIM Open Schema</a>. The explorer is static: no server sees your files. The page's code is MIT licensed.</p>
+  <p>The sample buildings keep their own licences (CC BY 4.0 and MIT): the credit for the one shown is above, and the sources, commits, and full notices are in <a href="https://github.com/ara3d/bim-open-data/blob/main/samples/public/NOTICE.md">samples/public/NOTICE.md</a>.</p>
 </footer>
 <script type="module" src="./src/main.ts"></script>
 </body>

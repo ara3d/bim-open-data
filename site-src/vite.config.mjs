@@ -5,21 +5,21 @@
 import { defineConfig } from 'vite';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { SAMPLE } from './sample.mjs';
+import { SAMPLES, SAMPLE_FOLDER } from './sample.mjs';
 
 const here = (path) => fileURLToPath(new URL(path, import.meta.url));
 const viewerPackage = (name) => here(`../deps/bim-open-viewer/packages/${name}/src/index.ts`);
-const sampleSource = here(`../deps/bim-open-schema/examples/${SAMPLE.file}`);
-const samplePath = `samples/${SAMPLE.file}`;
+const sampleSource = (file) => here(`${SAMPLE_FOLDER}${file}`);
 
-// The sample archive is copied from the schema repository at build time rather than committed.
+// The sample archives are copied from ../samples/public/ at build time, so each is committed once.
 const sampleArchive = {
-  name: 'bos-sample-archive',
+  name: 'bos-sample-archives',
   configureServer(server) {
-    server.middlewares.use(`/${samplePath}`, (_request, response) => {
-      response.setHeader('Content-Type', 'application/octet-stream');
-      response.end(readFileSync(sampleSource));
-    });
+    for (const { file } of SAMPLES)
+      server.middlewares.use(`/samples/${file}`, (_request, response) => {
+        response.setHeader('Content-Type', 'application/octet-stream');
+        response.end(readFileSync(sampleSource(file)));
+      });
     // The page links the landing page's mark as ../assets/; in development that is /assets/.
     server.middlewares.use('/assets/data-mark.svg', (_request, response) => {
       response.setHeader('Content-Type', 'image/svg+xml');
@@ -27,7 +27,8 @@ const sampleArchive = {
     });
   },
   generateBundle() {
-    this.emitFile({ type: 'asset', fileName: samplePath, source: readFileSync(sampleSource) });
+    for (const { file } of SAMPLES)
+      this.emitFile({ type: 'asset', fileName: `samples/${file}`, source: readFileSync(sampleSource(file)) });
   },
 };
 
