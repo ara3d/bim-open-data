@@ -1,0 +1,105 @@
+{
+  "sources": {
+    "schependomlaan": {
+      "file": "schependomlaan.ifc",
+      "url": "https://raw.githubusercontent.com/openBIMstandards/Archive-DataSetSchependomlaan/e6971d897b60f04ea28b4e3f2acf80d05f269197/Design%20model%20IFC/IFC%20Schependomlaan.ifc",
+      "repository": "https://github.com/openBIMstandards/Archive-DataSetSchependomlaan",
+      "commit": "e6971d897b60f04ea28b4e3f2acf80d05f269197",
+      "path": "Design model IFC/IFC Schependomlaan.ifc",
+      "bytes": 49286967,
+      "sha256": "2c3565ca1904f2aa61adab92024cf3755b2c5b21a498144d3094d7cb58cebec7"
+    },
+    "digitalhub-arc": {
+      "file": "DigitalHub_FM-ARC_v2.ifc",
+      "url": "https://raw.githubusercontent.com/RWTH-E3D/DigitalHub/36565d529b4dadeca625de2b793d7e16700171e9/Version_2/DigitalHub_FM-ARC_v2.ifc",
+      "repository": "https://github.com/RWTH-E3D/DigitalHub",
+      "commit": "36565d529b4dadeca625de2b793d7e16700171e9",
+      "path": "Version_2/DigitalHub_FM-ARC_v2.ifc",
+      "bytes": 9022255,
+      "sha256": "19d7d02d53c2b88e86890ee236297b12bbb0f7748030cd32ff6a22762e9966bb"
+    },
+    "digitalhub-hzg": {
+      "file": "DigitalHub_FM-HZG_v2.ifc",
+      "url": "https://raw.githubusercontent.com/RWTH-E3D/DigitalHub/36565d529b4dadeca625de2b793d7e16700171e9/Version_2/DigitalHub_FM-HZG_v2.ifc",
+      "repository": "https://github.com/RWTH-E3D/DigitalHub",
+      "commit": "36565d529b4dadeca625de2b793d7e16700171e9",
+      "path": "Version_2/DigitalHub_FM-HZG_v2.ifc",
+      "bytes": 20890415,
+      "sha256": "a5603e8f6aa4cbf63aece92f92f503e9a578702d8fe96a6d4661490f1843710d"
+    },
+    "digitalhub-lft": {
+      "file": "DigitalHub_FM-LFT_v2.ifc",
+      "url": "https://raw.githubusercontent.com/RWTH-E3D/DigitalHub/36565d529b4dadeca625de2b793d7e16700171e9/Version_2/DigitalHub_FM-LFT_v2.ifc",
+      "repository": "https://github.com/RWTH-E3D/DigitalHub",
+      "commit": "36565d529b4dadeca625de2b793d7e16700171e9",
+      "path": "Version_2/DigitalHub_FM-LFT_v2.ifc",
+      "bytes": 12737833,
+      "sha256": "c0a1807875957c4154d45d14a3b5ed480dd3178a5bdc3262302a7eccf76d5cb1"
+    },
+    "digitalhub-san": {
+      "file": "DigitalHub_FM-SAN_v2.ifc",
+      "url": "https://raw.githubusercontent.com/RWTH-E3D/DigitalHub/36565d529b4dadeca625de2b793d7e16700171e9/Version_2/DigitalHub_FM-SAN_v2.ifc",
+      "repository": "https://github.com/RWTH-E3D/DigitalHub",
+      "commit": "36565d529b4dadeca625de2b793d7e16700171e9",
+      "path": "Version_2/DigitalHub_FM-SAN_v2.ifc",
+      "bytes": 25178864,
+      "sha256": "0b1d6b0abd8d4cc3f5f798c7581bed2b39b40110ba6348d5470bbef646cfed79"
+    },
+    "duplex": {
+      "file": "Duplex_A_20110907.ifc",
+      "url": "https://media.githubusercontent.com/media/buildingsmart-community/Community-Sample-Test-Files/7ddf57a201f88a0c213d5322b02ed15e94a60a40/IFC%202.3.0.1%20(IFC%202x3)/Duplex%20Apartment/Duplex_A_20110907.ifc",
+      "repository": "https://github.com/buildingsmart-community/Community-Sample-Test-Files",
+      "commit": "7ddf57a201f88a0c213d5322b02ed15e94a60a40",
+      "path": "IFC 2.3.0.1 (IFC 2x3)/Duplex Apartment/Duplex_A_20110907.ifc",
+      "bytes": 2380763,
+      "sha256": "b347a2c8aa8fff6db896a4417a9c50c22ac0ccd7c5cfc22b99b8d29336c606ed"
+    }
+  },
+  "samples": [
+    {
+      "name": "schependomlaan",
+      "title": "Schependomlaan, design model",
+      "sources": ["schependomlaan"],
+      "geometry": true,
+      "counts": { "IFCBUILDINGSTOREY": 6, "IFCSPACE": 100, "IFCDOOR": 205, "IFCWINDOW": 259, "IFCWALL": 652, "IFCWALLSTANDARDCASE": 282 },
+      "relations": {},
+      "entities": 38947
+    },
+    {
+      "name": "digitalhub-arc",
+      "title": "DigitalHub, architecture",
+      "sources": ["digitalhub-arc"],
+      "geometry": true,
+      "counts": { "IFCBUILDINGSTOREY": 3, "IFCSPACE": 64, "IFCDOOR": 64, "IFCWINDOW": 47, "IFCWALL": 178 },
+      "relations": {},
+      "entities": 2972
+    },
+    {
+      "name": "digitalhub-hzg",
+      "title": "DigitalHub, heating",
+      "sources": ["digitalhub-hzg"],
+      "geometry": true,
+      "counts": { "IFCBUILDINGSTOREY": 3, "IFCSYSTEM": 42, "IFCPIPESEGMENT": 914, "IFCPIPEFITTING": 743, "IFCSPACEHEATER": 63, "IFCDISTRIBUTIONPORT": 3760 },
+      "relations": { "ConnectsTo": 1873 },
+      "entities": 6467
+    },
+    {
+      "name": "digitalhub-federated",
+      "title": "DigitalHub, architecture, heating, ventilation, and plumbing federated",
+      "sources": ["digitalhub-arc", "digitalhub-hzg", "digitalhub-lft", "digitalhub-san"],
+      "geometry": false,
+      "counts": { "IFCBUILDINGSTOREY": 12, "IFCSPACE": 64, "IFCDOOR": 64, "IFCWINDOW": 47, "IFCWALL": 178, "IFCSYSTEM": 65, "IFCSPACEHEATER": 63, "IFCPIPESEGMENT": 1418, "IFCDUCTSEGMENT": 595, "IFCAIRTERMINAL": 148, "IFCSANITARYTERMINAL": 72 },
+      "relations": { "ConnectsTo": 4208 },
+      "entities": 18551
+    },
+    {
+      "name": "duplex",
+      "title": "Duplex Apartment",
+      "sources": ["duplex"],
+      "geometry": true,
+      "counts": { "IFCBUILDINGSTOREY": 4, "IFCSPACE": 21, "IFCDOOR": 14, "IFCWINDOW": 24, "IFCWALL": 1, "IFCWALLSTANDARDCASE": 56 },
+      "relations": {},
+      "entities": 4721
+    }
+  ]
+}

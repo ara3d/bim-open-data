@@ -441,6 +441,11 @@ data/**
 *.parquet
 *.duckdb
 !samples/nrc/*.ifc
+# The public samples' converted outputs are committed (samples/public/README.md); their
+# source IFC files are fetched into sources/ and never committed.
+!samples/public/*.bos
+!samples/public/*.duckdb
+samples/public/sources/
 
 # The patterns above match any path component by name, case-insensitively on
 # Windows, so a project directory such as src/data/Ara3D.Ifc.Bos would otherwise
