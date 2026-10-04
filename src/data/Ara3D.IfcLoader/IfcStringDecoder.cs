@@ -6,7 +6,7 @@ public static class IfcStringDecoder
     /// Decodes IFC / STEP escaped strings into normal .NET Unicode strings.
     ///
     /// Handles:
-    ///   \\X\\hh\\              8-bit hex escape
+    ///   \\X\\hh                8-bit hex escape (ISO 8859-1), no closing backslash
     ///   \\X2\\hhhh...\\X0\\    UTF-16 hex escape, 4 hex digits per code unit
     ///   \\X4\\hhhhhhhh...\\X0\\ UTF-32 hex escape, 8 hex digits per code point
     ///   \\S\\c                 ISO-8859-1 high-half shorthand
@@ -106,7 +106,7 @@ public static class IfcStringDecoder
     private static bool TryDecodeSlashX(string s, ref int i, StringBuilder sb)
     {
         // Possible:
-        //   \X\hh\
+        //   \X\hh
         //   \X2\hhhh...\X0\
         //   \X4\hhhhhhhh...\X0\
 
@@ -125,12 +125,12 @@ public static class IfcStringDecoder
     }
 
     /// <summary>
-    /// Decodes \X\hh\.
+    /// Decodes \X\hh. ISO 10303-21 ends the escape after the two hex digits, with no closing
+    /// backslash: Revit writes 'W\X\E4rmed\X\E4mmung' for 'Wärmedämmung'.
     /// </summary>
     private static bool TryDecodeX8Bit(string s, ref int i, StringBuilder sb)
     {
-        // Expected: \X\hh\
-        if (i + 5 >= s.Length)
+        if (i + 4 >= s.Length)
             return false;
 
         var h1 = HexValue(s[i + 3]);
@@ -139,13 +139,8 @@ public static class IfcStringDecoder
         if (h1 < 0 || h2 < 0)
             return false;
 
-        if (s[i + 5] != '\\')
-            return false;
-
-        var code = (h1 << 4) | h2;
-        sb.Append((char)code);
-
-        i += 6;
+        sb.Append((char)((h1 << 4) | h2));
+        i += 5;
         return true;
     }
 
