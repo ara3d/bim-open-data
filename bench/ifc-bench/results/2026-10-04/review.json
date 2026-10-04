@@ -1,0 +1,15 @@
+{
+  "reviewer": "Claude Opus 5.5, the agent that made the TKT-145 fixes, on 2026-10-04; not the owner",
+  "rule": "The 2026-10-03 rule: correct when the answer gives the ground truth's facts (numbers within about 1 %, the same items); partial answers are wrong; 'review' where the file must be checked or the question is ambiguous.",
+  "scope": "A rerun of the eight questions the 2026-10-03 run lost to the double count (213, 236), material layers (387, 421, 434, 457), and arithmetic in the answer (375, 440), with the server built from bim-open-data 9cb7366. The other 92 questions were not run.",
+  "verdicts": {
+    "213": { "verdict": "correct", "note": "Total 301.11 m over 504 pipes, the ground truth's 301,106 mm. The answer splits it over the three storeys the pipes are contained in; the ground truth puts all of it under 'Unknown Level'." },
+    "236": { "verdict": "review", "note": "Total 1,133.89 m2, average 1.91 m2, and 595 ducts match. The level breakdown uses the three storeys the ducts are contained in (B01_OKRD 347.28 matches the ground truth's B01_OKFB 347.279); the ground truth uses seven reference levels, apparently from the Revit 'Referenzebene' property. Which is meant by 'building level' is the owner's call." },
+    "375": { "verdict": "correct", "note": "The 10 spaces and their areas; no total stated, and none was asked for." },
+    "387": { "verdict": "wrong", "note": "Four of five wall types have the right layers and thicknesses; Basiswand:STB 25.0 is reported as having no materials, though the model gives it StB - Ortbeton (HasMaterial) and Width 0.25. The agent's query required '<layer>/Width' rows, which a one-layer type does not have. The type descriptions it adds ('10.0 mm total', 'with wood') are invented.", "failure": "material layers" },
+    "421": { "verdict": "review", "note": "STB 250, KS 175, and KS 115 match. For GK 125 the answer names Dämmung - weich and Trockenbau - Gipsplatte, which the file does associate with those walls (IfcRelAssociatesMaterial to a constituent set); the ground truth says material information is not available." },
+    "434": { "verdict": "wrong", "note": "Both types, counts, and areas match, and the flat roof's four materials match. Ziegeldach 360 lists its four distinct materials but not its six layers (Luftschicht and Dachdeckung - Holz occur twice), and both lists are alphabetical, not in layer order, although Ifc:ConstituentIndex gives the order.", "failure": "material layers" },
+    "440": { "verdict": "correct", "note": "The 17 spaces and their areas; no total stated, and none was asked for." },
+    "457": { "verdict": "correct", "note": "All six wall types with their materials; the number of insulation layers in GK 25.0 is not given, and the question asks for materials." }
+  }
+}

@@ -1,0 +1,9 @@
+id,project,model,category,auto,autoReason,verdict,failure,reviewedBy,costUsd,seconds,turns,toolCalls
+213,digital_hub,plumbing,2,correct,"found 301106.02, 301106.02, 100",correct,,"Claude Opus 5.5, the agent that made the TKT-145 fixes, on 2026-10-04; not the owner",0.07434470000000001,29,8,7
+236,digital_hub,ventilation,3,review,ground truth is long or lists many numbers,review,,"Claude Opus 5.5, the agent that made the TKT-145 fixes, on 2026-10-04; not the owner",0.07213720000000001,26,7,6
+375,fantasy_office_building_1,arc,2,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that made the TKT-145 fixes, on 2026-10-04; not the owner",0.050842,17,5,4
+387,fantasy_office_building_1,arc,1,review,ground truth is long or lists many numbers,wrong,material layers,"Claude Opus 5.5, the agent that made the TKT-145 fixes, on 2026-10-04; not the owner",0.13663920000000002,64,17,16
+421,fantasy_office_building_2,arc,1,review,ground truth is long or lists many numbers,review,,"Claude Opus 5.5, the agent that made the TKT-145 fixes, on 2026-10-04; not the owner",0.06920520000000001,33,9,8
+434,fantasy_office_building_2,arc,3,review,ground truth is long or lists many numbers,wrong,material layers,"Claude Opus 5.5, the agent that made the TKT-145 fixes, on 2026-10-04; not the owner",0.180202,89,25,24
+440,fantasy_office_building_3,arc,3,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that made the TKT-145 fixes, on 2026-10-04; not the owner",0.04509730000000001,23,7,6
+457,fantasy_office_building_3,arc,1,review,ground truth is long or lists many numbers,correct,,"Claude Opus 5.5, the agent that made the TKT-145 fixes, on 2026-10-04; not the owner",0.14282229999999999,66,23,22

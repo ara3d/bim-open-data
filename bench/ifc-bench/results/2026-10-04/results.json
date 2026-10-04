@@ -1,0 +1,900 @@
+{
+  "attribution": "Questions and ground truths: IFC-Bench v2 (Hellin et al. 2026, https://huggingface.co/datasets/sylvainHellin/ifc-bench), CC BY 4.0, unchanged.",
+  "summary": {
+    "run": "2026-10-04",
+    "dataset": "sylvainHellin/ifc-bench",
+    "revision": "df630deb761efcb184f1a30ab374da7dbae38225",
+    "model": "claude-haiku-4-5-20251001",
+    "effort": "medium",
+    "claudeVersion": "2.1.286 (Claude Code)",
+    "questions": 8,
+    "reviewer": "Claude Opus 5.5, the agent that made the TKT-145 fixes, on 2026-10-04; not the owner",
+    "auto": {
+      "total": {
+        "correct": 1,
+        "wrong": 0,
+        "review": 7,
+        "error": 0
+      },
+      "byCategory": {
+        "1": {
+          "correct": 0,
+          "wrong": 0,
+          "review": 3,
+          "error": 0
+        },
+        "2": {
+          "correct": 1,
+          "wrong": 0,
+          "review": 1,
+          "error": 0
+        },
+        "3": {
+          "correct": 0,
+          "wrong": 0,
+          "review": 3,
+          "error": 0
+        },
+        "4": {
+          "correct": 0,
+          "wrong": 0,
+          "review": 0,
+          "error": 0
+        }
+      }
+    },
+    "final": {
+      "total": {
+        "correct": 4,
+        "wrong": 2,
+        "review": 2,
+        "error": 0
+      },
+      "byCategory": {
+        "1": {
+          "correct": 1,
+          "wrong": 1,
+          "review": 1,
+          "error": 0
+        },
+        "2": {
+          "correct": 2,
+          "wrong": 0,
+          "review": 0,
+          "error": 0
+        },
+        "3": {
+          "correct": 1,
+          "wrong": 1,
+          "review": 1,
+          "error": 0
+        },
+        "4": {
+          "correct": 0,
+          "wrong": 0,
+          "review": 0,
+          "error": 0
+        }
+      }
+    },
+    "costUsd": 0.77,
+    "sessionSecondsTotal": 347,
+    "wallSeconds": 122,
+    "toolCalls": 93
+  },
+  "questions": [
+    {
+      "id": 213,
+      "project": "digital_hub",
+      "model": "plumbing",
+      "category": 2,
+      "question": "What is the total length of pipe used in the plumbing system, and how is this distributed by building level?",
+      "groundTruth": "Total Pipe Length: 301106.02 m\n\n   Pipe Length by Building Level:\n   - Unknown Level: 301106.02 m (100.0%)",
+      "answer": "Based on the ifc_sql queries (2 queries total), here's the pipe length analysis:\n\n## Total Pipe Length in Plumbing System\n\n**Total: 301.11 meters** (301,106.02 mm measured values from 504 pipe segments)\n\n### Distribution by Building Level\n\n| Building Level | Length | Percentage |\n|---|---|---|\n| **B01_OKRD** (Basement) | 150.29 m | 49.9% |\n| **E00_OKRD** (Ground Floor) | 99.02 m | 32.9% |\n| **E01_OKRD** (First Floor) | 51.79 m | 17.2% |\n\nThe basement level contains the most piping, accounting for nearly half the total system length, followed by the ground floor, with the first floor containing the least amount of piping.",
+      "auto": {
+        "verdict": "correct",
+        "reason": "found 301106.02, 301106.02, 100"
+      },
+      "verdict": "correct",
+      "reviewNote": "Total 301.11 m over 504 pipes, the ground truth's 301,106 mm. The answer splits it over the three storeys the pipes are contained in; the ground truth puts all of it under 'Unknown Level'.",
+      "reviewedBy": "Claude Opus 5.5, the agent that made the TKT-145 fixes, on 2026-10-04; not the owner",
+      "failure": null,
+      "costUsd": 0.07434470000000001,
+      "seconds": 29,
+      "turns": 8,
+      "toolCalls": 7,
+      "tools": [
+        {
+          "tool": "ifc_open",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/digital_hub/plumbing.ifc"
+          }
+        },
+        {
+          "tool": "ifc_type_counts",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/digital_hub/plumbing.ifc"
+          }
+        },
+        {
+          "tool": "ifc_spatial_tree",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/digital_hub/plumbing.ifc"
+          }
+        },
+        {
+          "tool": "ifc_to_bos",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/digital_hub/plumbing.ifc"
+          }
+        },
+        {
+          "tool": "ifc_parameters",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/digital_hub/plumbing.ifc",
+            "type": "IFCPIPESEGMENT",
+            "take": 50
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/digital_hub/plumbing.ifc",
+            "sql": "SELECT \n  StoreyOfElement.StoreyName,\n  SUM(CAST(ParameterText.Value AS DOUBLE)) AS TotalLength_mm\nFROM EntityText\nJOIN ParameterText ON EntityText.EntityIndex = ParameterText.EntityIndex\nJOIN StoreyOfElement ON EntityText.EntityIndex = StoreyOfElement.EntityIndex\nWHERE EntityText.Category = 'IFCPIPESEGMENT'\n  AND ParameterText.Name = 'Länge'\n  AND ParameterText.ParameterGroup = 'Abmessungen'\nGROUP BY StoreyOfElement.StoreyName, StoreyOfElement.StoreyIndex\nORDER BY StoreyOfElement.StoreyIndex"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/digital_hub/plumbing.ifc",
+            "sql": "SELECT \n  SUM(CAST(ParameterText.Value AS DOUBLE)) AS TotalLength_mm\nFROM EntityText\nJOIN ParameterText ON EntityText.EntityIndex = ParameterText.EntityIndex\nWHERE EntityText.Category = 'IFCPIPESEGMENT'\n  AND ParameterText.Name = 'Länge'\n  AND ParameterText.ParameterGroup = 'Abmessungen'"
+          }
+        }
+      ]
+    },
+    {
+      "id": 236,
+      "project": "digital_hub",
+      "model": "ventilation",
+      "category": 3,
+      "question": "What is the total cross-sectional area of ductwork in the building, including the average per duct, the count of ducts with area data, and a breakdown of the area by building level?",
+      "groundTruth": "Total Duct Cross-Sectional Area: 1133.891 sq m\nAverage per Duct: 1.906 sq m\nDucts with area data: 595/595\n\nDuct Area by Building Level:\n- B01_OKFB: 347.279 sq m (30.6%)\n- E00_OKFB: 1.520 sq m (0.1%)\n- E01_OKFB: 0.219 sq m (0.0%)\n- E01_UKAHD: 352.868 sq m (31.1%)\n- E02_OKRD: 66.185 sq m (5.8%)\n- E02_UKAHD: 326.962 sq m (28.8%)\n- E02_UKRD: 38.858 sq m (3.4%)",
+      "answer": "## Answer\n\nBased on the SQL analysis of the ventilation model (from `ifc_sql`, 1 row for totals and 3 rows for storey breakdown):\n\n**Overall Ductwork Cross-Sectional Area:**\n- **Total area: 1,133.89 m²**\n- **Average area per duct: 1.91 m²**\n- **Count of ducts with area data: 595**\n\n**Breakdown by Building Level (Storey):**\n- **B01_OKRD**: 347.28 m² (48 ducts)\n- **E00_OKRD**: 354.39 m² (276 ducts)\n- **E01_OKRD**: 432.22 m² (271 ducts)\n\nThe E01_OKRD level has the largest total ductwork area, containing 271 ducts, while B01_OKRD (basement level) has the smallest footprint with only 48 ducts. The intermediate level E00_OKRD contains the most duct segments (276) but less total area than the top level.",
+      "auto": {
+        "verdict": "review",
+        "reason": "ground truth is long or lists many numbers"
+      },
+      "verdict": "review",
+      "reviewNote": "Total 1,133.89 m2, average 1.91 m2, and 595 ducts match. The level breakdown uses the three storeys the ducts are contained in (B01_OKRD 347.28 matches the ground truth's B01_OKFB 347.279); the ground truth uses seven reference levels, apparently from the Revit 'Referenzebene' property. Which is meant by 'building level' is the owner's call.",
+      "reviewedBy": "Claude Opus 5.5, the agent that made the TKT-145 fixes, on 2026-10-04; not the owner",
+      "failure": null,
+      "costUsd": 0.07213720000000001,
+      "seconds": 26,
+      "turns": 7,
+      "toolCalls": 6,
+      "tools": [
+        {
+          "tool": "ifc_open",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/digital_hub/ventilation.ifc"
+          }
+        },
+        {
+          "tool": "ifc_type_counts",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/digital_hub/ventilation.ifc"
+          }
+        },
+        {
+          "tool": "ifc_parameters",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/digital_hub/ventilation.ifc",
+            "type": "IFCDUCTSEGMENT"
+          }
+        },
+        {
+          "tool": "ifc_to_bos",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/digital_hub/ventilation.ifc"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/digital_hub/ventilation.ifc",
+            "sql": "SELECT \n  SUM(CAST(p.Value AS DOUBLE)) as TotalArea,\n  AVG(CAST(p.Value AS DOUBLE)) as AvgArea,\n  COUNT(*) as DuctCount\nFROM EntityText e\nJOIN ParameterText p ON e.EntityIndex = p.EntityIndex\nWHERE e.Category = 'IFCDUCTSEGMENT'\n  AND p.Name = 'Fläche'\n  AND p.ParameterGroup = 'HLS'"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/digital_hub/ventilation.ifc",
+            "sql": "SELECT \n  s.StoreyName,\n  SUM(CAST(p.Value AS DOUBLE)) as AreaByStorey,\n  COUNT(*) as DuctsInStorey\nFROM EntityText e\nJOIN ParameterText p ON e.EntityIndex = p.EntityIndex\nJOIN StoreyOfElement s ON e.EntityIndex = s.EntityIndex\nWHERE e.Category = 'IFCDUCTSEGMENT'\n  AND p.Name = 'Fläche'\n  AND p.ParameterGroup = 'HLS'\nGROUP BY s.StoreyName\nORDER BY s.StoreyName"
+          }
+        }
+      ]
+    },
+    {
+      "id": 375,
+      "project": "fantasy_office_building_1",
+      "model": "arc",
+      "category": 2,
+      "question": "What are all the spaces on level 2, with their areas?",
+      "groundTruth": "Level 2 (OG2) Spaces:\n   Total: 10 spaces\n   - Space 14: Working Space - 103.83 sq m\n   - Space 15: WC - 3.53 sq m\n   - Space 16: WC - 3.53 sq m\n   - Space 17: Working Space - 53.52 sq m\n   - Space 18: WC - 2.63 sq m\n   - Space 19: Working Space - 103.83 sq m\n   - Space 20: WC - 3.53 sq m\n   - Space 21: WC - 3.53 sq m\n   - Space 22: Working Space - 53.52 sq m\n   - Space 23: WC - 2.63 sq m\n\n   Total Level 2 Area: 334.06 sq m",
+      "answer": "**Spaces on Level 2 (OG2) with their areas:**\n\nFrom ifc_sql, 10 rows:\n\n- Working Space: 103.83035\n- Working Space: 103.83035\n- Working Space: 53.5196\n- Working Space: 53.5196\n- WC: 3.526875\n- WC: 3.526875\n- WC: 3.526875\n- WC: 3.526875\n- WC: 2.626\n- WC: 2.626\n\n(Areas are in square meters, from the NetFloorArea property)",
+      "auto": {
+        "verdict": "review",
+        "reason": "ground truth is long or lists many numbers"
+      },
+      "verdict": "correct",
+      "reviewNote": "The 10 spaces and their areas; no total stated, and none was asked for.",
+      "reviewedBy": "Claude Opus 5.5, the agent that made the TKT-145 fixes, on 2026-10-04; not the owner",
+      "failure": null,
+      "costUsd": 0.050842,
+      "seconds": 17,
+      "turns": 5,
+      "toolCalls": 4,
+      "tools": [
+        {
+          "tool": "ifc_open",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_1/arc.ifc"
+          }
+        },
+        {
+          "tool": "ifc_spatial_tree",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_1/arc.ifc"
+          }
+        },
+        {
+          "tool": "ifc_to_bos",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_1/arc.ifc"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_1/arc.ifc",
+            "sql": "\nSELECT \n  e.Name,\n  p.Value AS Area\nFROM EntityText e\nJOIN StoreyOfEntity soe ON e.EntityIndex = soe.EntityIndex\nJOIN ParameterText p ON e.EntityIndex = p.EntityIndex\nWHERE soe.StoreyName = 'OG2'\n  AND e.Category = 'IFCSPACE'\n  AND p.Name = 'NetFloorArea'\nORDER BY e.Name\n"
+          }
+        }
+      ]
+    },
+    {
+      "id": 387,
+      "project": "fantasy_office_building_1",
+      "model": "arc",
+      "category": 1,
+      "question": "What materials are used in each wall type, along with their layer thicknesses?",
+      "groundTruth": "Wall Material Layers and Thicknesses:\n\n   Basiswand:STB 25.0 WD 12.0:\n   - Total thickness: 370 mm\n      Layers:\n      - StB - Ortbeton, thickness: 25 cm\n      - Wärmedämmung - Hart, thickness: 12 cm\n\n   Basiswand:STB 20.0 WD 12.0:\n   - Total thickness: 370 mm\n      Layers:\n      - StB - Ortbeton, thickness: 20 cm\n      - Wärmedämmung - Hart, thickness: 12 cm\n      - MW - Gipskarton, thickness: 5 cm\n\n   Basiswand:GK 10.0:\n   - Total thickness: 100 mm\n      Layers:\n      - MW - Gipskarton, thickness: 1.25 cm\n      - Wärmedämmung - Hart, thickness: 7.5 cm\n      - MW - Gipskarton, thickness: 1.25 cm\n\n   Basiswand:GK 12.5:\n   - Total thickness: 125 mm\n      Layers:\n      - MW - Gipskarton, thickness: 2.5 cm\n      - Wärmedämmung - Hart, thickness: 7.5 cm\n      - MW - Gipskarton, thickness: 2.5 cm\n\n   Basiswand:STB 25.0:\n   - Total thickness: 250 mm\n      Layers:\n      - StB - Ortbeton, thickness: 25 cm",
+      "answer": "Based on the SQL query, from 11 rows showing the materials and thicknesses for each wall type, here are the results:\n\n## Wall Types and Their Materials with Layer Thicknesses\n\n**Basiswand:GK 10.0** (Gypsum board wall, 10.0 mm total)\n- MW - Gipskarton: 12.5 mm\n- MW - Gipskarton (2): 12.5 mm\n- Wärmeddämmung - Hart (insulation): 75 mm\n\n**Basiswand:GK 12.5** (Gypsum board wall, 12.5 mm total)\n- MW - Gipskarton: 25 mm\n- MW - Gipskarton (2): 25 mm\n- Wärmeddämmung - Hart (insulation): 75 mm\n\n**Basiswand:STB 20.0 WD 12.0** (Reinforced concrete wall, 20.0 cm with wood, 12.0 mm)\n- MW - Gipskarton: 50 mm\n- StB - Ortbeton (in-situ concrete): 200 mm\n- Wärmeddämmung - Hart (insulation): 120 mm\n\n**Basiswand:STB 25.0 WD 12.0** (Reinforced concrete wall, 25.0 cm with wood, 12.0 mm)\n- StB - Ortbeton (in-situ concrete): 250 mm\n- Wärmeddämmung - Hart (insulation): 120 mm\n\nNote: \"Basiswand:STB 25.0\" exists as a wall type but has no materials defined in this model.",
+      "auto": {
+        "verdict": "review",
+        "reason": "ground truth is long or lists many numbers"
+      },
+      "verdict": "wrong",
+      "reviewNote": "Four of five wall types have the right layers and thicknesses; Basiswand:STB 25.0 is reported as having no materials, though the model gives it StB - Ortbeton (HasMaterial) and Width 0.25. The agent's query required '<layer>/Width' rows, which a one-layer type does not have. The type descriptions it adds ('10.0 mm total', 'with wood') are invented.",
+      "reviewedBy": "Claude Opus 5.5, the agent that made the TKT-145 fixes, on 2026-10-04; not the owner",
+      "failure": "material layers",
+      "costUsd": 0.13663920000000002,
+      "seconds": 64,
+      "turns": 17,
+      "toolCalls": 16,
+      "tools": [
+        {
+          "tool": "ifc_open",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_1/arc.ifc"
+          }
+        },
+        {
+          "tool": "ifc_to_bos",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_1/arc.ifc"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_1/arc.ifc",
+            "sql": "SELECT DISTINCT Category FROM EntityText WHERE Category LIKE '%WALL%' ORDER BY Category"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_1/arc.ifc",
+            "sql": "\nWITH wall_types AS (\n  SELECT EntityIndex, Name FROM EntityText WHERE Category = 'IFCWALLTYPE'\n),\nwall_materials AS (\n  SELECT wt.EntityIndex, wt.Name as WallTypeName, \n         ml.Name as MaterialLayerName, \n         mp.Value as LayerThickness,\n         mli.Value as LayerIndex\n  FROM wall_types wt\n  LEFT JOIN RelationText r ON wt.EntityIndex = r.EntityIndexA AND r.RelationType = 'HasMaterial'\n  LEFT JOIN EntityText ml ON r.EntityIndexB = ml.EntityIndex AND ml.Category = 'IFCMATERIALLAYERSET'\n  LEFT JOIN RelationText lr ON ml.EntityIndex = lr.EntityIndexA AND lr.RelationType = 'HasLayer'\n  LEFT JOIN EntityText layer ON lr.EntityIndexB = layer.EntityIndex AND layer.Category = 'IFCMATERIALLAYER'\n  LEFT JOIN ParameterText mp ON layer.EntityIndex = mp.EntityIndex AND mp.Name = 'Ifc:LayerThickness'\n  LEFT JOIN ParameterText mli ON layer.EntityIndex = mli.EntityIndex AND mli.Name = 'Ifc:LayerIndex'\n)\nSELECT DISTINCT WallTypeName, MaterialLayerName, LayerThickness, LayerIndex\nFROM wall_materials\nORDER BY WallTypeName, LayerIndex\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_1/arc.ifc",
+            "sql": "\nSELECT DISTINCT e.Name, r.RelationType, e2.Category, e2.Name\nFROM EntityText e\nLEFT JOIN RelationText r ON e.EntityIndex = r.EntityIndexA\nLEFT JOIN EntityText e2 ON r.EntityIndexB = e2.EntityIndex\nWHERE e.Category = 'IFCWALLTYPE'\nORDER BY e.Name, r.RelationType\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_1/arc.ifc",
+            "sql": "\nSELECT e.Name as WallTypeName, p.Name as ParameterName, p.ParameterGroup, p.Value\nFROM EntityText e\nLEFT JOIN ParameterText p ON e.EntityIndex = p.EntityIndex\nWHERE e.Category = 'IFCWALLTYPE'\nORDER BY e.Name, p.ParameterGroup, p.Name\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_1/arc.ifc",
+            "sql": "\nSELECT e.Name, p.Name, p.ParameterGroup, p.Value\nFROM EntityText e\nJOIN ParameterText p ON e.EntityIndex = p.EntityIndex\nWHERE e.Category = 'IFCWALL' AND p.ParameterGroup LIKE 'Qto_%'\nORDER BY e.Name, p.Name\nLIMIT 100\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_1/arc.ifc",
+            "sql": "\nWITH wall_materials AS (\n  SELECT DISTINCT \n    SUBSTRING(e.Name, 1, POSITION(':' IN e.Name) - 1) as WallType,\n    m.Name as MaterialName\n  FROM EntityText e\n  JOIN RelationText r ON e.EntityIndex = r.EntityIndexA AND r.RelationType = 'HasMaterial'\n  JOIN EntityText m ON r.EntityIndexB = m.EntityIndex AND m.Category = 'IFCMATERIAL'\n  WHERE e.Category = 'IFCWALL'\n),\nlayer_widths AS (\n  SELECT DISTINCT\n    SUBSTRING(e.Name, 1, POSITION(':' IN e.Name) - 1) as WallType,\n    SUBSTRING(p.Name, 1, LENGTH(p.Name) - 6) as MaterialName,\n    CAST(p.Value AS DOUBLE) as LayerThickness\n  FROM EntityText e\n  JOIN ParameterText p ON e.EntityIndex = p.EntityIndex\n  WHERE e.Category = 'IFCWALL' \n    AND p.ParameterGroup = 'Qto_WallBaseQuantities'\n    AND p.Name LIKE '%/Width'\n)\nSELECT DISTINCT\n  wm.WallType,\n  wm.MaterialName,\n  lw.LayerThickness\nFROM wall_materials wm\nLEFT JOIN layer_widths lw ON wm.WallType = lw.WallType AND wm.MaterialName = lw.MaterialName\nORDER BY wm.WallType, wm.MaterialName\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_1/arc.ifc",
+            "sql": "\nWITH wall_to_type AS (\n  SELECT DISTINCT e.Name as WallName, wt.Name as WallTypeName\n  FROM EntityText e\n  LEFT JOIN RelationText r ON e.EntityIndex = r.EntityIndexA AND r.RelationType = 'IsDefinedBy'\n  LEFT JOIN EntityText wt ON r.EntityIndexB = wt.EntityIndex AND wt.Category = 'IFCWALLTYPE'\n  WHERE e.Category = 'IFCWALL'\n),\nmaterials_per_type AS (\n  SELECT DISTINCT\n    wt.Name as WallTypeName,\n    m.Name as MaterialName\n  FROM EntityText wt\n  LEFT JOIN RelationText r ON wt.EntityIndex = r.EntityIndexA AND r.RelationType = 'HasMaterial'\n  LEFT JOIN EntityText m ON r.EntityIndexB = m.EntityIndex AND m.Category = 'IFCMATERIAL'\n  WHERE wt.Category = 'IFCWALLTYPE'\n),\nlayer_widths AS (\n  SELECT DISTINCT\n    wt.Name as WallTypeName,\n    SUBSTRING(p.Name, 1, LENGTH(p.Name) - 6) as MaterialName,\n    CAST(p.Value AS DOUBLE) as LayerThickness\n  FROM EntityText e\n  JOIN RelationText r ON e.EntityIndex = r.EntityIndexA AND r.RelationType = 'IsDefinedBy'\n  JOIN EntityText wt ON r.EntityIndexB = wt.EntityIndex AND wt.Category = 'IFCWALLTYPE'\n  JOIN ParameterText p ON e.EntityIndex = p.EntityIndex\n  WHERE e.Category = 'IFCWALL' \n    AND p.ParameterGroup = 'Qto_WallBaseQuantities'\n    AND p.Name LIKE '%/Width'\n)\nSELECT\n  mpt.WallTypeName,\n  mpt.MaterialName,\n  lw.LayerThickness\nFROM materials_per_type mpt\nLEFT JOIN layer_widths lw ON mpt.WallTypeName = lw.WallTypeName AND mpt.MaterialName = lw.MaterialName\nWHERE mpt.WallTypeName IS NOT NULL\nORDER BY mpt.WallTypeName, mpt.MaterialName\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_1/arc.ifc",
+            "sql": "\nWITH wall_with_type AS (\n  SELECT \n    e.EntityIndex,\n    e.Name as WallName,\n    wt.Name as WallTypeName\n  FROM EntityText e\n  LEFT JOIN RelationText r ON e.EntityIndex = r.EntityIndexA AND r.RelationType = 'IsDefinedBy'\n  LEFT JOIN EntityText wt ON r.EntityIndexB = wt.EntityIndex AND wt.Category = 'IFCWALLTYPE'\n  WHERE e.Category = 'IFCWALL'\n),\nmaterials_with_widths AS (\n  SELECT \n    wwt.WallTypeName,\n    m.Name as MaterialName,\n    p.Name as ParameterName,\n    p.Value as LayerThickness\n  FROM wall_with_type wwt\n  LEFT JOIN RelationText r ON wwt.EntityIndex = r.EntityIndexA AND r.RelationType = 'HasMaterial'\n  LEFT JOIN EntityText m ON r.EntityIndexB = m.EntityIndex AND m.Category = 'IFCMATERIAL'\n  LEFT JOIN ParameterText p ON wwt.EntityIndex = p.EntityIndex\n  WHERE p.ParameterGroup = 'Qto_WallBaseQuantities'\n    AND p.Name LIKE CONCAT(m.Name, '%/Width')\n),\nunique_materials_widths AS (\n  SELECT DISTINCT\n    WallTypeName,\n    MaterialName,\n    LayerThickness\n  FROM materials_with_widths\n  WHERE WallTypeName IS NOT NULL AND MaterialName IS NOT NULL AND LayerThickness IS NOT NULL\n)\nSELECT \n  WallTypeName,\n  MaterialName,\n  CAST(LayerThickness AS DOUBLE) as ThicknessInMeters\nFROM unique_materials_widths\nORDER BY WallTypeName, MaterialName\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_1/arc.ifc",
+            "sql": "\nWITH sample_walls AS (\n  SELECT DISTINCT \n    wt.Name as WallTypeName,\n    e.EntityIndex,\n    ROW_NUMBER() OVER (PARTITION BY wt.Name ORDER BY e.EntityIndex) as rn\n  FROM EntityText e\n  LEFT JOIN RelationText r ON e.EntityIndex = r.EntityIndexA AND r.RelationType = 'IsDefinedBy'\n  LEFT JOIN EntityText wt ON r.EntityIndexB = wt.EntityIndex AND wt.Category = 'IFCWALLTYPE'\n  WHERE e.Category = 'IFCWALL'\n),\nfirst_wall_per_type AS (\n  SELECT WallTypeName, EntityIndex\n  FROM sample_walls\n  WHERE rn = 1\n),\nwall_materials AS (\n  SELECT \n    fw.WallTypeName,\n    m.Name as MaterialName\n  FROM first_wall_per_type fw\n  LEFT JOIN RelationText r ON fw.EntityIndex = r.EntityIndexA AND r.RelationType = 'HasMaterial'\n  LEFT JOIN EntityText m ON r.EntityIndexB = m.EntityIndex AND m.Category = 'IFCMATERIAL'\n),\nwidths_per_type AS (\n  SELECT \n    fw.WallTypeName,\n    SUBSTRING(p.Name, 1, LENGTH(p.Name) - 6) as MaterialName,\n    CAST(p.Value AS DOUBLE) as Thickness\n  FROM first_wall_per_type fw\n  JOIN ParameterText p ON fw.EntityIndex = p.EntityIndex\n  WHERE p.ParameterGroup = 'Qto_WallBaseQuantities' AND p.Name LIKE '%/Width'\n)\nSELECT \n  wm.WallTypeName,\n  wm.MaterialName,\n  wp.Thickness as ThicknessInMeters\nFROM wall_materials wm\nLEFT JOIN widths_per_type wp ON wm.WallTypeName = wp.WallTypeName AND wm.MaterialName = wp.MaterialName\nWHERE wm.WallTypeName IS NOT NULL\nORDER BY wm.WallTypeName, wm.MaterialName\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_1/arc.ifc",
+            "sql": "\nSELECT DISTINCT RelationType\nFROM RelationText\nWHERE RelationType LIKE '%Type%' OR RelationType LIKE '%Define%'\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_1/arc.ifc",
+            "sql": "\nSELECT DISTINCT RelationType\nFROM RelationText\nORDER BY RelationType\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_1/arc.ifc",
+            "sql": "\nSELECT e.Name, r.RelationType, e2.Name, e2.Category\nFROM EntityText e\nJOIN RelationText r ON e.EntityIndex = r.EntityIndexA\nJOIN EntityText e2 ON r.EntityIndexB = e2.EntityIndex\nWHERE e.Category = 'IFCWALL'\nLIMIT 20\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_1/arc.ifc",
+            "sql": "\nWITH wall_types_and_widths AS (\n  SELECT \n    SUBSTRING(e.Name, 1, POSITION(':' IN REVERSE(e.Name)) - 1) as WallType,\n    SUBSTRING(p.Name, 1, LENGTH(p.Name) - 6) as MaterialName,\n    CAST(p.Value AS DOUBLE) as Thickness\n  FROM EntityText e\n  JOIN ParameterText p ON e.EntityIndex = p.EntityIndex\n  WHERE e.Category = 'IFCWALL'\n    AND p.ParameterGroup = 'Qto_WallBaseQuantities'\n    AND p.Name LIKE '%/Width'\n),\nmaterials_per_wall_type AS (\n  SELECT DISTINCT e.Name as TypeName,\n         m.Name as MaterialName\n  FROM EntityText e\n  LEFT JOIN RelationText r ON e.EntityIndex = r.EntityIndexA AND r.RelationType = 'HasMaterial'\n  LEFT JOIN EntityText m ON r.EntityIndexB = m.EntityIndex AND m.Category = 'IFCMATERIAL'\n  WHERE e.Category = 'IFCWALLTYPE'\n)\nSELECT DISTINCT\n  wtw.WallType,\n  wtw.MaterialName,\n  wtw.Thickness\nFROM wall_types_and_widths wtw\nORDER BY wtw.WallType, wtw.MaterialName, wtw.Thickness\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_1/arc.ifc",
+            "sql": "\nWITH wall_instances AS (\n  SELECT DISTINCT\n    e.Name,\n    REGEXP_REPLACE(e.Name, ':[0-9]+$', '') as WallType\n  FROM EntityText e\n  WHERE e.Category = 'IFCWALL'\n),\nwidths_for_walls AS (\n  SELECT \n    wi.WallType,\n    SUBSTRING(p.Name, 1, LENGTH(p.Name) - 6) as MaterialName,\n    CAST(p.Value AS DOUBLE) as Thickness\n  FROM wall_instances wi\n  JOIN EntityText e ON REGEXP_REPLACE(e.Name, ':[0-9]+$', '') = wi.WallType AND e.Category = 'IFCWALL'\n  JOIN ParameterText p ON e.EntityIndex = p.EntityIndex\n  WHERE p.ParameterGroup = 'Qto_WallBaseQuantities'\n    AND p.Name LIKE '%/Width'\n)\nSELECT DISTINCT\n  WallType,\n  MaterialName,\n  Thickness\nFROM widths_for_walls\nORDER BY WallType, MaterialName\n"
+          }
+        }
+      ]
+    },
+    {
+      "id": 421,
+      "project": "fantasy_office_building_2",
+      "model": "arc",
+      "category": 1,
+      "question": "What materials are used for each wall type?",
+      "groundTruth": "Materials by Wall Type:\n\n- Basic Wall:STB 250:\n  - Ortbeton - bewehrt Verputzt\n\n- Basic Wall:GK 125:\n  - Material information not available\n\n- Basic Wall:KS 175:\n  - Mauerwerk - Kalksandstein\n\n- Basic Wall:KS 115:\n  - Mauerwerk - Kalksandstein",
+      "answer": "## Answer\n\nFrom the ifc_sql query, there are **4 distinct wall types** in the model, each with the following materials:\n\n| Wall Type | Materials |\n|-----------|-----------|\n| **GK 125** | Dämmung - weich, Trockenbau - Gipsplatte (soft insulation, drywall gypsum plasterboard) |\n| **KS 115** | Mauerwerk - Kalksandstein (lime-sand brick masonry) |\n| **KS 175** | Mauerwerk - Kalksandstein (lime-sand brick masonry) |\n| **STB 250** | Ortbeton - bewehrt Verputzt (reinforced in-situ concrete, plastered) |\n\nThe wall types appear to indicate construction methods: GK (Gipskarton/drywall), KS (Kalksandstein/lime-sand), and STB (Stahlbeton/reinforced concrete), with the numbers representing dimensions or specifications.",
+      "auto": {
+        "verdict": "review",
+        "reason": "ground truth is long or lists many numbers"
+      },
+      "verdict": "review",
+      "reviewNote": "STB 250, KS 175, and KS 115 match. For GK 125 the answer names Dämmung - weich and Trockenbau - Gipsplatte, which the file does associate with those walls (IfcRelAssociatesMaterial to a constituent set); the ground truth says material information is not available.",
+      "reviewedBy": "Claude Opus 5.5, the agent that made the TKT-145 fixes, on 2026-10-04; not the owner",
+      "failure": null,
+      "costUsd": 0.06920520000000001,
+      "seconds": 33,
+      "turns": 9,
+      "toolCalls": 8,
+      "tools": [
+        {
+          "tool": "ifc_open",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc"
+          }
+        },
+        {
+          "tool": "ifc_type_counts",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "take": 30
+          }
+        },
+        {
+          "tool": "ifc_entities_of_type",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "type": "IFCWALL",
+            "take": 100
+          }
+        },
+        {
+          "tool": "ifc_to_bos",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "sql": "\nWITH wall_types AS (\n  SELECT DISTINCT\n    SUBSTRING(Name FROM POSITION(':' IN Name) + 1) as WallType,\n    COUNT(*) as Count\n  FROM EntityText\n  WHERE Category = 'IFCWALL'\n  GROUP BY SUBSTRING(Name FROM POSITION(':' IN Name) + 1)\n),\nwall_materials AS (\n  SELECT\n    w.StepId,\n    SUBSTRING(w.Name FROM POSITION(':' IN Name) + 1) as WallType,\n    m.Name as MaterialName\n  FROM EntityText w\n  LEFT JOIN RelationText r ON w.EntityIndex = r.EntityIndexA AND r.RelationType = 'HasMaterial'\n  LEFT JOIN EntityText m ON r.EntityIndexB = m.EntityIndex\n  WHERE w.Category = 'IFCWALL'\n)\nSELECT DISTINCT\n  wt.WallType,\n  wt.Count,\n  STRING_AGG(DISTINCT wm.MaterialName, ', ') as Materials\nFROM wall_types wt\nLEFT JOIN wall_materials wm ON wt.WallType = wm.WallType\nGROUP BY wt.WallType, wt.Count\nORDER BY wt.WallType\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "sql": "\nWITH wall_types AS (\n  SELECT DISTINCT\n    SUBSTRING(Name FROM POSITION(':' IN Name) + 1) as WallType,\n    COUNT(*) as Count\n  FROM EntityText\n  WHERE Category = 'IFCWALL'\n  GROUP BY SUBSTRING(Name FROM POSITION(':' IN Name) + 1)\n),\nwall_materials AS (\n  SELECT\n    w.StepId,\n    SUBSTRING(w.Name FROM POSITION(':' IN w.Name) + 1) as WallType,\n    m.Name as MaterialName\n  FROM EntityText w\n  LEFT JOIN RelationText r ON w.EntityIndex = r.EntityIndexA AND r.RelationType = 'HasMaterial'\n  LEFT JOIN EntityText m ON r.EntityIndexB = m.EntityIndex\n  WHERE w.Category = 'IFCWALL'\n)\nSELECT DISTINCT\n  wt.WallType,\n  wt.Count,\n  STRING_AGG(DISTINCT wm.MaterialName, ', ') as Materials\nFROM wall_types wt\nLEFT JOIN wall_materials wm ON wt.WallType = wm.WallType\nGROUP BY wt.WallType, wt.Count\nORDER BY wt.WallType\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "sql": "\nWITH wall_materials AS (\n  SELECT\n    CASE \n      WHEN Name LIKE '%STB 250%' THEN 'STB 250'\n      WHEN Name LIKE '%GK 125%' THEN 'GK 125'\n      WHEN Name LIKE '%KS 175%' THEN 'KS 175'\n      WHEN Name LIKE '%KS 115%' THEN 'KS 115'\n      ELSE SUBSTRING(Name FROM POSITION(':' IN Name) + 1)\n    END as WallTypeName,\n    m.Name as MaterialName\n  FROM EntityText w\n  LEFT JOIN RelationText r ON w.EntityIndex = r.EntityIndexA AND r.RelationType = 'HasMaterial'\n  LEFT JOIN EntityText m ON r.EntityIndexB = m.EntityIndex\n  WHERE w.Category = 'IFCWALL'\n)\nSELECT\n  WallTypeName,\n  COUNT(DISTINCT MaterialName) as MaterialCount,\n  STRING_AGG(DISTINCT MaterialName, ', ') as Materials\nFROM wall_materials\nGROUP BY WallTypeName\nORDER BY WallTypeName\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "sql": "\nWITH wall_materials AS (\n  SELECT\n    CASE \n      WHEN w.Name LIKE '%STB 250%' THEN 'STB 250'\n      WHEN w.Name LIKE '%GK 125%' THEN 'GK 125'\n      WHEN w.Name LIKE '%KS 175%' THEN 'KS 175'\n      WHEN w.Name LIKE '%KS 115%' THEN 'KS 115'\n      ELSE SUBSTRING(w.Name FROM POSITION(':' IN w.Name) + 1)\n    END as WallTypeName,\n    m.Name as MaterialName\n  FROM EntityText w\n  LEFT JOIN RelationText r ON w.EntityIndex = r.EntityIndexA AND r.RelationType = 'HasMaterial'\n  LEFT JOIN EntityText m ON r.EntityIndexB = m.EntityIndex\n  WHERE w.Category = 'IFCWALL'\n)\nSELECT\n  WallTypeName,\n  COUNT(DISTINCT MaterialName) as MaterialCount,\n  STRING_AGG(DISTINCT MaterialName, ', ') as Materials\nFROM wall_materials\nGROUP BY WallTypeName\nORDER BY WallTypeName\n"
+          }
+        }
+      ]
+    },
+    {
+      "id": 434,
+      "project": "fantasy_office_building_2",
+      "model": "arc",
+      "category": 3,
+      "question": "Identify all roof types in the building and specify the construction material layers and area information for each roof type.",
+      "groundTruth": "Total roof elements: 3\n\nRoof types:\n\nBasic Roof:Flachdachaufbau begrünt 320: (1 element)\n- Area: 239.26 sq m\n- Material layers:\n   - Dachdeckung - Begrünung\n   - Dachdeckung - Flies\n   - Dämmung - hart\n   - Dachdeckung - Bitumenbahn\n\nBasic Roof:Ziegeldach 360: (2 elements)\n- Area for each roof slab: 90.16 sq m\n- Material layers:\n   - Dachdeckung - Ziegeldach\n   - Luftschicht\n   - Dachdeckung - Holz\n   - Dämmung - weich\n   - Luftschicht\n   - Dachdeckung - Holz",
+      "answer": "Based on ifc_sql queries (2 roof types, 3 instances total):\n\n## Summary of Roof Types in the Building\n\n**Roof Type 1: Flachdachaufbau begr\\u00FCnt 320** (Green Flat Roof)\n- **Instances:** 1\n- **Total Area:** 239.26 m²\n- **Overall Thickness:** 0.32 m\n- **Material Layers:**\n  1. Dachdeckung - Begr\\u00FCnung (Greening/Vegetation Layer)\n  2. Dachdeckung - Bitumenbahn (Bituminous Waterproofing Membrane)\n  3. Dachdeckung - Flies (Fleece Layer)\n  4. D\\u00E4mmung - hart (Rigid Insulation)\n\n**Roof Type 2: Ziegeldach 360** (Tile Roof)\n- **Instances:** 2\n- **Total Area:** 180.32 m²\n- **Overall Thickness:** 0.36 m\n- **Material Layers:**\n  1. Dachdeckung - Holz (Wood Sheathing)\n  2. Dachdeckung - Ziegeldach (Tile Covering)\n  3. D\\u00E4mmung - weich (Soft Insulation)\n  4. Luftschicht (Air Gap Layer)",
+      "auto": {
+        "verdict": "review",
+        "reason": "ground truth is long or lists many numbers"
+      },
+      "verdict": "wrong",
+      "reviewNote": "Both types, counts, and areas match, and the flat roof's four materials match. Ziegeldach 360 lists its four distinct materials but not its six layers (Luftschicht and Dachdeckung - Holz occur twice), and both lists are alphabetical, not in layer order, although Ifc:ConstituentIndex gives the order.",
+      "reviewedBy": "Claude Opus 5.5, the agent that made the TKT-145 fixes, on 2026-10-04; not the owner",
+      "failure": "material layers",
+      "costUsd": 0.180202,
+      "seconds": 89,
+      "turns": 25,
+      "toolCalls": 24,
+      "tools": [
+        {
+          "tool": "ifc_open",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc"
+          }
+        },
+        {
+          "tool": "ifc_type_counts",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc"
+          }
+        },
+        {
+          "tool": "ifc_to_bos",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "sql": "\nSELECT \n  e.Name AS RoofName,\n  e.StepId,\n  pt.Name AS PropertyName,\n  pt.Value,\n  pt.ParameterGroup\nFROM EntityText e\nLEFT JOIN ParameterText pt ON e.EntityIndex = pt.EntityIndex\nWHERE e.Category = 'IFCROOF'\nORDER BY e.Name, pt.ParameterGroup, pt.Name\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "sql": "\nSELECT DISTINCT\n  e.Name AS RoofTypeName,\n  e.StepId,\n  e.GlobalId\nFROM EntityText e\nWHERE e.Category = 'IFCROOFTYPE'\nORDER BY e.Name\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "sql": "\n-- Query to get material information for roof types\nWITH RoofTypes AS (\n  SELECT EntityIndex, Name, StepId FROM EntityText WHERE Category = 'IFCROOFTYPE'\n),\nRoofMaterials AS (\n  SELECT \n    rt.Name AS RoofTypeName,\n    rt.StepId AS RoofTypeId,\n    rel.EntityIndexB AS MaterialSetIndex\n  FROM RoofTypes rt\n  LEFT JOIN RelationText rel ON rt.EntityIndex = rel.EntityIndexA \n    AND (rel.RelationType = 'HasAssociations' OR rel.RelationType = 'AssociatedMaterial')\n)\nSELECT \n  rm.RoofTypeName,\n  e.Name AS MaterialName,\n  e.Category AS MaterialCategory,\n  pt.Name AS PropertyName,\n  pt.Value\nFROM RoofMaterials rm\nLEFT JOIN EntityText e ON rm.MaterialSetIndex = e.EntityIndex\nLEFT JOIN ParameterText pt ON e.EntityIndex = pt.EntityIndex\nWHERE e.Category IN ('IFCMATERIAL', 'IFCMATERIALLAYERSET', 'IFCMATERIALLAYER', 'IFCMATERIALCONSTITUENTSET', 'IFCMATERIALCONSTITUENT')\nORDER BY rm.RoofTypeName, e.Name, pt.Name\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "sql": "\n-- Get material associations for roof types\nSELECT \n  rt.Name AS RoofTypeName,\n  rt.StepId AS RoofTypeStepId,\n  e.Name AS AssociatedEntity,\n  e.Category AS EntityCategory,\n  e.StepId AS EntityStepId\nFROM EntityText rt\nLEFT JOIN RelationText rel ON rt.EntityIndex = rel.EntityIndexA\nLEFT JOIN EntityText e ON rel.EntityIndexB = e.EntityIndex\nWHERE rt.Category = 'IFCROOFTYPE'\nORDER BY rt.Name, e.Category, e.Name\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "sql": "\nSELECT \n  rt.Name AS RoofTypeName,\n  rt.StepId AS RoofTypeStepId,\n  e.Name AS AssociatedEntity,\n  e.Category AS EntityCategory,\n  e.StepId AS EntityStepId\nFROM EntityText rt\nLEFT JOIN RelationText rel ON rt.EntityIndex = rel.EntityIndexA\nLEFT JOIN EntityText e ON rel.EntityIndexB = e.EntityIndex\nWHERE rt.Category = 'IFCROOFTYPE'\nORDER BY rt.Name, e.Category, e.Name\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "sql": "\nSELECT \n  e.Name AS EntityName,\n  e.Category AS EntityCategory,\n  rel.RelationType,\n  rt.Name AS RoofTypeName\nFROM EntityText rt\nLEFT JOIN RelationText rel ON rt.EntityIndex = rel.EntityIndexB\nLEFT JOIN EntityText e ON rel.EntityIndexA = e.EntityIndex\nWHERE rt.Category = 'IFCROOFTYPE'\nORDER BY rt.Name, rel.RelationType\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "sql": "\nSELECT \n  roof.Name AS RoofName,\n  roof.StepId AS RoofStepId,\n  mat.Name AS Material,\n  mat.Category AS MaterialCategory,\n  mat.StepId AS MaterialStepId\nFROM EntityText roof\nLEFT JOIN RelationText rel ON roof.EntityIndex = rel.EntityIndexA\nLEFT JOIN EntityText mat ON rel.EntityIndexB = mat.EntityIndex\nWHERE roof.Category = 'IFCROOF'\nORDER BY roof.Name, mat.Category, mat.Name\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "sql": "\nSELECT \n  mat.Name AS MaterialName,\n  mat.StepId AS MaterialStepId,\n  pt.Name AS PropertyName,\n  pt.Value,\n  pt.ParameterGroup,\n  pt.Units\nFROM EntityText mat\nLEFT JOIN ParameterText pt ON mat.EntityIndex = pt.EntityIndex\nWHERE mat.Category = 'IFCMATERIAL' AND mat.StepId IN (85294, 85303, 85295, 85299, 101749, 101741, 2133, 101745)\nORDER BY mat.Name, pt.ParameterGroup, pt.Name\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "sql": "\nSELECT \n  roof.Name AS RoofName,\n  roof.StepId AS RoofStepId,\n  mcs.Name AS MaterialSet,\n  mcs.Category AS MaterialSetCategory,\n  pt.Name AS PropertyName,\n  pt.Value,\n  pt.Units\nFROM EntityText roof\nLEFT JOIN RelationText rel ON roof.EntityIndex = rel.EntityIndexA AND rel.RelationType = 'HasAssociations'\nLEFT JOIN EntityText mcs ON rel.EntityIndexB = mcs.EntityIndex\nLEFT JOIN ParameterText pt ON mcs.EntityIndex = pt.EntityIndex\nWHERE roof.Category = 'IFCROOF'\nORDER BY roof.Name, mcs.Name, pt.Name\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "sql": "\nSELECT \n  roof.Name AS RoofName,\n  roof.StepId AS RoofStepId,\n  pt.Name AS PropertyName,\n  pt.Value,\n  pt.ParameterGroup,\n  pt.Units\nFROM EntityText roof\nLEFT JOIN ParameterText pt ON roof.EntityIndex = pt.EntityIndex\nWHERE roof.Category = 'IFCROOF' AND pt.Name LIKE '%Width%' OR pt.Name LIKE '%Thickness%' OR pt.Name LIKE '%Layer%'\nORDER BY roof.Name, pt.ParameterGroup, pt.Name\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "sql": "\nSELECT \n  mcs.Name AS MaterialConstituentSet,\n  mcs.StepId AS SetStepId,\n  mc.Name AS MaterialConstituent,\n  mc.StepId AS ConstituentStepId,\n  pt.Name AS PropertyName,\n  pt.Value,\n  pt.Units\nFROM EntityText mcs\nLEFT JOIN RelationText rel ON mcs.EntityIndex = rel.EntityIndexA\nLEFT JOIN EntityText mc ON rel.EntityIndexB = mc.EntityIndex\nLEFT JOIN ParameterText pt ON mc.EntityIndex = pt.EntityIndex\nWHERE mcs.Category = 'IFCMATERIALCONSTITUENTSET'\nORDER BY mcs.Name, mc.Name, pt.Name\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "sql": "\nSELECT \n  mc.Name AS MaterialConstituent,\n  mc.StepId AS StepId,\n  pt.Name AS PropertyName,\n  pt.Value,\n  pt.ParameterGroup\nFROM EntityText mc\nLEFT JOIN ParameterText pt ON mc.EntityIndex = pt.EntityIndex\nWHERE mc.Category = 'IFCMATERIALCONSTITUENT'\nORDER BY mc.Name, pt.ParameterGroup, pt.Name\nLIMIT 200\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "sql": "\nSELECT \n  rt.Name AS RoofTypeName,\n  pt.Name AS PropertyName,\n  pt.Value,\n  pt.ParameterGroup\nFROM EntityText rt\nLEFT JOIN ParameterText pt ON rt.EntityIndex = pt.EntityIndex\nWHERE rt.Category = 'IFCROOFTYPE' AND (pt.Name LIKE '%Width%' OR pt.Name LIKE '%Layer%' OR pt.Name LIKE '%Thickness%')\nORDER BY rt.Name, pt.ParameterGroup, pt.Name\n"
+          }
+        },
+        {
+          "tool": "ifc_properties",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "id": 85292
+          }
+        },
+        {
+          "tool": "ifc_properties",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "id": 101739
+          }
+        },
+        {
+          "tool": "ifc_properties",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "id": 85293
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "sql": "\nSELECT \n  rt.Name AS RoofTypeName,\n  pt.Name AS PropertyName,\n  pt.Value,\n  pt.ParameterGroup,\n  rt.StepId\nFROM EntityText rt\nLEFT JOIN ParameterText pt ON rt.EntityIndex = pt.EntityIndex\nWHERE rt.Category = 'IFCROOFTYPE'\nORDER BY rt.Name, pt.ParameterGroup, pt.Name\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "sql": "\nSELECT \n  roof.Name AS RoofName,\n  roof.StepId,\n  pt.Name AS PropertyName,\n  pt.Value,\n  pt.ParameterGroup\nFROM EntityText roof\nLEFT JOIN ParameterText pt ON roof.EntityIndex = pt.EntityIndex\nWHERE roof.Category = 'IFCROOF' AND roof.StepId = 85292\nORDER BY pt.ParameterGroup, pt.Name\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "sql": "\nSELECT \n  roof.Name AS RoofName,\n  SUBSTRING(roof.Name, POSITION(':' IN roof.Name) + 1, POSITION(':' IN roof.Name) - 1) AS RoofType,\n  pt_area.Value AS Area,\n  pt_thickness.Value AS Thickness\nFROM EntityText roof\nLEFT JOIN ParameterText pt_area ON roof.EntityIndex = pt_area.EntityIndex AND pt_area.Name = 'Area' AND pt_area.ParameterGroup = 'Dimensions'\nLEFT JOIN ParameterText pt_thickness ON roof.EntityIndex = pt_thickness.EntityIndex AND pt_thickness.Name = 'Thickness' AND pt_thickness.ParameterGroup = 'Dimensions'\nWHERE roof.Category = 'IFCROOF'\nORDER BY roof.Name\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "sql": "\nSELECT \n  CASE \n    WHEN roof.Name LIKE 'Basic Roof:Flachdachaufbau%' THEN 'Flachdachaufbau begrünt 320'\n    WHEN roof.Name LIKE 'Basic Roof:Ziegeldach%' THEN 'Ziegeldach 360'\n  END AS RoofType,\n  COUNT(DISTINCT roof.StepId) AS NumberOfInstances,\n  SUM(CAST(COALESCE(pt_area.Value, '0') AS FLOAT)) AS TotalArea,\n  MAX(CAST(COALESCE(pt_thickness.Value, '0') AS FLOAT)) AS Thickness\nFROM EntityText roof\nLEFT JOIN ParameterText pt_area ON roof.EntityIndex = pt_area.EntityIndex AND pt_area.Name = 'Area' AND pt_area.ParameterGroup = 'Dimensions'\nLEFT JOIN ParameterText pt_thickness ON roof.EntityIndex = pt_thickness.EntityIndex AND pt_thickness.Name = 'Thickness' AND pt_thickness.ParameterGroup = 'Dimensions'\nWHERE roof.Category = 'IFCROOF'\nGROUP BY RoofType\nORDER BY RoofType\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_2/arc.ifc",
+            "sql": "\nSELECT DISTINCT\n  CASE \n    WHEN roof.Name LIKE 'Basic Roof:Flachdachaufbau%' THEN 'Flachdachaufbau begrünt 320'\n    WHEN roof.Name LIKE 'Basic Roof:Ziegeldach%' THEN 'Ziegeldach 360'\n  END AS RoofType,\n  mat.Name AS MaterialLayer,\n  mat_props.Value AS MaterialCategory\nFROM EntityText roof\nLEFT JOIN RelationText rel ON roof.EntityIndex = rel.EntityIndexA\nLEFT JOIN EntityText mat ON rel.EntityIndexB = mat.EntityIndex\nLEFT JOIN ParameterText mat_props ON mat.EntityIndex = mat_props.EntityIndex AND mat_props.Name = 'Ifc:Category'\nWHERE roof.Category = 'IFCROOF' AND mat.Category = 'IFCMATERIAL'\nORDER BY RoofType, mat.Name\n"
+          }
+        }
+      ]
+    },
+    {
+      "id": 440,
+      "project": "fantasy_office_building_3",
+      "model": "arc",
+      "category": 3,
+      "question": "What are all the spaces on level 1, with their areas?",
+      "groundTruth": "Level 1 (OG1) Spaces:\n   Total spaces: 17\n   Total area: 299.30 sq m\n\n   Individual spaces:\n   - Elevater shaft 1: 2.21 sq m\n   - Staircase core (west): 13.87 sq m\n   - Corridor west: 33.54 sq m\n   - Toilet men: 8.34 sq m\n   - Individual office 2: 11.08 sq m\n   - Individual office 1: 10.96 sq m\n   - Kitchen: 27.28 sq m\n   - Meeting room 1: 15.16 sq m\n   - Open-plan office 1: 54.57 sq m\n   - Meeting room 2: 15.16 sq m\n   - Small office space: 27.28 sq m\n   - Individual office 3: 11.26 sq m\n   - Individual office 4: 11.04 sq m\n   - Toilet women: 8.77 sq m\n   - Corridor east: 32.14 sq m\n   - Staircase core (east): 14.43 sq m\n   - Elevator shaft 2: 2.21 sq m",
+      "answer": "**Spaces on Level 1 (OG1) with their areas (from ifc_sql, 17 rows):**\n\n| Space Name | Area |\n|---|---|\n| Corridor east | 32.14 |\n| Corridor west | 33.54 |\n| Elevater shaft 1 | 2.21 |\n| Elevator shaft 2 | 2.21 |\n| Individual office 1 | 10.96 |\n| Individual office 2 | 11.08 |\n| Individual office 3 | 11.26 |\n| Individual office 4 | 11.04 |\n| Kitchen | 27.28 |\n| Meeting room 1 | 15.16 |\n| Meeting room 2 | 15.16 |\n| Open-plan office 1 | 54.57 |\n| Small office space | 27.28 |\n| Staircase core (east) | 14.43 |\n| Staircase core (west) | 13.87 |\n| Toilet men | 8.34 |\n| Toilet women | 8.77 |",
+      "auto": {
+        "verdict": "review",
+        "reason": "ground truth is long or lists many numbers"
+      },
+      "verdict": "correct",
+      "reviewNote": "The 17 spaces and their areas; no total stated, and none was asked for.",
+      "reviewedBy": "Claude Opus 5.5, the agent that made the TKT-145 fixes, on 2026-10-04; not the owner",
+      "failure": null,
+      "costUsd": 0.04509730000000001,
+      "seconds": 23,
+      "turns": 7,
+      "toolCalls": 6,
+      "tools": [
+        {
+          "tool": "ifc_open",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc"
+          }
+        },
+        {
+          "tool": "ifc_spatial_tree",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc"
+          }
+        },
+        {
+          "tool": "ifc_to_bos",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc",
+            "sql": "SELECT e.Name, p.Value as Area\nFROM EntityText e\nJOIN StoreyOfElement se ON e.EntityIndex = se.EntityIndex\nJOIN ParameterText p ON e.EntityIndex = p.EntityIndex\nWHERE se.StoreyName = 'OG1'\n  AND e.Category = 'IFCSPACE'\n  AND p.Name = 'NetFloorArea'\nORDER BY e.Name"
+          }
+        },
+        {
+          "tool": "ifc_parameters",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc",
+            "type": "IFCSPACE"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc",
+            "sql": "SELECT e.Name, p.Value as Area\nFROM EntityText e\nJOIN StoreyOfElement se ON e.EntityIndex = se.EntityIndex\nJOIN ParameterText p ON e.EntityIndex = p.EntityIndex\nWHERE se.StoreyName = 'OG1'\n  AND e.Category = 'IFCSPACE'\n  AND p.Name = 'Area'\n  AND p.ParameterGroup = 'PSet_Room'\nORDER BY e.Name"
+          }
+        }
+      ]
+    },
+    {
+      "id": 457,
+      "project": "fantasy_office_building_3",
+      "model": "arc",
+      "category": 1,
+      "question": "What materials are used in each wall type?",
+      "groundTruth": "Wall Type Materials, by layer:\n\n   - Basiswand:STB 30.0:\n      -  StB - Ortbeton\n\n   - Basiswand:STB 25.0:\n      -  StB - Ortbeton\n\n   - Basiswand:STB 20.0:\n      -  StB - Ortbeton\n\n   - Basiswand:GK 25.0:\n      -  MW - Gipskarton\n      -  Wärmedämmung - Hart (3 layers)\n      -  MW - Gipskarton\n\n   - Basiswand:GK 12.5:\n      -  MW - Gipskarton\n      -  Wärmedämmung - Hart\n      -  MW - Gipskarton\n\n   - Basiswand:MW 11.5:\n      -  MW - Ziegel, verputzt",
+      "answer": "Based on ifc_sql, 8 rows total, here are the materials used in each wall type:\n\n- **Basiswand:GK 12.5** — MW - Gipskarton, Wärmedämmung - Hart\n- **Basiswand:GK 25.0** — MW - Gipskarton, Wärmedämmung - Hart\n- **Basiswand:MW 11.5** — MW - Ziegel, verputzt\n- **Basiswand:STB 20.0** — StB - Ortbeton\n- **Basiswand:STB 25.0** — StB - Ortbeton\n- **Basiswand:STB 30.0** — StB - Ortbeton\n\nThe model has 6 wall types total. The GK (Gipskarton/drywall) types use two materials each (plasterboard and hard insulation), the MW (masonry) type uses ceramic brick with plaster, and the STB (concrete) types use reinforced concrete (Ortbeton).",
+      "auto": {
+        "verdict": "review",
+        "reason": "ground truth is long or lists many numbers"
+      },
+      "verdict": "correct",
+      "reviewNote": "All six wall types with their materials; the number of insulation layers in GK 25.0 is not given, and the question asks for materials.",
+      "reviewedBy": "Claude Opus 5.5, the agent that made the TKT-145 fixes, on 2026-10-04; not the owner",
+      "failure": null,
+      "costUsd": 0.14282229999999999,
+      "seconds": 66,
+      "turns": 23,
+      "toolCalls": 22,
+      "tools": [
+        {
+          "tool": "ifc_open",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc"
+          }
+        },
+        {
+          "tool": "ifc_type_counts",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc"
+          }
+        },
+        {
+          "tool": "ifc_to_bos",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc",
+            "sql": "\nSELECT DISTINCT\n  wt.Name AS WallType,\n  m.Name AS Material\nFROM EntityText wt\nLEFT JOIN RelationText r1 ON wt.EntityIndex = r1.EntityIndexA AND r1.RelationType = 'HasMaterial'\nLEFT JOIN EntityText mcs ON r1.EntityIndexB = mcs.EntityIndex AND mcs.Category = 'IFCMATERIALCONSTITUENTSET'\nLEFT JOIN RelationText r2 ON mcs.EntityIndex = r2.EntityIndexA AND r2.RelationType = 'HasConstituent'\nLEFT JOIN EntityText mc ON r2.EntityIndexB = mc.EntityIndex AND mc.Category = 'IFCMATERIALCONSTITUENT'\nLEFT JOIN ParameterText mat ON mc.EntityIndex = mat.EntityIndex AND mat.Name = 'Ifc:Material'\nLEFT JOIN EntityText m ON m.Name = mat.Value AND m.Category = 'IFCMATERIAL'\nWHERE wt.Category = 'IFCWALLTYPE'\nORDER BY wt.Name, m.Name\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc",
+            "sql": "\nSELECT *\nFROM EntityText\nWHERE Category = 'IFCMATERIAL'\nORDER BY Name\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc",
+            "sql": "\nSELECT\n  wt.Name AS WallType,\n  m.Name AS Material\nFROM EntityText wt\nLEFT JOIN RelationText r ON wt.EntityIndex = r.EntityIndexA AND r.RelationType = 'AssociatedMaterial'\nLEFT JOIN EntityText m ON r.EntityIndexB = m.EntityIndex\nWHERE wt.Category = 'IFCWALLTYPE'\nORDER BY wt.Name, m.Name\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc",
+            "sql": "\nSELECT DISTINCT r.RelationType\nFROM EntityText wt\nLEFT JOIN RelationText r ON wt.EntityIndex = r.EntityIndexA\nWHERE wt.Category = 'IFCWALLTYPE'\nORDER BY r.RelationType\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc",
+            "sql": "\nSELECT\n  wt.Name AS WallType,\n  e2.Category AS RelatedCategory,\n  e2.Name AS RelatedName\nFROM EntityText wt\nLEFT JOIN RelationText r ON wt.EntityIndex = r.EntityIndexA AND r.RelationType = 'HasMaterial'\nLEFT JOIN EntityText e2 ON r.EntityIndexB = e2.EntityIndex\nWHERE wt.Category = 'IFCWALLTYPE'\nORDER BY wt.Name, e2.Category, e2.Name\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc",
+            "sql": "\nSELECT DISTINCT\n  wt.Name AS WallType,\n  e2.Name AS Material\nFROM EntityText wt\nLEFT JOIN RelationText r ON wt.EntityIndex = r.EntityIndexA AND r.RelationType = 'HasMaterial'\nLEFT JOIN EntityText e2 ON r.EntityIndexB = e2.EntityIndex AND e2.Category = 'IFCMATERIAL'\nWHERE wt.Category = 'IFCWALLTYPE'\nORDER BY wt.Name, e2.Name\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc",
+            "sql": "\n-- Check if STB wall types have material constituent sets\nSELECT\n  wt.Name AS WallType,\n  mcs.Name AS MaterialConstituentSet\nFROM EntityText wt\nLEFT JOIN RelationText r ON wt.EntityIndex = r.EntityIndexA AND r.RelationType = 'HasMaterial'\nLEFT JOIN EntityText mcs ON r.EntityIndexB = mcs.EntityIndex AND mcs.Category = 'IFCMATERIALCONSTITUENTSET'\nWHERE wt.Category = 'IFCWALLTYPE'\n  AND wt.Name LIKE '%STB%'\nORDER BY wt.Name\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc",
+            "sql": "\nSELECT\n  wt.Name AS WallType,\n  mcs.Name AS MaterialConstituentSet\nFROM EntityText wt\nLEFT JOIN RelationText r ON wt.EntityIndex = r.EntityIndexA AND r.RelationType = 'HasMaterial'\nLEFT JOIN EntityText mcs ON r.EntityIndexB = mcs.EntityIndex AND mcs.Category = 'IFCMATERIALCONSTITUENTSET'\nWHERE wt.Category = 'IFCWALLTYPE'\n  AND wt.Name LIKE '%STB%'\nORDER BY wt.Name\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc",
+            "sql": "\nSELECT\n  wt.Name AS WallType,\n  r.RelationType,\n  e2.Category AS RelatedCategory,\n  e2.Name AS RelatedName\nFROM EntityText wt\nLEFT JOIN RelationText r ON wt.EntityIndex = r.EntityIndexA\nLEFT JOIN EntityText e2 ON r.EntityIndexB = e2.EntityIndex\nWHERE wt.Category = 'IFCWALLTYPE'\n  AND (wt.Name LIKE '%STB%' OR wt.Name LIKE '%MW%')\nORDER BY wt.Name, r.RelationType, e2.Category\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc",
+            "sql": "\nSELECT\n  wt.Name AS WallType,\n  p.ParameterGroup,\n  p.Name,\n  p.Value\nFROM EntityText wt\nLEFT JOIN ParameterText p ON wt.EntityIndex = p.EntityIndex\nWHERE wt.Category = 'IFCWALLTYPE'\n  AND (wt.Name LIKE '%STB%' OR wt.Name LIKE '%MW%')\nORDER BY wt.Name, p.ParameterGroup, p.Name\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc",
+            "sql": "\nSELECT\n  w.Name AS Wall,\n  wt.Name AS WallType,\n  m.Name AS Material\nFROM EntityText w\nLEFT JOIN RelationText r1 ON w.EntityIndex = r1.EntityIndexA AND r1.RelationType = 'DefinesType'\nLEFT JOIN EntityText wt ON r1.EntityIndexB = wt.EntityIndex\nLEFT JOIN RelationText r2 ON w.EntityIndex = r2.EntityIndexA AND r2.RelationType = 'HasMaterial'\nLEFT JOIN EntityText m ON r2.EntityIndexB = m.EntityIndex AND m.Category = 'IFCMATERIAL'\nWHERE w.Category = 'IFCWALL'\nORDER BY wt.Name, w.Name, m.Name\nLIMIT 50\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc",
+            "sql": "\nSELECT DISTINCT RelationType\nFROM RelationText\nWHERE (EntityIndexA IN (SELECT EntityIndex FROM EntityText WHERE Category = 'IFCWALL')\n   OR EntityIndexB IN (SELECT EntityIndex FROM EntityText WHERE Category = 'IFCWALL'))\nORDER BY RelationType\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc",
+            "sql": "\nSELECT\n  w.Name AS Wall,\n  wt.Name AS WallType,\n  m.Name AS Material\nFROM EntityText w\nLEFT JOIN RelationText r1 ON w.EntityIndex = r1.EntityIndexB AND r1.RelationType = 'DefinesType'\nLEFT JOIN EntityText wt ON r1.EntityIndexA = wt.EntityIndex\nLEFT JOIN RelationText r2 ON w.EntityIndex = r2.EntityIndexA AND r2.RelationType = 'HasMaterial'\nLEFT JOIN EntityText m ON r2.EntityIndexB = m.EntityIndex AND m.Category = 'IFCMATERIAL'\nWHERE w.Category = 'IFCWALL'\nORDER BY wt.Name, w.Name, m.Name\nLIMIT 20\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc",
+            "sql": "\nSELECT *\nFROM EntityText\nWHERE Category = 'IFCRELDEFINESBYTYPE'\nLIMIT 5\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc",
+            "sql": "\nSELECT DISTINCT r.RelationType\nFROM EntityText wt\nLEFT JOIN RelationText r ON wt.EntityIndex = r.EntityIndexB\nWHERE wt.Category = 'IFCWALLTYPE'\nORDER BY r.RelationType\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc",
+            "sql": "\nSELECT\n  e1.Name AS Source,\n  e1.Category AS SourceCategory,\n  r.RelationType,\n  e2.Name AS Target,\n  e2.Category AS TargetCategory\nFROM RelationText r\nLEFT JOIN EntityText e1 ON r.EntityIndexA = e1.EntityIndex\nLEFT JOIN EntityText e2 ON r.EntityIndexB = e2.EntityIndex\nWHERE e2.Category = 'IFCMATERIAL'\n  AND e2.Name IN ('MW - Gipskarton', 'StB - Ortbeton')\nORDER BY e1.Category, e1.Name, e2.Name\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc",
+            "sql": "\nSELECT DISTINCT\n  wt.Name AS WallType,\n  m.Name AS Material\nFROM EntityText wt\nCROSS JOIN EntityText w ON w.Category = 'IFCWALL' AND w.Name LIKE wt.Name || '%'\nLEFT JOIN RelationText r ON w.EntityIndex = r.EntityIndexA AND r.RelationType = 'HasMaterial'\nLEFT JOIN EntityText m ON r.EntityIndexB = m.EntityIndex AND m.Category = 'IFCMATERIAL'\nWHERE wt.Category = 'IFCWALLTYPE'\nORDER BY wt.Name, m.Name\n"
+          }
+        },
+        {
+          "tool": "ifc_sql",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc",
+            "sql": "\nSELECT DISTINCT\n  wt.Name AS WallType,\n  m.Name AS Material\nFROM EntityText wt\nJOIN (\n  SELECT DISTINCT w.EntityIndex, wt2.Name as WallTypeName\n  FROM EntityText w\n  JOIN EntityText wt2 ON w.Name LIKE wt2.Name || '%'\n  WHERE w.Category = 'IFCWALL' AND wt2.Category = 'IFCWALLTYPE'\n) wall_with_type ON wall_with_type.WallTypeName = wt.Name\nLEFT JOIN RelationText r ON wall_with_type.EntityIndex = r.EntityIndexA AND r.RelationType = 'HasMaterial'\nLEFT JOIN EntityText m ON r.EntityIndexB = m.EntityIndex AND m.Category = 'IFCMATERIAL'\nWHERE wt.Category = 'IFCWALLTYPE'\nORDER BY wt.Name, m.Name\n"
+          }
+        },
+        {
+          "tool": "ifc_close",
+          "input": {
+            "path": "C:/Users/cdigg/git/bim-open-data/bench/ifc-bench/cache/dataset/projects/fantasy_office_building_3/arc.ifc"
+          }
+        }
+      ]
+    }
+  ]
+}
