@@ -28,6 +28,19 @@ The `IBuildingProjectionWriter` interface is the export boundary. `DuckDbProject
 
 For example, query `SELECT element_name, nominal_width FROM door WHERE nominal_width > 0.8`. Exports without an established numeric storage policy retain unknown measurements as NULL; use `--revit-internal` only for source values known to use Revit internal units.
 
+## IFC to BOS and DuckDB: `convert-ifc`
+
+`convert-ifc <file.ifc> <output.bos> <output.duckdb>` converts one IFC file to a BOS file with
+geometry (`Ara3D.Ifc.DuckDb.IfcDuckDbBuild.SaveBos`), then loads it into a raw DuckDB database
+with the text views (`EntityText`, `ParameterText`, `RelationText`, `StoreyOfEntity`,
+`StoreyOfElement`), the same database the IFC MCP server's `ifc_to_bos` builds. The converter
+records the IFC path as given in the `Documents` table, so pass a relative path to keep
+machine-local folders out of the output. `samples/public/convert.mjs` uses it.
+
+```powershell
+dotnet run --project tools/building-model-workflows -c Release -- convert-ifc samples/nrc/duplex-base.ifc artifacts/duplex.bos artifacts/duplex.duckdb
+```
+
 ## Federation: `federate-union`
 
 `federate-union <out-dir> (<file.ifc>... | --example)` converts one or more IFC files with

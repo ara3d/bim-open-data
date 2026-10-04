@@ -9,6 +9,7 @@ using Ara3D.BimOpenSchema.BuildingModel.Source;
 using Ara3D.BimOpenSchema.BuildingModel.Workflows;
 using Ara3D.BimOpenSchema.BuildingModel.Workflows.IO;
 using Ara3D.BimOpenSchema.Federation;
+using Ara3D.Ifc.DuckDb;
 using Ara3D.Utils;
 using Platonic;
 
@@ -49,6 +50,9 @@ internal static class Program
                     if (args.Length == 5 && args[4] != "--complete-scope") return Usage();
                     Compare(args[1], args[2], args[3], args.Length == 5);
                     return 0;
+                case "convert-ifc" when args.Length == 4:
+                    ConvertIfc(args[1], args[2], args[3]);
+                    return 0;
                 case "federate-union" when args.Length >= 3:
                     FederateUnion(args[1], args.Skip(2).ToArray());
                     return 0;
@@ -64,7 +68,7 @@ internal static class Program
 
     private static int Usage()
     {
-        Console.Error.WriteLine("Commands: prepare <source.bos> <cache.bfast> | run <cache.bfast> <output-directory> [--declared-units|--revit-internal] | reopen <projection.json> <output-directory> | export-duckdb <cache.bfast> <output.duckdb> [--declared-units|--revit-internal] | portfolio <output-directory> <projection.json> [...] | compare <before.json> <after.json> <output-directory> [--complete-scope] | federate-union <out-dir> (<file.ifc>... | --example)");
+        Console.Error.WriteLine("Commands: prepare <source.bos> <cache.bfast> | run <cache.bfast> <output-directory> [--declared-units|--revit-internal] | reopen <projection.json> <output-directory> | export-duckdb <cache.bfast> <output.duckdb> [--declared-units|--revit-internal] | portfolio <output-directory> <projection.json> [...] | compare <before.json> <after.json> <output-directory> [--complete-scope] | convert-ifc <file.ifc> <output.bos> <output.duckdb> | federate-union <out-dir> (<file.ifc>... | --example)");
         Console.Error.WriteLine("BFAST preparation is explicit; run/reopen never read or decode the original BOS. --declared-units asserts stored numeric units, not merely display units.");
         return 2;
     }
@@ -124,6 +128,18 @@ internal static class Program
             DateTimeOffset.UtcNow, NumericStorage: storagePolicy));
         new DuckDbProjectionWriter().Write(projection, destination);
         Console.WriteLine($"DuckDB core projection ({Summary(projection)}): {Path.GetFullPath(destination)}");
+    }
+
+    /// <summary>Converts one IFC file to a BOS file with geometry, then loads that BOS into a raw
+    /// DuckDB database with the text views (EntityText, ParameterText, RelationText, ...), the
+    /// same database the IFC MCP server's ifc_to_bos builds.</summary>
+    private static void ConvertIfc(string ifc, string bos, string duckDb)
+    {
+        var timer = Stopwatch.StartNew();
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(bos))!);
+        IfcDuckDbBuild.SaveBos(ifc, bos);
+        IfcDuckDbBuild.FromBos(bos, duckDb);
+        Console.WriteLine($"{Path.GetFileName(ifc)}: {new FileInfo(bos).Length:N0} byte BOS, {new FileInfo(duckDb).Length:N0} byte DuckDB in {timer.Elapsed.TotalSeconds:F1} s");
     }
 
     private static readonly JsonSerializerOptions FederationJsonOptions =

@@ -27,7 +27,8 @@ public static class BosUnion
 
     /// <summary>Converts each file with IfcToBosConverter, disposing its IfcFile before the
     /// next so peak memory reflects one file, not all of them. Title is the file name without
-    /// its extension.</summary>
+    /// its extension; Path is the path as given, as IfcToBosConverter records it, so relative
+    /// inputs keep machine-local folders out of the union.</summary>
     public static IReadOnlyList<UnionInput> ConvertIfc(IReadOnlyList<FilePath> ifcFiles, ILogger? logger = null)
     {
         var result = new List<UnionInput>(ifcFiles.Count);
@@ -36,7 +37,7 @@ public static class BosUnion
             var converter = new IfcToBosConverter(file, logger);
             try
             {
-                result.Add(new UnionInput(converter.BimDataBuilder.Build(), file.GetFileNameWithoutExtension(), file.FullPath));
+                result.Add(new UnionInput(converter.BimDataBuilder.Build(), file.GetFileNameWithoutExtension(), file.Value));
             }
             finally
             {

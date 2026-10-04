@@ -18,23 +18,29 @@ public static class IfcDuckDbBuild
         {
             var bos = new FilePath(Path.Combine(folder, Path.GetFileNameWithoutExtension(ifc.FullPath) + ".bos"));
             SaveBos(ifc, bos);
-
-            var directory = Path.GetDirectoryName(duckDb.FullPath);
-            if (!string.IsNullOrEmpty(directory))
-                Directory.CreateDirectory(directory);
-
-            // A database left from an earlier build keeps tables this one no longer writes, so
-            // replacing tables in place is not enough to make the result reproducible.
-            File.Delete(duckDb.FullPath);
-
-            bos.BosToDuckDB(duckDb);
-            BosDuckDbViews.CreateViews(duckDb);
-            return duckDb;
+            return FromBos(bos, duckDb);
         }
         finally
         {
             TryDelete(folder);
         }
+    }
+
+    /// <summary>Loads a BOS file into a new DuckDB file and creates the text views. Overwrites
+    /// the database. Returns the database path.</summary>
+    public static FilePath FromBos(FilePath bos, FilePath duckDb)
+    {
+        var directory = Path.GetDirectoryName(duckDb.FullPath);
+        if (!string.IsNullOrEmpty(directory))
+            Directory.CreateDirectory(directory);
+
+        // A database left from an earlier build keeps tables this one no longer writes, so
+        // replacing tables in place is not enough to make the result reproducible.
+        File.Delete(duckDb.FullPath);
+
+        bos.BosToDuckDB(duckDb);
+        BosDuckDbViews.CreateViews(duckDb);
+        return duckDb;
     }
 
     /// <summary>Converts the IFC to a BOS file (parquet zip) at the given path. Runs the
