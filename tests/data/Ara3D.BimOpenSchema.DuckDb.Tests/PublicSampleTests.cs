@@ -15,6 +15,7 @@ public sealed class PublicSampleTests
 {
     public sealed record Sample(
         string Name,
+        string[] Sources,
         bool Geometry,
         Dictionary<string, long> Counts,
         Dictionary<string, long> Relations,
@@ -68,5 +69,42 @@ public sealed class PublicSampleTests
         Assert.That(data.Entities, Has.Length.EqualTo(sample.Entities));
         if (sample.Geometry)
             Assert.That(path.ReadBimGeometryFromParquetZip().InstanceEntityIndex.Length, Is.GreaterThan(0));
+    }
+
+    public static IEnumerable<TestCaseData> Unions()
+        => Samples().Where(c => ((Sample)c.Arguments[0]!).Sources.Length > 1);
+
+    /// <summary>A union keeps every part whole: its entities and geometry instances are the
+    /// parts' (each part is the single-source sample of the same name) in source order, and
+    /// each instance still names the same source entity (document and STEP id) as in its part,
+    /// so nothing was merged on a matching GlobalId and no instance points into another model.</summary>
+    [TestCaseSource(nameof(Unions))]
+    public void Union_IsItsPartsInOrder(Sample sample)
+    {
+        var union = new FilePath(RepoPaths.Samples("public", sample.Name + ".bos")).ReadBimDataFromParquetZip();
+        var parts = sample.Sources.Select(s => new FilePath(RepoPaths.Samples("public", s + ".bos")).ReadBimDataFromParquetZip()).ToArray();
+        Assert.That(union.Entities, Has.Length.EqualTo(parts.Sum(p => p.Entities.Length)), "entities");
+        Assert.That(union.Geometry.InstanceEntityIndex, Has.Length.EqualTo(parts.Sum(p => p.Geometry.InstanceEntityIndex.Length)), "instances");
+
+        var (entityOffset, instanceOffset) = (0, 0);
+        for (var d = 0; d < parts.Length; d++)
+        {
+            var part = parts[d];
+            for (var i = 0; i < part.Geometry.InstanceEntityIndex.Length; i++)
+            {
+                var expected = part.Geometry.InstanceEntityIndex[i];
+                var actual = union.Geometry.InstanceEntityIndex[instanceOffset + i];
+                if (expected < 0)
+                {
+                    Assert.That(actual, Is.EqualTo(expected));
+                    continue;
+                }
+                Assert.That(actual, Is.EqualTo(expected + entityOffset), $"{sample.Sources[d]} instance {i}");
+                Assert.That(union.Entities[actual].Document, Is.EqualTo((DocumentIndex)d));
+                Assert.That(union.Entities[actual].LocalId, Is.EqualTo(part.Entities[expected].LocalId));
+            }
+            entityOffset += part.Entities.Length;
+            instanceOffset += part.Geometry.InstanceEntityIndex.Length;
+        }
     }
 }

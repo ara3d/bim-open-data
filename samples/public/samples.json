@@ -111,10 +111,28 @@
       "entities": 6467
     },
     {
+      "name": "digitalhub-lft",
+      "title": "DigitalHub, ventilation",
+      "sources": ["digitalhub-lft"],
+      "geometry": true,
+      "counts": { "IFCBUILDINGSTOREY": 3, "IFCSYSTEM": 4, "IFCDUCTSEGMENT": 595, "IFCDUCTFITTING": 538, "IFCAIRTERMINAL": 148, "IFCDAMPER": 18, "IFCDISTRIBUTIONPORT": 2656 },
+      "relations": { "ConnectsTo": 1310 },
+      "entities": 4883
+    },
+    {
+      "name": "digitalhub-san",
+      "title": "DigitalHub, plumbing",
+      "sources": ["digitalhub-san"],
+      "geometry": true,
+      "counts": { "IFCBUILDINGSTOREY": 3, "IFCSYSTEM": 19, "IFCPIPESEGMENT": 504, "IFCPIPEFITTING": 411, "IFCSANITARYTERMINAL": 72, "IFCUNITARYEQUIPMENT": 16, "IFCVALVE": 3, "IFCDISTRIBUTIONPORT": 2081 },
+      "relations": { "ConnectsTo": 1025 },
+      "entities": 4229
+    },
+    {
       "name": "digitalhub-federated",
       "title": "DigitalHub, architecture, heating, ventilation, and plumbing federated",
       "sources": ["digitalhub-arc", "digitalhub-hzg", "digitalhub-lft", "digitalhub-san"],
-      "geometry": false,
+      "geometry": true,
       "counts": { "IFCBUILDINGSTOREY": 12, "IFCSPACE": 64, "IFCDOOR": 64, "IFCWINDOW": 47, "IFCWALL": 178, "IFCSYSTEM": 65, "IFCSPACEHEATER": 63, "IFCPIPESEGMENT": 1418, "IFCDUCTSEGMENT": 595, "IFCAIRTERMINAL": 148, "IFCSANITARYTERMINAL": 72 },
       "relations": { "ConnectsTo": 4208 },
       "entities": 18551
@@ -159,7 +177,7 @@
       "name": "duplex-federated",
       "title": "Duplex Apartment, architecture, MEP, electrical, and rooms federated",
       "sources": ["duplex", "duplex-mep", "duplex-electrical", "duplex-rooms"],
-      "geometry": false,
+      "geometry": true,
       "counts": { "IFCBUILDINGSTOREY": 13, "IFCSPACE": 101, "IFCDOOR": 14, "IFCWINDOW": 24, "IFCWALL": 1, "IFCWALLSTANDARDCASE": 56, "IFCFLOWSEGMENT": 673, "IFCFLOWFITTING": 565, "IFCFLOWTERMINAL": 187, "IFCFLOWCONTROLLER": 30, "IFCENERGYCONVERSIONDEVICE": 40, "IFCFLOWMOVINGDEVICE": 12, "IFCDISTRIBUTIONCONTROLELEMENT": 5, "IFCBUILDINGELEMENTPROXY": 4 },
       "relations": { "ConnectsTo": 82, "ContainedIn": 1723, "HasMaterial": 307 },
       "entities": 14077

@@ -2,10 +2,12 @@
 // Converts the fetched source IFC files into the committed samples that samples.json lists:
 // <name>.bos and <name>.duckdb in samples/public/. One source: the CLI's convert-ifc verb (IFC to
 // BOS with geometry, then DuckDB with the text views, as the IFC MCP server's ifc_to_bos builds).
-// Several sources: its federate-union verb (Ara3D.BimOpenSchema.Federation, geometry-free).
+// Several sources: its federate-union verb (Ara3D.BimOpenSchema.Federation), which keeps each
+// source as its own document with all its entities and geometry, merging nothing.
 //
 //   node samples/public/fetch.mjs
-//   node samples/public/convert.mjs
+//   node samples/public/convert.mjs                        # every sample
+//   node samples/public/convert.mjs duplex-federated ...   # only the named samples
 //
 // Runs from the repository root and passes the sources as relative paths, because the converter
 // records each source path in the Documents table and a relative one keeps machine-local folders
@@ -18,7 +20,12 @@ import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "../..");
-const { sources, samples } = JSON.parse(readFileSync(join(here, "samples.json"), "utf8"));
+const catalog = JSON.parse(readFileSync(join(here, "samples.json"), "utf8"));
+const { sources } = catalog;
+const names = process.argv.slice(2);
+const unknown = names.filter((name) => !catalog.samples.some((s) => s.name === name));
+if (unknown.length > 0) throw new Error(`Not in samples.json: ${unknown.join(", ")}`);
+const samples = names.length === 0 ? catalog.samples : catalog.samples.filter((s) => names.includes(s.name));
 const project = "tools/building-model-workflows";
 const cli = join(root, project, "bin/Release/net8.0-windows/BuildingModel.Workflows.Cli.exe");
 
