@@ -10,6 +10,8 @@
 
 **Sample buildings:** [`samples/public/`](samples/public/README.md) holds Schependomlaan (CC BY 4.0), DigitalHub architecture, heating, and a four-model federation (MIT), and the Duplex Apartment (CC BY 4.0), each as a `.bos` and a `.duckdb` file with measured counts. Their licences and required attribution are in [`samples/public/NOTICE.md`](samples/public/NOTICE.md).
 
+**Benchmark:** [`bench/ifc-bench/`](bench/ifc-bench/README.md) runs 100 questions from IFC-Bench v2, an external benchmark with expected answers, against the IFC MCP server with Claude Haiku as the agent, and grades the answers; the score is in its `RESULTS.md`.
+
 **Status on 2026-10-03: the code is here.** It moved from [`ara3d/bim-open-toolkit`](https://github.com/ara3d/bim-open-toolkit), with its git history, in phase 4 of the toolkit's [repository split plan](https://github.com/ara3d/bim-open-toolkit/blob/main/docs/plans/repository-split.md). The paths are the ones it had there (`src/data`, `tests/data`, `src/mcp/BimOpenMcp.Ifc`, `tests/mcp/BimOpenMcp.Ifc.Tests`, `apps/`, `tools/`), so `git log --follow` reaches back through the toolkit's history. The toolkit now takes this repository through its own `deps.json`, as `deps/bim-open-data`.
 
 ## Build and test

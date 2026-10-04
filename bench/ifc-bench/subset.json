@@ -1,0 +1,608 @@
+{
+  "revision": "df630deb761efcb184f1a30ab374da7dbae38225",
+  "size": 100,
+  "maxModelMb": 80,
+  "rule": "usable licence, model at most maxModelMb, category seats proportional to the dataset, models take turns, order by sha256('ifc-bench-subset:'+id)",
+  "questions": [
+    {
+      "id": 51,
+      "project": "ac20",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 55,
+      "project": "ac20",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 61,
+      "project": "ac20",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 69,
+      "project": "ac20",
+      "ifc_model": "arc",
+      "category": 4
+    },
+    {
+      "id": 74,
+      "project": "ac20",
+      "ifc_model": "arc",
+      "category": 1
+    },
+    {
+      "id": 85,
+      "project": "ac20",
+      "ifc_model": "arc",
+      "category": 4
+    },
+    {
+      "id": 89,
+      "project": "ac20",
+      "ifc_model": "arc",
+      "category": 3
+    },
+    {
+      "id": 97,
+      "project": "dental_clinic",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 103,
+      "project": "dental_clinic",
+      "ifc_model": "arc",
+      "category": 4
+    },
+    {
+      "id": 104,
+      "project": "dental_clinic",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 115,
+      "project": "dental_clinic",
+      "ifc_model": "arc",
+      "category": 4
+    },
+    {
+      "id": 117,
+      "project": "dental_clinic",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 119,
+      "project": "dental_clinic",
+      "ifc_model": "arc",
+      "category": 1
+    },
+    {
+      "id": 122,
+      "project": "dental_clinic",
+      "ifc_model": "arc",
+      "category": 3
+    },
+    {
+      "id": 126,
+      "project": "dental_clinic",
+      "ifc_model": "str",
+      "category": 4
+    },
+    {
+      "id": 134,
+      "project": "dental_clinic",
+      "ifc_model": "str",
+      "category": 1
+    },
+    {
+      "id": 135,
+      "project": "dental_clinic",
+      "ifc_model": "str",
+      "category": 3
+    },
+    {
+      "id": 141,
+      "project": "digital_hub",
+      "ifc_model": "arc",
+      "category": 1
+    },
+    {
+      "id": 146,
+      "project": "digital_hub",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 161,
+      "project": "digital_hub",
+      "ifc_model": "arc",
+      "category": 3
+    },
+    {
+      "id": 167,
+      "project": "digital_hub",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 168,
+      "project": "digital_hub",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 180,
+      "project": "digital_hub",
+      "ifc_model": "arc",
+      "category": 4
+    },
+    {
+      "id": 202,
+      "project": "digital_hub",
+      "ifc_model": "heating",
+      "category": 2
+    },
+    {
+      "id": 206,
+      "project": "digital_hub",
+      "ifc_model": "heating",
+      "category": 2
+    },
+    {
+      "id": 207,
+      "project": "digital_hub",
+      "ifc_model": "heating",
+      "category": 2
+    },
+    {
+      "id": 210,
+      "project": "digital_hub",
+      "ifc_model": "heating",
+      "category": 4
+    },
+    {
+      "id": 213,
+      "project": "digital_hub",
+      "ifc_model": "plumbing",
+      "category": 2
+    },
+    {
+      "id": 218,
+      "project": "digital_hub",
+      "ifc_model": "plumbing",
+      "category": 2
+    },
+    {
+      "id": 221,
+      "project": "digital_hub",
+      "ifc_model": "plumbing",
+      "category": 2
+    },
+    {
+      "id": 230,
+      "project": "digital_hub",
+      "ifc_model": "ventilation",
+      "category": 2
+    },
+    {
+      "id": 233,
+      "project": "digital_hub",
+      "ifc_model": "ventilation",
+      "category": 2
+    },
+    {
+      "id": 235,
+      "project": "digital_hub",
+      "ifc_model": "ventilation",
+      "category": 2
+    },
+    {
+      "id": 236,
+      "project": "digital_hub",
+      "ifc_model": "ventilation",
+      "category": 3
+    },
+    {
+      "id": 239,
+      "project": "duplex",
+      "ifc_model": "arc",
+      "category": 1
+    },
+    {
+      "id": 250,
+      "project": "duplex",
+      "ifc_model": "arc",
+      "category": 3
+    },
+    {
+      "id": 253,
+      "project": "duplex",
+      "ifc_model": "arc",
+      "category": 4
+    },
+    {
+      "id": 274,
+      "project": "duplex",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 279,
+      "project": "duplex",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 280,
+      "project": "duplex",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 291,
+      "project": "duplex",
+      "ifc_model": "mep",
+      "category": 2
+    },
+    {
+      "id": 294,
+      "project": "duplex",
+      "ifc_model": "mep",
+      "category": 2
+    },
+    {
+      "id": 300,
+      "project": "duplex",
+      "ifc_model": "mep",
+      "category": 4
+    },
+    {
+      "id": 302,
+      "project": "duplex",
+      "ifc_model": "mep",
+      "category": 2
+    },
+    {
+      "id": 305,
+      "project": "duplex",
+      "ifc_model": "mep",
+      "category": 1
+    },
+    {
+      "id": 328,
+      "project": "fantasy_hotel_1",
+      "ifc_model": "arc",
+      "category": 1
+    },
+    {
+      "id": 337,
+      "project": "fantasy_hotel_1",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 342,
+      "project": "fantasy_hotel_1",
+      "ifc_model": "arc",
+      "category": 3
+    },
+    {
+      "id": 343,
+      "project": "fantasy_hotel_1",
+      "ifc_model": "arc",
+      "category": 4
+    },
+    {
+      "id": 348,
+      "project": "fantasy_hotel_1",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 361,
+      "project": "fantasy_hotel_1",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 374,
+      "project": "fantasy_office_building_1",
+      "ifc_model": "arc",
+      "category": 3
+    },
+    {
+      "id": 375,
+      "project": "fantasy_office_building_1",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 381,
+      "project": "fantasy_office_building_1",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 387,
+      "project": "fantasy_office_building_1",
+      "ifc_model": "arc",
+      "category": 1
+    },
+    {
+      "id": 392,
+      "project": "fantasy_office_building_1",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 396,
+      "project": "fantasy_office_building_1",
+      "ifc_model": "arc",
+      "category": 4
+    },
+    {
+      "id": 410,
+      "project": "fantasy_office_building_2",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 420,
+      "project": "fantasy_office_building_2",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 421,
+      "project": "fantasy_office_building_2",
+      "ifc_model": "arc",
+      "category": 1
+    },
+    {
+      "id": 427,
+      "project": "fantasy_office_building_2",
+      "ifc_model": "arc",
+      "category": 4
+    },
+    {
+      "id": 429,
+      "project": "fantasy_office_building_2",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 434,
+      "project": "fantasy_office_building_2",
+      "ifc_model": "arc",
+      "category": 3
+    },
+    {
+      "id": 440,
+      "project": "fantasy_office_building_3",
+      "ifc_model": "arc",
+      "category": 3
+    },
+    {
+      "id": 444,
+      "project": "fantasy_office_building_3",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 450,
+      "project": "fantasy_office_building_3",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 457,
+      "project": "fantasy_office_building_3",
+      "ifc_model": "arc",
+      "category": 1
+    },
+    {
+      "id": 460,
+      "project": "fantasy_office_building_3",
+      "ifc_model": "arc",
+      "category": 4
+    },
+    {
+      "id": 465,
+      "project": "fantasy_office_building_3",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 471,
+      "project": "fantasy_residential_building_1",
+      "ifc_model": "arc",
+      "category": 1
+    },
+    {
+      "id": 479,
+      "project": "fantasy_residential_building_1",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 490,
+      "project": "fantasy_residential_building_1",
+      "ifc_model": "arc",
+      "category": 3
+    },
+    {
+      "id": 493,
+      "project": "fantasy_residential_building_1",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 497,
+      "project": "fantasy_residential_building_1",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 502,
+      "project": "fantasy_residential_building_1",
+      "ifc_model": "arc",
+      "category": 4
+    },
+    {
+      "id": 513,
+      "project": "fzk_house",
+      "ifc_model": "arc",
+      "category": 1
+    },
+    {
+      "id": 530,
+      "project": "fzk_house",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 543,
+      "project": "fzk_house",
+      "ifc_model": "arc",
+      "category": 4
+    },
+    {
+      "id": 555,
+      "project": "fzk_house",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 610,
+      "project": "molio",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 653,
+      "project": "molio",
+      "ifc_model": "arc",
+      "category": 1
+    },
+    {
+      "id": 661,
+      "project": "molio",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 662,
+      "project": "molio",
+      "ifc_model": "arc",
+      "category": 4
+    },
+    {
+      "id": 740,
+      "project": "schependomlaan",
+      "ifc_model": "arc",
+      "category": 4
+    },
+    {
+      "id": 760,
+      "project": "schependomlaan",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 765,
+      "project": "schependomlaan",
+      "ifc_model": "arc",
+      "category": 1
+    },
+    {
+      "id": 782,
+      "project": "schependomlaan",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 880,
+      "project": "sixty5",
+      "ifc_model": "str",
+      "category": 2
+    },
+    {
+      "id": 883,
+      "project": "sixty5",
+      "ifc_model": "str",
+      "category": 2
+    },
+    {
+      "id": 905,
+      "project": "smiley_west",
+      "ifc_model": "arc",
+      "category": 1
+    },
+    {
+      "id": 925,
+      "project": "smiley_west",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 928,
+      "project": "smiley_west",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 946,
+      "project": "smiley_west",
+      "ifc_model": "arc",
+      "category": 4
+    },
+    {
+      "id": 953,
+      "project": "wbdg_office",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 965,
+      "project": "wbdg_office",
+      "ifc_model": "arc",
+      "category": 2
+    },
+    {
+      "id": 1001,
+      "project": "wbdg_office",
+      "ifc_model": "mep",
+      "category": 2
+    },
+    {
+      "id": 1004,
+      "project": "wbdg_office",
+      "ifc_model": "mep",
+      "category": 2
+    },
+    {
+      "id": 1008,
+      "project": "wbdg_office",
+      "ifc_model": "mep",
+      "category": 4
+    },
+    {
+      "id": 1019,
+      "project": "wbdg_office",
+      "ifc_model": "str",
+      "category": 2
+    },
+    {
+      "id": 1020,
+      "project": "wbdg_office",
+      "ifc_model": "str",
+      "category": 2
+    }
+  ]
+}

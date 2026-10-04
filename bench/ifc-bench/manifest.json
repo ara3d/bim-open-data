@@ -1,0 +1,685 @@
+{
+  "dataset": "sylvainHellin/ifc-bench",
+  "revision": "df630deb761efcb184f1a30ab374da7dbae38225",
+  "questionsSha256": "1a3ab5f824e3805b435a72ff672adb89228609e8446a7efdef9bc771f2df570a",
+  "questions": 1026,
+  "rule": "Models are usable here when their licence is one of CC-BY-4.0, MIT (TKT-145).",
+  "projects": [
+    {
+      "project": "4351",
+      "licence": "GPL-3.0-or-later",
+      "usable": false,
+      "licenceHolder": "Copyright (C) 2009-2017  BIMserver.org",
+      "models": [
+        {
+          "model": "arc",
+          "bytes": 7288853,
+          "questionsByCategory": [
+            2,
+            18,
+            15,
+            8
+          ]
+        }
+      ]
+    },
+    {
+      "project": "ac20",
+      "licence": "CC-BY-4.0",
+      "usable": true,
+      "licenceHolder": "(C) Institute for Automation and Applied Informatics (IAI) / Karlsruhe Institute of Technology (KIT), https://www.ifcwiki.org/index.php?title=KIT_IFC_Examples",
+      "models": [
+        {
+          "model": "arc",
+          "bytes": 10934237,
+          "questionsByCategory": [
+            6,
+            32,
+            1,
+            9
+          ]
+        }
+      ]
+    },
+    {
+      "project": "city_house_munich",
+      "licence": "CC-BY-4.0",
+      "usable": true,
+      "licenceHolder": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+      "models": [
+        {
+          "model": "arc",
+          "bytes": 33499586,
+          "questionsByCategory": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "project": "dental_clinic",
+      "licence": "CC-BY-4.0",
+      "usable": true,
+      "licenceHolder": "(C) \"BSI (2020) \"Medical-Dental Test Files,\" buildingSMART International\", https://github.com/buildingsmart-community/Community-Sample-Test-Files/tree/main/IFC%202.3.0.1%20(IFC%202x3)/Medical-Dental%20Clinic",
+      "models": [
+        {
+          "model": "arc",
+          "bytes": 13208096,
+          "questionsByCategory": [
+            7,
+            10,
+            4,
+            12
+          ]
+        },
+        {
+          "model": "mep",
+          "bytes": 125780663,
+          "questionsByCategory": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "model": "str",
+          "bytes": 19375987,
+          "questionsByCategory": [
+            2,
+            0,
+            2,
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "project": "digital_hub",
+      "licence": "MIT",
+      "usable": true,
+      "licenceHolder": "MIT License",
+      "models": [
+        {
+          "model": "arc",
+          "bytes": 9022255,
+          "questionsByCategory": [
+            15,
+            34,
+            3,
+            12
+          ]
+        },
+        {
+          "model": "heating",
+          "bytes": 20890415,
+          "questionsByCategory": [
+            0,
+            11,
+            0,
+            1
+          ]
+        },
+        {
+          "model": "plumbing",
+          "bytes": 25178864,
+          "questionsByCategory": [
+            0,
+            13,
+            0,
+            0
+          ]
+        },
+        {
+          "model": "ventilation",
+          "bytes": 12737833,
+          "questionsByCategory": [
+            0,
+            12,
+            1,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "project": "duplex",
+      "licence": "CC-BY-4.0",
+      "usable": true,
+      "licenceHolder": "(C) \"BSI (2020) \"Duplex Apartment Test Files,\" buildingSMART International\", https://github.com/buildingsmart-community/Community-Sample-Test-Files/tree/main/IFC%202.3.0.1%20(IFC%202x3)/Duplex%20Apartment",
+      "models": [
+        {
+          "model": "arc",
+          "bytes": 1656153,
+          "questionsByCategory": [
+            11,
+            9,
+            5,
+            26
+          ]
+        },
+        {
+          "model": "mep",
+          "bytes": 11129368,
+          "questionsByCategory": [
+            7,
+            5,
+            0,
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "project": "ettenheim_gis",
+      "licence": "GPL-3.0-or-later",
+      "usable": false,
+      "licenceHolder": "Copyright (C) 2009-2017  BIMserver.org",
+      "models": [
+        {
+          "model": "city",
+          "bytes": 30552021,
+          "questionsByCategory": [
+            4,
+            8,
+            3,
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "project": "fantasy_hotel_1",
+      "licence": "MIT",
+      "usable": true,
+      "licenceHolder": "MIT License",
+      "models": [
+        {
+          "model": "arc",
+          "bytes": 8455469,
+          "questionsByCategory": [
+            4,
+            25,
+            1,
+            11
+          ]
+        }
+      ]
+    },
+    {
+      "project": "fantasy_hotel_2",
+      "licence": "MIT",
+      "usable": true,
+      "licenceHolder": "MIT License",
+      "models": [
+        {
+          "model": "arc",
+          "bytes": 9952273,
+          "questionsByCategory": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "project": "fantasy_office_building_1",
+      "licence": "MIT",
+      "usable": true,
+      "licenceHolder": "MIT License",
+      "models": [
+        {
+          "model": "arc",
+          "bytes": 13427535,
+          "questionsByCategory": [
+            4,
+            19,
+            8,
+            4
+          ]
+        }
+      ]
+    },
+    {
+      "project": "fantasy_office_building_2",
+      "licence": "MIT",
+      "usable": true,
+      "licenceHolder": "MIT License",
+      "models": [
+        {
+          "model": "arc",
+          "bytes": 19463969,
+          "questionsByCategory": [
+            4,
+            18,
+            7,
+            2
+          ]
+        }
+      ]
+    },
+    {
+      "project": "fantasy_office_building_3",
+      "licence": "MIT",
+      "usable": true,
+      "licenceHolder": "MIT License",
+      "models": [
+        {
+          "model": "arc",
+          "bytes": 9655829,
+          "questionsByCategory": [
+            3,
+            21,
+            6,
+            5
+          ]
+        }
+      ]
+    },
+    {
+      "project": "fantasy_residential_building_1",
+      "licence": "MIT",
+      "usable": true,
+      "licenceHolder": "MIT License",
+      "models": [
+        {
+          "model": "arc",
+          "bytes": 19719618,
+          "questionsByCategory": [
+            4,
+            19,
+            8,
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "project": "fzk_house",
+      "licence": "CC-BY-4.0",
+      "usable": true,
+      "licenceHolder": "(C) Institute for Automation and Applied Informatics (IAI) / Karlsruhe Institute of Technology (KIT), https://www.ifcwiki.org/index.php?title=KIT_IFC_Examples",
+      "models": [
+        {
+          "model": "arc",
+          "bytes": 2570803,
+          "questionsByCategory": [
+            13,
+            24,
+            0,
+            12
+          ]
+        }
+      ]
+    },
+    {
+      "project": "hitos",
+      "licence": "GPL-3.0-or-later",
+      "usable": false,
+      "licenceHolder": "Copyright (C) 2009-2017  BIMserver.org",
+      "models": [
+        {
+          "model": "arc",
+          "bytes": 64095402,
+          "questionsByCategory": [
+            14,
+            27,
+            0,
+            10
+          ]
+        }
+      ]
+    },
+    {
+      "project": "molio",
+      "licence": "CC-BY-4.0",
+      "usable": true,
+      "licenceHolder": "(C) unspecified, https://github.com/buildingsmart-community/Community-Sample-Test-Files/tree/main/IFC%202.3.0.1%20(IFC%202x3)/Molio",
+      "models": [
+        {
+          "model": "arc",
+          "bytes": 73945142,
+          "questionsByCategory": [
+            21,
+            30,
+            0,
+            7
+          ]
+        }
+      ]
+    },
+    {
+      "project": "samuel_macalister_sample_house",
+      "licence": "GPL-3.0-or-later",
+      "usable": false,
+      "licenceHolder": "Copyright (C) 2009-2017  BIMserver.org",
+      "models": [
+        {
+          "model": "arc",
+          "bytes": 25400254,
+          "questionsByCategory": [
+            10,
+            27,
+            8,
+            7
+          ]
+        },
+        {
+          "model": "mep",
+          "bytes": 29610955,
+          "questionsByCategory": [
+            1,
+            21,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "project": "schependomlaan",
+      "licence": "CC-BY-4.0",
+      "usable": true,
+      "licenceHolder": "(C) original owners.",
+      "models": [
+        {
+          "model": "arc",
+          "bytes": 65078748,
+          "questionsByCategory": [
+            10,
+            16,
+            3,
+            22
+          ]
+        }
+      ]
+    },
+    {
+      "project": "sixty5",
+      "licence": "CC-BY-4.0",
+      "usable": true,
+      "licenceHolder": "(C) unspecified, https://github.com/buildingsmart-community/Community-Sample-Test-Files/tree/main/IFC%202.3.0.1%20(IFC%202x3)/SDK%20-%20S1",
+      "models": [
+        {
+          "model": "arc",
+          "bytes": 342657851,
+          "questionsByCategory": [
+            1,
+            26,
+            17,
+            6
+          ]
+        },
+        {
+          "model": "electrical",
+          "bytes": 97058912,
+          "questionsByCategory": [
+            0,
+            16,
+            0,
+            0
+          ]
+        },
+        {
+          "model": "facade",
+          "bytes": 6067026,
+          "questionsByCategory": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "model": "kitchen",
+          "bytes": 49670229,
+          "questionsByCategory": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "model": "plumbing",
+          "bytes": 222099255,
+          "questionsByCategory": [
+            0,
+            17,
+            0,
+            1
+          ]
+        },
+        {
+          "model": "str",
+          "bytes": 7422441,
+          "questionsByCategory": [
+            0,
+            11,
+            0,
+            0
+          ]
+        },
+        {
+          "model": "ventilation",
+          "bytes": 114891068,
+          "questionsByCategory": [
+            0,
+            18,
+            0,
+            2
+          ]
+        }
+      ]
+    },
+    {
+      "project": "smiley_west",
+      "licence": "CC-BY-4.0",
+      "usable": true,
+      "licenceHolder": "(C) Institute for Automation and Applied Informatics (IAI) / Karlsruhe Institute of Technology (KIT), https://www.ifcwiki.org/index.php?title=KIT_IFC_Examples",
+      "models": [
+        {
+          "model": "arc",
+          "bytes": 6109213,
+          "questionsByCategory": [
+            4,
+            19,
+            8,
+            11
+          ]
+        }
+      ]
+    },
+    {
+      "project": "wbdg_office",
+      "licence": "CC-BY-4.0",
+      "usable": true,
+      "licenceHolder": "(C) \"BSI (2020) \"Medical-Dental Test Files,\" buildingSMART International\", https://github.com/buildingsmart-community/Community-Sample-Test-Files/tree/main/IFC%202.3.0.1%20(IFC%202x3)/Medical-Dental%20Clinic",
+      "models": [
+        {
+          "model": "arc",
+          "bytes": 4099293,
+          "questionsByCategory": [
+            4,
+            20,
+            9,
+            0
+          ]
+        },
+        {
+          "model": "mep",
+          "bytes": 41894594,
+          "questionsByCategory": [
+            1,
+            34,
+            0,
+            2
+          ]
+        },
+        {
+          "model": "str",
+          "bytes": 11067475,
+          "questionsByCategory": [
+            0,
+            8,
+            3,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "project": "west_riverside_hospital",
+      "licence": "CC-BY-3.0",
+      "usable": false,
+      "licenceHolder": "West Riverside Hospital IFC Models",
+      "models": [
+        {
+          "model": "arc_ifc2x3",
+          "bytes": 80318141,
+          "questionsByCategory": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "model": "arc_ifc4",
+          "bytes": 80937122,
+          "questionsByCategory": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "model": "elec_ifc2x3",
+          "bytes": 4725101,
+          "questionsByCategory": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "model": "elec_ifc4",
+          "bytes": 4435308,
+          "questionsByCategory": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "model": "fire_ifc2x3",
+          "bytes": 906328,
+          "questionsByCategory": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "model": "fire_ifc4",
+          "bytes": 905021,
+          "questionsByCategory": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "model": "mech_ifc2x3",
+          "bytes": 78764170,
+          "questionsByCategory": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "model": "mech_ifc4",
+          "bytes": 73047260,
+          "questionsByCategory": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "model": "plumb_ifc2x3",
+          "bytes": 24998920,
+          "questionsByCategory": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "model": "plumb_ifc4",
+          "bytes": 23762808,
+          "questionsByCategory": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "model": "sprinkle_ifc2x3",
+          "bytes": 35659244,
+          "questionsByCategory": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "model": "sprinkle_ifc4",
+          "bytes": 33990094,
+          "questionsByCategory": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "model": "str_ifc2x3",
+          "bytes": 6398139,
+          "questionsByCategory": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "model": "str_ifc4",
+          "bytes": 6484576,
+          "questionsByCategory": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    }
+  ]
+}
