@@ -37,6 +37,11 @@ public sealed class IfcPropData
     public readonly Dictionary<int, IfcPropSet> PropSets = [];
     public readonly MultiDictionary<int, int> ObjectToPropSets = [];
 
+    /// <summary>IfcPhysicalComplexQuantity entities by id, kept as named groups of quantity ids.
+    /// Revit writes one per layer of a wall, slab, or roof into the base quantity set, holding
+    /// that layer's Width; <see cref="GetProperties(IfcPropSet)"/> flattens them.</summary>
+    public readonly Dictionary<int, IfcPropSet> ComplexQuantities = [];
+
     private readonly StepDocument _document;
 
     public IfcPropData(IfcFile file)
@@ -91,6 +96,11 @@ public sealed class IfcPropData
                     ParseElementQuantity(e);
                     break;
 
+                case IfcPhysicalComplexQuantity.ENTITY_CODE:
+                    // (Name, Description, HasQuantities, Discrimination, Quality, Usage)
+                    ComplexQuantities[id] = new IfcPropSet(id, e.GetString(0).StripQuotes().DecodeIfc(), e.GetIdList(2));
+                    break;
+
                 case IfcQuantityLength.ENTITY_CODE:
                 case IfcQuantityArea.ENTITY_CODE:
                 case IfcQuantityVolume.ENTITY_CODE:
@@ -135,11 +145,19 @@ public sealed class IfcPropData
         PropSets[e.Id] = new IfcPropSet(e.Id, name, qtyIds);
     }
 
+    /// <summary>The values a set holds. A complex quantity among them contributes each of its
+    /// members, named <c>Complex/Member</c> (for example <c>StB - Ortbeton/Width</c>), so a layer's
+    /// width cannot be mistaken for the element's own Width.</summary>
     public IEnumerable<IfcPropValue> GetProperties(IfcPropSet propSet)
     {
         foreach (var id in propSet.Ids)
+        {
             if (PropValues.TryGetValue(id, out var propValue))
                 yield return propValue;
+            else if (ComplexQuantities.TryGetValue(id, out var complex))
+                foreach (var member in GetProperties(complex))
+                    yield return member with { Name = $"{complex.Name}/{member.Name}" };
+        }
     }
 
     /// <summary>Every property an object carries, each (set name, property name, value) once.

@@ -92,7 +92,6 @@ public class IfcToBosConverter
         "IFCELEMENTQUANTITY",
         "IFCCARTESIANPOINTLIST2D",
         "IFCEXTRUDEDAREASOLID",
-        "IFCMATERIALCONSTITUENT",
         "IFCINDEXEDCOLOURMAP",
         "IFCCOLOURRGBLIST",
         "IFCARBITRARYCLOSEDPROFILEDEF",
@@ -220,15 +219,23 @@ public class IfcToBosConverter
                     BimDataBuilder.AddParameter(ei, axisTag, AxisTagParameter, "", e.GetEntityName());
             }
 
-            // Additional attributes are added as properties. 
-            for (var i=3; i < attributes.Length; i++)
+            // Additional attributes are added as properties. An IfcRoot entity's first three are
+            // GlobalId, OwnerHistory, and Name; a material resource entity is not IfcRoot, and its
+            // first attributes carry what it is about (IfcMaterialLayer.LayerThickness is attribute 1).
+            var isMaterial = IsMaterialResource(e);
+            for (var i = isMaterial ? 0 : 3; i < attributes.Length; i++)
             {
                 if (i >= e.Attributes.Count)
                     break;
+                // A material set's member list is recorded on each member instead, by AddMaterialSetMembers.
+                if (isMaterial && e.GetAttribute(i).IsList)
+                    continue;
                 ProcessAttributeAsProp(e, attributes[i], i, ei);
             }
 
         }
+
+        AddMaterialSetMembers();
 
         logger?.Log("Recording project length unit");
         var lengthUnit = IfcLengthUnit.Read(IfcFile);
@@ -410,6 +417,46 @@ public class IfcToBosConverter
         {
             var str = val.ToString()?.DecodeIfc() ?? "";
             BimDataBuilder.AddParameter(bosId, str, name, "", propSetName);
+        }
+    }
+
+    public const string LayerSetParameter = "Ifc:LayerSet";
+    public const string LayerIndexParameter = "Ifc:LayerIndex";
+    public const string ConstituentSetParameter = "Ifc:ConstituentSet";
+    public const string ConstituentIndexParameter = "Ifc:ConstituentIndex";
+
+    /// <summary>IfcMaterial, its layers, constituents, profiles, and the sets and usages that group
+    /// them. None is IfcRoot.</summary>
+    public static bool IsMaterialResource(IfcEntity entity)
+        => entity.GetEntityName().StartsWith("IFCMATERIAL", StringComparison.Ordinal);
+
+    /// <summary>Gives each layer of an IfcMaterialLayerSet, and each constituent of an
+    /// IfcMaterialConstituentSet, its set and its 1-based position in it, so a query can list a
+    /// wall type's layers in order with their thicknesses.</summary>
+    private void AddMaterialSetMembers()
+    {
+        foreach (var set in BosEntities)
+        {
+            var (setParameter, indexParameter, membersAttribute) = set.GetEntityName() switch
+            {
+                "IFCMATERIALLAYERSET" => (LayerSetParameter, LayerIndexParameter, 0),
+                "IFCMATERIALCONSTITUENTSET" => (ConstituentSetParameter, ConstituentIndexParameter, 2),
+                _ => (null, null, -1),
+            };
+            if (setParameter == null || set.Attributes.Count <= membersAttribute || !set.GetAttribute(membersAttribute).IsList)
+                continue;
+
+            var setEi = GetBosEntityIndexFromIfc(set.Id);
+            var members = set.GetIdList(membersAttribute);
+            for (var i = 0; i < members.Length; i++)
+            {
+                var memberEi = GetBosEntityIndexFromIfc(members[i]);
+                if (memberEi == InvalidEntityIndex)
+                    continue;
+                var group = GetEntity(members[i]).GetEntityName();
+                BimDataBuilder.AddParameter(memberEi, setEi, setParameter, "", group);
+                BimDataBuilder.AddParameter(memberEi, i + 1, indexParameter!, "", group);
+            }
         }
     }
 

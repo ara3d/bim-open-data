@@ -27,32 +27,46 @@ public class IfcEntity
     public string GetIfcRootGlobalId()
         => GetString(0);
 
-    /// <summary>Display name: IfcSpace.LongName (attr 7), then IfcRoot.Name (attr 2), then material name (attr 0).</summary>
+    /// <summary>Display name: IfcSpace.LongName (attr 7), the name attribute of a material
+    /// resource entity (<see cref="MaterialNameIndex"/>), then IfcRoot.Name (attr 2).</summary>
     public string GetEntityLabel()
     {
+        var entityName = GetEntityName();
+
         // IfcSpace exporters typically put the room number in Name and the descriptive label in LongName.
-        if (GetEntityName() == "IFCSPACE")
+        if (entityName == "IFCSPACE")
         {
             var longName = GetStringOrEmpty(7);
             if (!string.IsNullOrEmpty(longName))
                 return longName;
         }
 
-        var rootName = GetStringOrEmpty(2);
-        if (!string.IsNullOrEmpty(rootName))
-            return rootName;
-
-        // Material/layer entities carry their name in attr 0; for IfcRoot entities attr 0 is the GlobalId GUID,
-        // so only fall back to attr 0 for materials (otherwise we would surface a GUID as a name).
-        if (GetEntityName().StartsWith("IFCMATERIAL", StringComparison.Ordinal))
+        if (entityName.StartsWith("IFCMATERIAL", StringComparison.Ordinal))
         {
-            var materialName = GetStringOrEmpty(0);
-            if (!string.IsNullOrEmpty(materialName))
-                return materialName;
+            var materialName = MaterialNameIndex.TryGetValue(entityName, out var nameIndex) ? GetStringOrEmpty(nameIndex) : "";
+            return string.IsNullOrEmpty(materialName) ? $"#{Id}" : materialName;
         }
 
-        return $"#{Id}";
+        var rootName = GetStringOrEmpty(2);
+        return string.IsNullOrEmpty(rootName) ? $"#{Id}" : rootName;
     }
+
+    /// <summary>Where the material resource entities keep their name; one not listed here
+    /// (IfcMaterialList, IfcMaterialLayerSetUsage) has none. They are not IfcRoot, so attribute 2
+    /// is something else: IfcMaterial's Category ('Generisch' in the fantasy office
+    /// models), IfcMaterialLayer's IsVentilated, a constituent set's member list.</summary>
+    public static readonly IReadOnlyDictionary<string, int> MaterialNameIndex = new Dictionary<string, int>
+    {
+        ["IFCMATERIAL"] = 0,
+        ["IFCMATERIALLAYER"] = 3,
+        ["IFCMATERIALLAYERWITHOFFSETS"] = 3,
+        ["IFCMATERIALLAYERSET"] = 1,
+        ["IFCMATERIALCONSTITUENT"] = 0,
+        ["IFCMATERIALCONSTITUENTSET"] = 0,
+        ["IFCMATERIALPROFILE"] = 0,
+        ["IFCMATERIALPROFILEWITHOFFSETS"] = 0,
+        ["IFCMATERIALPROFILESET"] = 0,
+    };
 
     public StepToken GetValue(int index)
         => Attributes.Count > index ? Attributes[index] : default;
