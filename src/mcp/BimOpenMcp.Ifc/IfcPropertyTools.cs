@@ -1,4 +1,4 @@
-using Ara3D.IfcLoader;
+﻿using Ara3D.IfcLoader;
 using Ara3D.MCP;
 
 namespace BimOpenMcp.Ifc;
@@ -46,24 +46,23 @@ public static class IfcPropertyTools
         var document = session.File.Document;
         var result = new List<IfcProperty>();
 
-        foreach (var propSet in data.GetPropSets(id))
-            foreach (var value in data.GetProperties(propSet))
-            {
-                if ((value.Kind == IfcPropKind.Quantity) != quantities)
-                    continue;
+        foreach (var (propSet, value) in data.GetDistinctProperties(id))
+        {
+            if ((value.Kind == IfcPropKind.Quantity) != quantities)
+                continue;
 
-                // A quantity holds a bare number, so its own entity name is the only measure type.
-                var measure = value.GetMeasureType();
-                if (measure.Length == 0)
-                    measure = value.EntityName;
+            // A quantity holds a bare number, so its own entity name is the only measure type.
+            var measure = value.GetMeasureType();
+            if (measure.Length == 0)
+                measure = value.EntityName;
 
-                result.Add(new IfcProperty(
-                    propSet.Name,
-                    value.Name,
-                    value.Kind.ToString(),
-                    measure,
-                    value.GetValueText(document)));
-            }
+            result.Add(new IfcProperty(
+                propSet.Name,
+                value.Name,
+                value.Kind.ToString(),
+                measure,
+                value.GetValueText(document)));
+        }
 
         return new
         {

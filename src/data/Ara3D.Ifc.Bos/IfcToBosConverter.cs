@@ -274,33 +274,20 @@ public class IfcToBosConverter
             logger?.Log($"Category: {n}");
 
         logger?.Log($"Computing {PropData.ObjectToPropSets.Count} object-property set pairs");
-        foreach (var kv in PropData.ObjectToPropSets)
+        foreach (var objectId in PropData.ObjectToPropSets.Keys)
         {
-            var objectId = kv.Key;
-            var propSetIdList = kv.Value;
-
             var bosId = GetBosEntityIndexFromIfc(objectId);
             if (bosId == InvalidEntityIndex)
                 continue;
 
-            foreach (var propSetId in propSetIdList)
+            foreach (var (propSet, p) in PropData.GetDistinctProperties(objectId))
             {
-                var propSet = PropData.PropSets[propSetId];
                 var propSetName = propSet.Name.DecodeIfc();
-                foreach (var id in propSet.Ids)
-                {
-                    if (!PropData.PropValues.TryGetValue(id, out var p))
-                        continue;
-
-                    // This is a function so that we can recursively resolve entities that are used as property values.
-                    // We assume that entities within entities have only one property, which is a very common pattern in IFC files.
-
-                    var propName = p.Name.DecodeIfc();
-                    if (!p.Value.HasValue)
-                        BimDataBuilder.AddParameter(bosId, "", propName, "", propSetName);
-                    else
-                        ProcessPropValue(propName, p.Value.Value, p, bosId, propSetName);
-                }
+                var propName = p.Name.DecodeIfc();
+                if (!p.Value.HasValue)
+                    BimDataBuilder.AddParameter(bosId, "", propName, "", propSetName);
+                else
+                    ProcessPropValue(propName, p.Value.Value, p, bosId, propSetName);
             }
         }
 

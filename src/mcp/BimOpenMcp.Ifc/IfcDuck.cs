@@ -1,4 +1,4 @@
-using Ara3D.BimOpenSchema.DuckDb;
+﻿using Ara3D.BimOpenSchema.DuckDb;
 using Ara3D.Utils;
 using DuckDB.NET.Data;
 
@@ -170,13 +170,15 @@ public static class IfcDuck
 
     /// <summary>DuckDB hands back provider-specific values for several logical types; anything the
     /// JSON writer does not model natively is reported as its text form rather than as an object
-    /// with the provider's internal field names.</summary>
+    /// with the provider's internal field names. A LIST or array column (list(), array_agg) comes
+    /// back as a JSON array rather than the CLR collection's type name.</summary>
     private static object? Jsonable(object value)
         => value switch
         {
             bool or string or byte or sbyte or short or ushort or int or uint
                 or long or ulong or float or double or decimal or DateTime or Guid => value,
             byte[] bytes => $"{bytes.Length} bytes",
+            System.Collections.IEnumerable items => items.Cast<object?>().Select(i => i == null ? null : Jsonable(i)).ToList(),
             _ => value.ToString(),
         };
 

@@ -37,8 +37,11 @@ public sealed class IfcPropData
     public readonly Dictionary<int, IfcPropSet> PropSets = [];
     public readonly MultiDictionary<int, int> ObjectToPropSets = [];
 
+    private readonly StepDocument _document;
+
     public IfcPropData(IfcFile file)
     {
+        _document = file.Document;
         foreach (var e in file.EntityResolver.GetEntities())
         {
             var id = e.Id;
@@ -139,9 +142,25 @@ public sealed class IfcPropData
                 yield return propValue;
     }
 
+    /// <summary>Every property an object carries, each (set name, property name, value) once.
+    /// Some exporters attach two property sets of the same name with the same values to one
+    /// element (the DigitalHub Revit models give every pipe two 'Abmessungen' sets, each with its
+    /// Länge); reading both would double every sum over that property. Values that differ are all
+    /// kept: the duplicate is dropped only when it says nothing new.</summary>
+    public IEnumerable<(IfcPropSet Set, IfcPropValue Value)> GetDistinctProperties(int objectId)
+    {
+        var seen = new HashSet<(string, string, string, string)>();
+        foreach (var set in GetPropSets(objectId))
+            foreach (var value in GetProperties(set))
+                if (seen.Add((set.Name, value.Name, value.GetMeasureType(), value.GetValueText(_document))))
+                    yield return (set, value);
+    }
+
+    /// <summary>The sets attached to an object. A relation can point at a set kind this class
+    /// does not parse; it is skipped rather than thrown on.</summary>
     public IEnumerable<IfcPropSet> GetPropSets(int objectId)
         => ObjectToPropSets.TryGetValue(objectId, out var propSetIds)
-            ? propSetIds.Select(id => PropSets[id])
+            ? propSetIds.Where(PropSets.ContainsKey).Select(id => PropSets[id])
             : [];
 
     public IEnumerable<IfcPropValue> GetProperties(int objectId)

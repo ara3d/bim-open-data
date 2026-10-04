@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Ara3D.IfcLoader;
 using Ara3D.IO.StepParser;
 
@@ -94,15 +94,12 @@ public sealed class IfcParameterIndex
 
         foreach (var entity in session.Resolver.GetEntities())
         {
-            if (!data.ObjectToPropSets.TryGetValue(entity.Id, out var setIds))
+            if (!data.ObjectToPropSets.ContainsKey(entity.Id))
                 continue;
 
             types[entity.Id] = entity.GetEntityName();
-            foreach (var setId in setIds)
-                // A relation can point at a set kind IfcPropData does not parse; skip it rather than throw.
-                if (data.PropSets.TryGetValue(setId, out var set))
-                    foreach (var value in data.GetProperties(set))
-                        Record(buckets, set, value, entity.Id, document);
+            foreach (var (set, value) in data.GetDistinctProperties(entity.Id))
+                Record(buckets, set, value, entity.Id, document);
         }
 
         return buckets;
