@@ -47,6 +47,8 @@ public sealed class PublicSampleTests
     [TestCaseSource(nameof(Samples))]
     public void DuckDb_HasTheRecordedCounts(Sample sample)
     {
+        if (!File.Exists(RepoPaths.Samples("public", sample.Name + ".duckdb")))
+            Assert.Ignore($"{sample.Name}.duckdb is generated, not committed; run samples/public/convert.mjs");
         using var conn = OpenReadOnly(sample);
         Assert.Multiple(() =>
         {
