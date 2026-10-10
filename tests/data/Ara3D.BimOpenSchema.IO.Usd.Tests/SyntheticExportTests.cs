@@ -28,7 +28,7 @@ public sealed class SyntheticExportTests
         [
             new(10, (StringIndex)0, (DocumentIndex)(-1), (StringIndex)3, (EntityIndex)(-1), (EntityIndex)(-1)),
             new(11, (StringIndex)1, (DocumentIndex)(-1), (StringIndex)2, (EntityIndex)Category, (EntityIndex)(-1)),
-            new(12, (StringIndex)(-1), (DocumentIndex)(-1), (StringIndex)0, (EntityIndex)(-1), (EntityIndex)(-1)),
+            new(-1, (StringIndex)(-1), (DocumentIndex)(-1), (StringIndex)0, (EntityIndex)(-1), (EntityIndex)(-1)),
             new(13, (StringIndex)0, (DocumentIndex)(-1), (StringIndex)9, (EntityIndex)StoreyCategory, (EntityIndex)(-1)),
             new(14, (StringIndex)0, (DocumentIndex)(-1), (StringIndex)10, (EntityIndex)(-1), (EntityIndex)(-1)),
         ],
@@ -87,8 +87,8 @@ public sealed class SyntheticExportTests
         var (summary, _, _) = Export();
         Assert.That(summary, Is.EqualTo(new UsdExportSummary(
             Materials: 1, Prototypes: 1, Descriptors: 5, Elements: 2, Instances: 4, UnassignedInstances: 1, InstancesWithoutMesh: 1,
-            // wall: index, local id, GlobalId, name, category, four parameters; bare: index, local id, one parameter
-            Attributes: 9 + 3, ParametersWithoutValue: 2, DuplicateParameters: 1)));
+            // wall: index, local id, GlobalId, name, category, four parameters; bare: index, one parameter
+            Attributes: 9 + 2, ParametersWithoutValue: 2, DuplicateParameters: 1)));
     }
 
     [Test]
@@ -98,6 +98,7 @@ public sealed class SyntheticExportTests
         var bare = Prim(text, "E2");
         Assert.Multiple(() =>
         {
+            Assert.That(bare, Does.Not.Contain("bim:localId"), "local id -1 means none");
             Assert.That(bare, Does.Not.Contain("bim:globalId"), "no GlobalId");
             Assert.That(bare, Does.Not.Contain("bim:name"), "empty name");
             Assert.That(bare, Does.Not.Contain("bim:category"), "no category");
@@ -114,6 +115,7 @@ public sealed class SyntheticExportTests
         var wall = Prim(text, "E_gid_1");
         Assert.Multiple(() =>
         {
+            Assert.That(wall, Does.Contain("custom int64 bim:localId = 11"));
             Assert.That(wall, Does.Contain("custom string bim:globalId = \"gid$1\""));
             Assert.That(wall, Does.Contain("custom string bim:category = \"IFCWALL\""));
             Assert.That(wall, Does.Contain("custom float bim:param:Pset_Common:Width = 2.5\n"));

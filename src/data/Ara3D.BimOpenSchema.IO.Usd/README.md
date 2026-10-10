@@ -73,7 +73,7 @@ GlobalId is always in `bim:globalId`.
 | Attribute | USD type | Written when |
 |---|---|---|
 | `bim:entityIndex` | `int` | always: the BOS entity row |
-| `bim:localId` | `int64` | always: STEP line number (IFC) or ElementId (Revit) |
+| `bim:localId` | `int64` | the local id is not negative (-1 marks "none"): STEP line number (IFC) or ElementId (Revit) |
 | `bim:globalId` | `string` | the GlobalId is present and not empty |
 | `bim:name` | `string` | the name is present and not empty |
 | `bim:category` | `string` | the entity has a category whose name is not empty |

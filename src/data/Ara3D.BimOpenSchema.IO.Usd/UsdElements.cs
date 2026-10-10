@@ -90,8 +90,13 @@ internal sealed class UsdElements
         _w.CloseMetadata().Open();
 
         _w.Line().Text("custom int ").Text(UsdNames.EntityIndexAttribute).Text(" = ").Int(entityIndex).End();
-        _w.Line().Text("custom int64 ").Text(UsdNames.LocalIdAttribute).Text(" = ").Int(entity.LocalId).End();
-        _attributeCount += 2;
+        _attributeCount++;
+        // BimDataBuilder.AddEntity() marks "no local id" with -1.
+        if (entity.LocalId >= 0)
+        {
+            _w.Line().Text("custom int64 ").Text(UsdNames.LocalIdAttribute).Text(" = ").Int(entity.LocalId).End();
+            _attributeCount++;
+        }
         WriteString(UsdNames.GlobalIdAttribute, BosValues.NonEmptyString(_data, entity.GlobalId));
         WriteString(UsdNames.NameAttribute, BosValues.NonEmptyString(_data, entity.Name));
         WriteString(UsdNames.CategoryAttribute, BosValues.EntityName(_data, entity.Category));
