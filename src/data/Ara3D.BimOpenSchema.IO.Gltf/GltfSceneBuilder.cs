@@ -38,69 +38,31 @@ internal sealed class GltfSceneBuilder(IBimData data, GlbExportOptions options)
         var scene = _model.UseScene(0);
         _model.DefaultScene = scene;
 
-        var selection = SelectInstances();
-        var instances = selection.Instances;
-        WriteMeshBuffers(instances);
+        var selection = InstanceSelection.Select(_geometry, options);
+        var placements = selection.Placements;
+        WriteMeshBuffers(placements);
 
         long triangles = 0;
-        foreach (var i in instances)
+        foreach (var p in placements)
         {
-            var meshIndex = _geometry.InstanceMeshIndex[i];
-            var materialIndex = _geometry.InstanceMaterialIndex[i];
-            var entityIndex = _geometry.InstanceEntityIndex[i];
-
-            var node = scene.CreateNode(EntityString(entityIndex, e => e.Name));
-            node.Mesh = UseMesh(meshIndex, materialIndex);
-            node.LocalMatrix = (Matrix4x4)_geometry.GetTransformMatrix(_geometry.InstanceTransformIndex[i]) * ZUpToYUp;
-            node.Extras = EntityExtras(entityIndex);
-            triangles += _accessors[meshIndex].Indices.Count / 3;
+            var node = scene.CreateNode(EntityString(p.Entity, e => e.Name));
+            node.Mesh = UseMesh(p.Mesh, p.Material);
+            node.LocalMatrix = (Matrix4x4)_geometry.GetTransformMatrix(p.Transform) * ZUpToYUp;
+            node.Extras = EntityExtras(p.Entity);
+            triangles += _accessors[p.Mesh].Indices.Count / 3;
         }
 
-        return (_model, new GlbExportSummary(instances.Count, _meshes.Count, _materials.Count, triangles,
-            selection.SkippedEmpty, selection.UnmatchedEntityIndices));
+        return (_model, new GlbExportSummary(placements.Count, _meshes.Count, _materials.Count, triangles,
+            selection.SkippedEmpty, selection.SkippedBadTransform, selection.DefaultedMaterials,
+            selection.UnmatchedEntityIndices));
     }
-
-    /// <summary>The instances to write, in table order, with what was left out on the way.</summary>
-    private sealed record Selection(List<int> Instances, int SkippedEmpty, int UnmatchedEntityIndices);
-
-    /// <summary>Picks the instances to write. A selected instance whose mesh has no triangles is
-    /// left out and counted; a requested entity that ends up with no node is counted as unmatched.</summary>
-    private Selection SelectInstances()
-    {
-        var entities = options.EntityIndices is null ? null : new HashSet<int>(options.EntityIndices);
-        var meshCount = _geometry.GetNumMeshes();
-        var instances = new List<int>();
-        var matched = new HashSet<int>();
-        var skipped = 0;
-        for (var i = 0; i < _geometry.GetNumInstances(); i++)
-        {
-            if (!options.IncludeHidden && (_geometry.InstanceFlags[i] & (byte)BimGeometry.InstanceFlagEnum.IsHidden) != 0)
-                continue;
-            var entity = _geometry.InstanceEntityIndex[i];
-            if (entities is not null && !entities.Contains(entity))
-                continue;
-            var mesh = _geometry.InstanceMeshIndex[i];
-            if (mesh < 0 || mesh >= meshCount || IsEmpty(_geometry.GetMeshSlice(mesh)))
-            {
-                skipped++;
-                continue;
-            }
-            instances.Add(i);
-            matched.Add(entity);
-        }
-        var unmatched = entities?.Count(e => !matched.Contains(e)) ?? 0;
-        return new Selection(instances, skipped, unmatched);
-    }
-
-    private static bool IsEmpty(Ara3D.Models.MeshSliceStruct slice)
-        => slice.IndexCount == 0 || slice.VertexCount == 0;
 
     /// <summary>Writes each mesh the instances use, once, in metres: positions as float VEC3 in
     /// one strided buffer view and indices as uint32 in another. BOS indices are already local
     /// to their mesh, as glTF accessors expect.</summary>
-    private void WriteMeshBuffers(List<int> instances)
+    private void WriteMeshBuffers(List<Placement> placements)
     {
-        var meshes = instances.Select(i => _geometry.InstanceMeshIndex[i]).Distinct().Order().ToList();
+        var meshes = placements.Select(p => p.Mesh).Distinct().Order().ToList();
         var slices = meshes.Select(_geometry.GetMeshSlice).ToList();
         if (meshes.Count == 0)
             return;
@@ -156,8 +118,8 @@ internal sealed class GltfSceneBuilder(IBimData data, GlbExportOptions options)
         return mesh;
     }
 
-    /// <summary>One glTF material per BOS material; index -1 (no material) gets the SDK's
-    /// default grey. Double-sided, because BIM meshes do not keep a consistent winding.</summary>
+    /// <summary>One glTF material per BOS material; -1 (no material, or one the Materials table
+    /// does not have) gets the SDK's default grey. Double-sided, because BIM meshes do not keep a consistent winding.</summary>
     private GltfMaterial UseMaterial(int materialIndex)
     {
         if (_materials.TryGetValue(materialIndex, out var material))

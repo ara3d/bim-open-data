@@ -7,6 +7,10 @@ namespace Ara3D.BimOpenSchema.IO.Gltf;
 /// <param name="Triangles">Triangles drawn: each node's mesh counted once per node.</param>
 /// <param name="SkippedEmpty">Selected instances left out because their mesh has no triangles
 /// or their mesh index is out of range; glTF does not allow an empty accessor.</param>
+/// <param name="SkippedBadTransform">Selected instances left out because their transform index
+/// is out of range of the Transforms table: there is nowhere to place them.</param>
+/// <param name="DefaultedMaterials">Instances written with the default material because their
+/// material index is out of range of the Materials table. Index -1 (no material) is not counted.</param>
 /// <param name="UnmatchedEntityIndices">Distinct indices in <see cref="GlbExportOptions.EntityIndices"/>
 /// that produced no node: out of range of the Entities table, or with no instance that could be
 /// drawn (none at all, only empty meshes, or only hidden ones while IncludeHidden is off). Zero
@@ -19,5 +23,7 @@ public sealed record GlbExportSummary(
     int Materials,
     long Triangles,
     int SkippedEmpty,
+    int SkippedBadTransform,
+    int DefaultedMaterials,
     int UnmatchedEntityIndices,
     long? Bytes = null);

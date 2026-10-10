@@ -52,6 +52,12 @@ number it passed, and a file with no nodes.
   gets the SDK's default grey.
 - **Hidden instances** (`InstanceFlags` bit `IsHidden`, set by the converter that wrote the
   `.bos`) are left out unless `IncludeHidden` is set.
+- **Bad indices.** Every index in the Instances table is checked against the table it points
+  into. A mesh index out of range or an empty mesh skips the instance (`SkippedEmpty`); a
+  transform index out of range skips it (`SkippedBadTransform`); a material index out of range
+  draws it with the default grey (`DefaultedMaterials`). An `InstanceFlags` column shorter than
+  the Instances table (older files, hand-built geometry) leaves the missing instances visible.
+  The mesh offsets into the vertex and index buffers are trusted.
 
 ## What it does not do
 
