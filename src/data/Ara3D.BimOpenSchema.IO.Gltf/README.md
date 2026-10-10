@@ -34,7 +34,10 @@ var (model, summary) = bimData.ToGltf();   // SharpGLTF.Schema2.ModelRoot
 ```
 
 The summary counts nodes, glTF meshes, materials, triangles drawn, instances skipped because
-their mesh is empty, and the bytes written.
+their mesh is empty, and the bytes written. `UnmatchedEntityIndices` counts the requested
+entity indices that produced no node (out of range, no geometry, or only hidden instances): a
+caller that passed STEP ids or Revit element ids instead of entity indices sees it equal the
+number it passed, and a file with no nodes.
 
 ## What the file holds
 

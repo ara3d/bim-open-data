@@ -145,6 +145,34 @@ public class BosGlbTests
         Assert.That(summary.Nodes, Is.EqualTo(expected.Count));
         Assert.That(nodes.Select(n => (int)n.Extras![BosGlb.EntityIndexKey]!).Distinct(), Is.EquivalentTo(chosen));
         Assert.That(summary.Triangles, Is.EqualTo(expected.Sum(i => MeshTriangles(_geometry.InstanceMeshIndex[i]))));
+        Assert.That(summary.UnmatchedEntityIndices, Is.Zero);
+    }
+
+    [Test]
+    public void Entity_filter_counts_indices_that_draw_nothing()
+    {
+        var drawn = VisibleInstances().Select(i => _geometry.InstanceEntityIndex[i]).ToHashSet();
+        var withoutGeometry = Enumerable.Range(0, _data.Entities.Length).First(e => !drawn.Contains(e));
+        var onlyHidden = Enumerable.Range(0, _geometry.InstanceEntityIndex.Length)
+            .Where(IsHidden).Select(i => _geometry.InstanceEntityIndex[i]).First(e => !drawn.Contains(e));
+        var outOfRange = new[] { -1, _data.Entities.Length, _data.Entities.Length + 157200 };
+        var good = drawn.First();
+
+        var summary = _data.ToGltf(new GlbExportOptions
+            { EntityIndices = [good, good, withoutGeometry, onlyHidden, .. outOfRange] }).Summary;
+
+        Assert.That(summary.Nodes, Is.GreaterThan(0));
+        Assert.That(summary.UnmatchedEntityIndices, Is.EqualTo(2 + outOfRange.Length));
+    }
+
+    [Test]
+    public void Entity_filter_that_matches_nothing_says_so()
+    {
+        // Revit element ids from duplex node names, shifted past the Entities table so none can land on a row by chance.
+        var stepIds = new[] { 157200, 157607, 157950 }.Select(id => id + _data.Entities.Length).ToList();
+        var summary = _data.ToGltf(new GlbExportOptions { EntityIndices = stepIds }).Summary;
+        Assert.That(summary.Nodes, Is.Zero);
+        Assert.That(summary.UnmatchedEntityIndices, Is.EqualTo(stepIds.Count));
     }
 
     [Test]

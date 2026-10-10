@@ -38,7 +38,8 @@ internal sealed class GltfSceneBuilder(IBimData data, GlbExportOptions options)
         var scene = _model.UseScene(0);
         _model.DefaultScene = scene;
 
-        var (instances, skipped) = SelectInstances();
+        var selection = SelectInstances();
+        var instances = selection.Instances;
         WriteMeshBuffers(instances);
 
         long triangles = 0;
@@ -55,22 +56,28 @@ internal sealed class GltfSceneBuilder(IBimData data, GlbExportOptions options)
             triangles += _accessors[meshIndex].Indices.Count / 3;
         }
 
-        return (_model, new GlbExportSummary(instances.Count, _meshes.Count, _materials.Count, triangles, skipped));
+        return (_model, new GlbExportSummary(instances.Count, _meshes.Count, _materials.Count, triangles,
+            selection.SkippedEmpty, selection.UnmatchedEntityIndices));
     }
 
-    /// <summary>The instances to write, in table order, and how many selected ones were left out
-    /// because their mesh has no triangles to draw.</summary>
-    private (List<int> Instances, int SkippedEmpty) SelectInstances()
+    /// <summary>The instances to write, in table order, with what was left out on the way.</summary>
+    private sealed record Selection(List<int> Instances, int SkippedEmpty, int UnmatchedEntityIndices);
+
+    /// <summary>Picks the instances to write. A selected instance whose mesh has no triangles is
+    /// left out and counted; a requested entity that ends up with no node is counted as unmatched.</summary>
+    private Selection SelectInstances()
     {
         var entities = options.EntityIndices is null ? null : new HashSet<int>(options.EntityIndices);
         var meshCount = _geometry.GetNumMeshes();
         var instances = new List<int>();
+        var matched = new HashSet<int>();
         var skipped = 0;
         for (var i = 0; i < _geometry.GetNumInstances(); i++)
         {
             if (!options.IncludeHidden && (_geometry.InstanceFlags[i] & (byte)BimGeometry.InstanceFlagEnum.IsHidden) != 0)
                 continue;
-            if (entities is not null && !entities.Contains(_geometry.InstanceEntityIndex[i]))
+            var entity = _geometry.InstanceEntityIndex[i];
+            if (entities is not null && !entities.Contains(entity))
                 continue;
             var mesh = _geometry.InstanceMeshIndex[i];
             if (mesh < 0 || mesh >= meshCount || IsEmpty(_geometry.GetMeshSlice(mesh)))
@@ -79,8 +86,10 @@ internal sealed class GltfSceneBuilder(IBimData data, GlbExportOptions options)
                 continue;
             }
             instances.Add(i);
+            matched.Add(entity);
         }
-        return (instances, skipped);
+        var unmatched = entities?.Count(e => !matched.Contains(e)) ?? 0;
+        return new Selection(instances, skipped, unmatched);
     }
 
     private static bool IsEmpty(Ara3D.Models.MeshSliceStruct slice)
