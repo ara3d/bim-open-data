@@ -29,9 +29,12 @@ public static class UsdNames
     /// <summary>BOS instance i is the prim I{i} under its element.</summary>
     public const string InstancePrefix = "I";
 
-    /// <summary>An element prim is E_{GlobalId} with invalid characters replaced, or
-    /// E{entity index} when that is empty or already taken.</summary>
+    /// <summary>An entity prim is E_{GlobalId} with invalid characters replaced, or
+    /// E{entity index} when that is empty or already taken (see <see cref="EntityPrimNames"/>).</summary>
     public const string ElementPrefix = "E";
+
+    /// <summary>Entity prims are children of the root: /Model/{prim name}.</summary>
+    public const string EntityPathPrefix = "/" + Root + "/";
 
     public const string MaterialPath = "/" + Root + "/" + MaterialsScope + "/" + MaterialPrefix;
     public const string PrototypePath = "/" + Root + "/" + PrototypesScope + "/" + PrototypePrefix;

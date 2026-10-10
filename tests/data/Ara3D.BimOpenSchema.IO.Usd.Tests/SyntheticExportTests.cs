@@ -5,7 +5,8 @@ namespace Ara3D.BimOpenSchema.IO.Usd.Tests;
 
 /// <summary>
 /// A hand-built BOS model small enough to read whole, with the awkward cases the samples
-/// lack: missing values, a duplicate parameter, an instance with no entity, one with no mesh,
+/// lack: missing values, a duplicate parameter, entities without geometry, relations with bad
+/// ends or an unknown type, an instance with no entity, one with no mesh,
 /// a hidden one, a transformed one, and strings that need escaping.
 /// </summary>
 [TestFixture]
@@ -51,6 +52,18 @@ public sealed class SyntheticExportTests
             new((EntityIndex)Bare, (DescriptorIndex)Note, 99),     // string index past the end
             new((EntityIndex)Bare, (DescriptorIndex)Count, 7),
         ],
+        Relations =
+        [
+            new((EntityIndex)Wall, (EntityIndex)Storey, RelationType.ContainedIn),
+            new((EntityIndex)Wall, (EntityIndex)Storey, RelationType.ContainedIn),       // duplicate: one target
+            new((EntityIndex)Wall, (EntityIndex)Category, RelationType.HostedBy),
+            new((EntityIndex)Bare, (EntityIndex)Wall, RelationType.PartOf),
+            new((EntityIndex)Storey, (EntityIndex)Bare, RelationType.BoundedBy),
+            new((EntityIndex)Storey, (EntityIndex)Wall, RelationType.BoundedBy),
+            new((EntityIndex)Wall, (EntityIndex)99, RelationType.ContainedIn),          // target out of range
+            new((EntityIndex)Wall, (EntityIndex)Storey, (RelationType)99),              // unknown type
+            new((EntityIndex)(-1), (EntityIndex)Wall, RelationType.PartOf),             // no source
+        ],
         Geometry = new BimGeometry
         {
             VertexX = [0, 10_000, 0],
@@ -86,9 +99,43 @@ public sealed class SyntheticExportTests
     {
         var (summary, _, _) = Export();
         Assert.That(summary, Is.EqualTo(new UsdExportSummary(
-            Materials: 1, Prototypes: 1, Descriptors: 5, Elements: 2, Instances: 4, UnassignedInstances: 1, InstancesWithoutMesh: 1,
-            // wall: index, local id, GlobalId, name, category, four parameters; bare: index, one parameter
-            Attributes: 9 + 2, ParametersWithoutValue: 2, DuplicateParameters: 1)));
+            Materials: 1, Prototypes: 1, Descriptors: 5, Entities: 5, Elements: 2, Instances: 4, UnassignedInstances: 1,
+            InstancesWithoutMesh: 1,
+            // wall: index, local id, GlobalId, name, category, four parameters; bare: index, one parameter;
+            // wall category: index, local id, name; storey: index, local id, name, category; storey category: index, local id, name
+            Attributes: 9 + 2 + 3 + 4 + 3,
+            // wall: containedIn, hostedBy; bare: partOf; storey: boundedBy twice
+            Relationships: 5, RelationsLeftOut: 3,
+            ParametersWithoutValue: 2, DuplicateParameters: 1)));
+    }
+
+    [Test]
+    public void EntitiesWithoutGeometry_AreScopes()
+    {
+        var (_, text, _) = Export();
+        Assert.Multiple(() =>
+        {
+            Assert.That(text, Does.Contain("def Xform \"E_gid_1\" ("), "wall has geometry");
+            Assert.That(text, Does.Contain("def Scope \"E0\"\n"), "wall category");
+            Assert.That(text, Does.Contain("def Scope \"E3\"\n"), "storey");
+            Assert.That(text, Does.Contain("def Scope \"E4\"\n"), "storey category");
+            Assert.That(Prim(text, "E3"), Does.Contain("custom string bim:name = \"Level 1\""));
+            Assert.That(Prim(text, "E3"), Does.Not.Contain("kind"), "only elements with geometry are components");
+        });
+    }
+
+    [Test]
+    public void Relations_AreRelationshipsOnTheSource()
+    {
+        var (_, text, _) = Export();
+        Assert.Multiple(() =>
+        {
+            Assert.That(Prim(text, "E_gid_1"), Does.Contain("custom rel bim:containedIn = [</Model/E3>]\n"), "duplicate merged, bad target left out");
+            Assert.That(Prim(text, "E_gid_1"), Does.Contain("custom rel bim:hostedBy = [</Model/E0>]\n"));
+            Assert.That(Prim(text, "E2"), Does.Contain("custom rel bim:partOf = [</Model/E_gid_1>]\n"));
+            Assert.That(Prim(text, "E3"), Does.Contain("custom rel bim:boundedBy = [</Model/E_gid_1>, </Model/E2>]\n"));
+            Assert.That(text, Does.Not.Contain("E99"), "a target out of range is left out");
+        });
     }
 
     [Test]
@@ -121,7 +168,7 @@ public sealed class SyntheticExportTests
             Assert.That(wall, Does.Contain("custom float bim:param:Pset_Common:Width = 2.5\n"));
             Assert.That(wall, Does.Not.Contain("displayGroup"), "descriptor strings are written once, under Descriptors");
             Assert.That(wall, Does.Contain("custom point3f bim:param:Pset_Common:Origin = (1, 2, 3)"));
-            Assert.That(wall, Does.Contain("custom string bim:param:Pset_Common:Level_1 = \"Level 1\""));
+            Assert.That(wall, Does.Contain("custom rel bim:param:Pset_Common:Level_1 = </Model/E3>\n"), "an entity parameter targets the entity's prim");
             Assert.That(wall, Does.Contain("custom string bim:param:Pset_Common:Note = \"\""));
             Assert.That(wall.Split("bim:param:Pset_Common:Width =").Length - 1, Is.EqualTo(1), "duplicate dropped");
         });
@@ -137,6 +184,7 @@ public sealed class SyntheticExportTests
             Assert.That(descriptors, Does.Contain("custom float bim:param:Pset_Common:Width (\n"));
             Assert.That(descriptors, Does.Contain("displayGroup = \"Pset Common\""));
             Assert.That(descriptors, Does.Contain("displayName = \"Level 1\""));
+            Assert.That(descriptors, Does.Contain("custom rel bim:param:Pset_Common:Level_1 (\n"));
             Assert.That(descriptors, Does.Contain("string bosType = \"Entity\""));
             Assert.That(descriptors, Does.Not.Contain("units"), "empty units are left out");
             Assert.That(descriptors, Does.Not.Contain(" = 2.5"), "declarations carry no values");
@@ -166,22 +214,32 @@ public sealed class SyntheticExportTests
     public void UsdCore_ReadsWhatWasWritten()
     {
         var (_, _, path) = Export();
-        var check = UsdCheck.Run(path, "/Model/E_gid_1", "/Model/E2", "/Model/Descriptors");
+        var check = UsdCheck.Run(path, "/Model/E_gid_1", "/Model/E2", "/Model/E3", "/Model/Descriptors");
         var counts = check.GetProperty("counts");
-        var wall = check.GetProperty("prims").GetProperty("/Model/E_gid_1");
+        JsonElement Properties(string prim) => check.GetProperty("prims").GetProperty(prim).GetProperty("properties");
+        var wall = Properties("/Model/E_gid_1");
         Assert.Multiple(() =>
         {
             Assert.That(check.GetProperty("compositionErrors").GetArrayLength(), Is.Zero);
             Assert.That(check.GetProperty("findings").GetArrayLength(), Is.Zero, check.GetProperty("findings").ToString());
             Assert.That(counts.GetProperty("instances").GetInt32(), Is.EqualTo(4));
+            Assert.That(counts.GetProperty("entities").GetInt32(), Is.EqualTo(5));
+            Assert.That(counts.GetProperty("scopes").GetInt32(), Is.EqualTo(3));
             Assert.That(counts.GetProperty("elements").GetInt32(), Is.EqualTo(2));
+            Assert.That(counts.GetProperty("relationshipTargets").GetInt32(), Is.EqualTo(5));
             Assert.That(counts.GetProperty("invisible").GetInt32(), Is.EqualTo(1));
+            Assert.That(check.GetProperty("prims").GetProperty("/Model/E3").GetProperty("typeName").GetString(), Is.EqualTo("Scope"));
+            Assert.That(wall.GetProperty("bim:containedIn").GetProperty("targets").EnumerateArray().Select(t => t.GetString()),
+                Is.EqualTo(new[] { "/Model/E3" }));
+            Assert.That(wall.GetProperty("bim:param:Pset_Common:Level_1").GetProperty("targets").EnumerateArray().Select(t => t.GetString()),
+                Is.EqualTo(new[] { "/Model/E3" }));
             Assert.That(wall.GetProperty("bim:name").GetProperty("value").GetString(), Is.EqualTo(Tricky), "escaped string reads back exactly");
             Assert.That(wall.GetProperty("bim:localId").GetProperty("type").GetString(), Is.EqualTo("int64"));
             Assert.That(wall.GetProperty("bim:param:Pset_Common:Origin").GetProperty("type").GetString(), Is.EqualTo("point3f"));
             Assert.That(wall.GetProperty("bim:param:Pset_Common:Width").GetProperty("value").GetDouble(), Is.EqualTo(2.5));
-            Assert.That(check.GetProperty("prims").GetProperty("/Model/E2").TryGetProperty("bim:globalId", out _), Is.False);
-            var width = check.GetProperty("prims").GetProperty("/Model/Descriptors").GetProperty("bim:param:Pset_Common:Width");
+            Assert.That(Properties("/Model/E2").TryGetProperty("bim:globalId", out _), Is.False);
+            Assert.That(Properties("/Model/E2").TryGetProperty("bim:localId", out _), Is.False);
+            var width = Properties("/Model/Descriptors").GetProperty("bim:param:Pset_Common:Width");
             Assert.That(width.GetProperty("displayGroup").GetString(), Is.EqualTo("Pset Common"));
             Assert.That(width.GetProperty("value").ValueKind, Is.EqualTo(JsonValueKind.Null), "a declaration has no value");
         });

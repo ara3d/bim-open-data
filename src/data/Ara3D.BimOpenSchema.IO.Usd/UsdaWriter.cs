@@ -165,6 +165,10 @@ internal sealed class UsdaWriter
     public UsdaWriter PathRef(string prefix, long index)
         => Text('<').Text(prefix).Int(index).Text('>');
 
+    /// <summary>A path literal: &lt;/Model/E_2O2Fr_t4X7Zf8NOew3FLOH&gt;.</summary>
+    public UsdaWriter PathRef(string prefix, string name)
+        => Text('<').Text(prefix).Text(name).Text('>');
+
     /// <summary>A tuple of three floats: (x, y, z).</summary>
     public UsdaWriter Float3(float x, float y, float z)
         => Text('(').Float(x).Text(", ").Float(y).Text(", ").Float(z).Text(')');

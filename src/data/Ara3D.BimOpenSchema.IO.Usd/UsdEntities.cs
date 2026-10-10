@@ -1,52 +1,59 @@
 namespace Ara3D.BimOpenSchema.IO.Usd;
 
 /// <summary>
-/// Writes one Xform prim per BOS entity that has geometry, in entity order: its identity and
-/// parameters as bim: attributes, then its instances. Instances whose entity is missing go
-/// under /Model/Unassigned. Then /Model/Descriptors declares each parameter attribute that
-/// was written. Parameters are grouped by entity once, so the pass is linear in entities,
-/// instances, and parameters.
+/// Writes one prim per BOS entity, in entity order. An entity with geometry is an Xform of kind
+/// component holding its instances; an entity without geometry (a storey, a space with no
+/// shape, a type, a property set) is a Scope, which has no transform and is not drawn. Both
+/// carry the entity's identity and parameters as bim: properties and its relations as bim:
+/// relationships. Instances whose entity is missing go under /Model/Unassigned. Then
+/// /Model/Descriptors declares each parameter property that was written. Parameters and
+/// relations are grouped by entity once, so the pass is linear in entities, instances,
+/// parameters, and relations.
 /// </summary>
-internal sealed class UsdElements
+internal sealed class UsdEntities
 {
     private readonly UsdaWriter _w;
     private readonly IBimData _data;
     private readonly BimGeometry _g;
+    private readonly string[] _primNames;
     private readonly ParameterAttribute?[] _attributes;
     private readonly RowGroups _parametersByEntity;
+    private readonly UsdRelations _relations;
 
-    // _writtenFor[d] == entity + 1 when descriptor d already has an attribute on that entity's
-    // prim; a second value for the same descriptor would be a duplicate attribute in USD.
+    // _writtenFor[d] == entity + 1 when descriptor d already has a property on that entity's
+    // prim; a second value for the same descriptor would be a duplicate property in USD.
     private readonly int[] _writtenFor;
 
-    // _described[d] is true once descriptor d has a value on some element, so /Model/Descriptors declares it.
+    // _described[d] is true once descriptor d has a value on some entity, so /Model/Descriptors declares it.
     private readonly bool[] _described;
-    private readonly HashSet<string> _primNames = new(StringComparer.Ordinal);
 
     private int _elements, _instances, _unassigned, _withoutMesh, _attributeCount, _withoutValue, _duplicates;
 
-    private UsdElements(UsdaWriter w, IBimData data, BimGeometry g)
+    private UsdEntities(UsdaWriter w, IBimData data, BimGeometry g)
     {
         _w = w;
         _data = data;
         _g = g;
+        _primNames = EntityPrimNames.ForEntities(data);
         _attributes = ParameterAttribute.ForDescriptors(data);
         _parametersByEntity = new RowGroups(data.Entities.Length, data.Parameters.Length, p => (int)data.Parameters[p].Entity);
+        _relations = new UsdRelations(data, _primNames);
         _writtenFor = new int[data.Descriptors.Length];
         _described = new bool[data.Descriptors.Length];
     }
 
-    /// <summary>Writes every element prim, the Unassigned prim (when needed), and the
+    /// <summary>Writes every entity prim, the Unassigned prim (when needed), and the
     /// Descriptors scope as children of the open root prim, and returns the counts the
     /// summary reports.</summary>
     public static UsdExportSummary Write(UsdaWriter w, IBimData data, BimGeometry g, int materials, int prototypes)
     {
-        var e = new UsdElements(w, data, g);
+        var e = new UsdEntities(w, data, g);
         e.WriteAll();
         var described = e._attributes.Where((a, d) => a is not null && e._described[d]).Select(a => a!);
         var descriptors = ParameterAttribute.WriteDescriptors(w, described);
-        return new UsdExportSummary(materials, prototypes, descriptors, e._elements, e._instances, e._unassigned,
-            e._withoutMesh, e._attributeCount, e._withoutValue, e._duplicates);
+        return new UsdExportSummary(materials, prototypes, descriptors, data.Entities.Length, e._elements,
+            e._instances, e._unassigned, e._withoutMesh, e._attributeCount, e._relations.Targets,
+            e._relations.LeftOut, e._withoutValue, e._duplicates);
     }
 
     private void WriteAll()
@@ -57,11 +64,7 @@ internal sealed class UsdElements
             i => UsdGeometry.HasMesh(_g, i) ? _g.InstanceEntityIndex[i] : -1);
 
         for (var e = 0; e < entityCount; e++)
-        {
-            var instances = byEntity.Rows(e);
-            if (instances.Length > 0)
-                WriteElement(e, instances);
-        }
+            WriteEntity(e, byEntity.Rows(e));
 
         var unassigned = new List<int>();
         for (var i = 0; i < instanceCount; i++)
@@ -82,12 +85,18 @@ internal sealed class UsdElements
         }
     }
 
-    private void WriteElement(int entityIndex, ReadOnlySpan<int> instances)
+    private void WriteEntity(int entityIndex, ReadOnlySpan<int> instances)
     {
         var entity = _data.Entities[entityIndex];
-        _w.Line().Text("def Xform \"").Text(PrimName(entityIndex, entity)).Text('"').OpenMetadata();
-        _w.Line("kind = \"component\"");
-        _w.CloseMetadata().Open();
+        var hasGeometry = instances.Length > 0;
+        if (hasGeometry)
+        {
+            _w.Line().Text("def Xform \"").Text(_primNames[entityIndex]).Text('"').OpenMetadata();
+            _w.Line("kind = \"component\"");
+            _w.CloseMetadata().Open();
+        }
+        else
+            _w.Line().Text("def Scope \"").Text(_primNames[entityIndex]).Text('"').End().Open();
 
         _w.Line().Text("custom int ").Text(UsdNames.EntityIndexAttribute).Text(" = ").Int(entityIndex).End();
         _attributeCount++;
@@ -104,27 +113,15 @@ internal sealed class UsdElements
         WriteString(UsdNames.DocumentAttribute, BosValues.DocumentTitle(_data, entity.Document));
         foreach (var p in _parametersByEntity.Rows(entityIndex))
             WriteParameter(entityIndex, _data.Parameters[p]);
+        _relations.Write(_w, entityIndex);
 
         foreach (var i in instances)
             UsdGeometry.WriteInstance(_w, _g, i);
         _w.Close();
 
-        _elements++;
+        if (hasGeometry)
+            _elements++;
         _instances += instances.Length;
-    }
-
-    /// <summary>E_{GlobalId} made an identifier, or E{entity index} when the GlobalId is
-    /// missing or its identifier is taken (duplicate GlobalIds occur in federated models).
-    /// The two forms cannot collide: the second character is "_" in one and a digit in the other.</summary>
-    private string PrimName(int entityIndex, Entity entity)
-    {
-        if (BosValues.NonEmptyString(_data, entity.GlobalId) is { } globalId)
-        {
-            var name = UsdNames.ToIdentifier(UsdNames.ElementPrefix + "_" + globalId);
-            if (_primNames.Add(name))
-                return name;
-        }
-        return UsdNames.ElementPrefix + entityIndex;
     }
 
     private void WriteString(string attribute, string? value)
@@ -153,9 +150,8 @@ internal sealed class UsdElements
             return;
         }
         _writtenFor[(int)p.Descriptor] = entityIndex + 1;
-        _attributeCount++;
-
         _described[(int)p.Descriptor] = true;
+        _attributeCount++;
 
         _w.Line().Text("custom ").Text(a.UsdType).Text(' ').Text(a.Name).Text(" = ");
         WriteValue(a.Type, p.Value);
@@ -167,7 +163,7 @@ internal sealed class UsdElements
         ParameterType.Int => true,
         ParameterType.Number => BosValues.Number(_data, (NumberIndex)value).HasValue,
         ParameterType.String => BosValues.String(_data, (StringIndex)value) is not null,
-        ParameterType.Entity => BosValues.EntityName(_data, (EntityIndex)value) is not null,
+        ParameterType.Entity => BosValues.Entity(_data, (EntityIndex)value).HasValue,
         ParameterType.Point => BosValues.Point(_data, (PointIndex)value).HasValue,
         _ => false,
     };
@@ -186,7 +182,7 @@ internal sealed class UsdElements
                 _w.Quoted(_data.Strings[value]);
                 break;
             case ParameterType.Entity:
-                _w.Quoted(BosValues.EntityName(_data, (EntityIndex)value)!);
+                _w.PathRef(UsdNames.EntityPathPrefix, _primNames[value]);
                 break;
             case ParameterType.Point:
                 var pt = _data.Points[value];

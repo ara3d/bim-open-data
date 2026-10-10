@@ -16,7 +16,10 @@ namespace Ara3D.BimOpenSchema.IO.Usd.Tests;
 public sealed class SampleExportTests
 {
     private const string DoorPrim = "/Model/E_1hOSvn6df7F8_7GcBWlRH8";
+    private const string StoreyPrim = "/Model/E_1xS3BCk291UvhgP2dvNMKI";
     private const string DescriptorsPrim = "/Model/" + UsdNames.DescriptorsScope;
+
+    private sealed record Counts(int Entities, int Elements, int Instances, int Meshes, int Materials, int Relationships);
 
     private static string OutputPath(string name)
     {
@@ -37,18 +40,23 @@ public sealed class SampleExportTests
         return (data, summary, path, clock.Elapsed);
     }
 
-    /// <summary>Elements, instances, and meshes as the BOS tables define them, counted without the exporter.</summary>
-    private static (int Elements, int Instances, int Meshes, int Materials) Expected(BimData data)
+    /// <summary>What the BOS tables hold, counted without the exporter: every entity, the
+    /// entities with drawable instances, and the distinct (source, type, target) relations
+    /// between valid entities.</summary>
+    private static Counts Expected(BimData data)
     {
         var g = data.Geometry;
+        var entities = data.Entities.Length;
+        bool Valid(int e) => e >= 0 && e < entities;
         var withMesh = Enumerable.Range(0, g.GetNumInstances())
             .Where(i => g.InstanceMeshIndex[i] >= 0 && g.InstanceMeshIndex[i] < g.GetNumMeshes())
             .ToList();
-        var elements = withMesh.Select(i => g.InstanceEntityIndex[i])
-            .Where(e => e >= 0 && e < data.Entities.Length)
+        var elements = withMesh.Select(i => g.InstanceEntityIndex[i]).Where(Valid).Distinct().Count();
+        var relations = data.Relations
+            .Where(r => Valid((int)r.EntityA) && Valid((int)r.EntityB) && Enum.IsDefined(r.RelationType))
             .Distinct()
             .Count();
-        return (elements, withMesh.Count, g.GetNumMeshes(), g.GetNumMaterials());
+        return new Counts(entities, elements, withMesh.Count, g.GetNumMeshes(), g.GetNumMaterials(), relations);
     }
 
     /// <summary>Size and write time in the test output: the source of the numbers in README.md.</summary>
@@ -62,6 +70,33 @@ public sealed class SampleExportTests
         return File.ReadLines(path).Count(regex.IsMatch);
     }
 
+    private static void AssertSummary(UsdExportSummary summary, Counts expected)
+    {
+        Assert.That(summary.Entities, Is.EqualTo(expected.Entities), "entities");
+        Assert.That(summary.Elements, Is.EqualTo(expected.Elements), "elements");
+        Assert.That(summary.Instances, Is.EqualTo(expected.Instances), "instances");
+        Assert.That(summary.Prototypes, Is.EqualTo(expected.Meshes), "prototypes");
+        Assert.That(summary.Materials, Is.EqualTo(expected.Materials), "materials");
+        Assert.That(summary.Relationships, Is.EqualTo(expected.Relationships), "relationship targets");
+    }
+
+    private static void AssertOpensClean(JsonElement check, Counts expected)
+    {
+        var findings = check.GetProperty("findings").EnumerateArray().ToList();
+        foreach (var f in findings)
+            TestContext.Out.WriteLine($"{f.GetProperty("type")} {f.GetProperty("name")}: {f.GetProperty("message")}");
+        var counts = check.GetProperty("counts");
+        Assert.That(check.GetProperty("compositionErrors").GetArrayLength(), Is.Zero, "composition errors");
+        Assert.That(findings, Is.Empty, "validation findings");
+        Assert.That(counts.GetProperty("entities").GetInt32(), Is.EqualTo(expected.Entities), "entity prims");
+        Assert.That(counts.GetProperty("scopes").GetInt32(), Is.EqualTo(expected.Entities - expected.Elements), "Scope entity prims");
+        Assert.That(counts.GetProperty("elements").GetInt32(), Is.EqualTo(expected.Elements), "component prims");
+        Assert.That(counts.GetProperty("instances").GetInt32(), Is.EqualTo(expected.Instances), "instance prims");
+        Assert.That(counts.GetProperty("meshes").GetInt32(), Is.EqualTo(expected.Meshes), "Mesh prims");
+        Assert.That(counts.GetProperty("materials").GetInt32(), Is.EqualTo(expected.Materials), "Material prims");
+        Assert.That(counts.GetProperty("relationshipTargets").GetInt32(), Is.EqualTo(expected.Relationships), "relationship targets");
+    }
+
     [Test]
     public void Duplex_CountsMatchTheBosTables()
     {
@@ -69,12 +104,12 @@ public sealed class SampleExportTests
         var expected = Expected(data);
         Report(path, summary, elapsed);
         Assert.That(expected.Instances, Is.GreaterThan(0), "the fixture has geometry");
+        Assert.That(expected.Relationships, Is.GreaterThan(0), "the fixture has relations");
         Assert.Multiple(() =>
         {
-            Assert.That(summary.Elements, Is.EqualTo(expected.Elements), "elements");
-            Assert.That(summary.Instances, Is.EqualTo(expected.Instances), "instances");
-            Assert.That(summary.Prototypes, Is.EqualTo(expected.Meshes), "prototypes");
-            Assert.That(summary.Materials, Is.EqualTo(expected.Materials), "materials");
+            AssertSummary(summary, expected);
+            Assert.That(summary.RelationsLeftOut, Is.Zero, "relations left out");
+            Assert.That(CountLines(path, "^    def (Xform|Scope) \"E"), Is.EqualTo(expected.Entities), "entity prims in the text");
             Assert.That(CountLines(path, "^\\s*def Mesh \""), Is.EqualTo(expected.Meshes), "mesh prims in the text");
             Assert.That(CountLines(path, "^\\s*instanceable = true$"), Is.EqualTo(expected.Instances), "instanceable prims in the text");
             Assert.That(CountLines(path, "^\\s*kind = \"component\"$"), Is.EqualTo(expected.Elements), "element prims in the text");
@@ -97,82 +132,70 @@ public sealed class SampleExportTests
     public void Duplex_OpensInUsdCoreWithoutErrors()
     {
         var (data, summary, path, _) = Duplex.Value;
-        var expected = Expected(data);
-        var check = UsdCheck.Run(path, DoorPrim);
-
-        var findings = check.GetProperty("findings").EnumerateArray().ToList();
-        foreach (var f in findings)
-            TestContext.Out.WriteLine($"{f.GetProperty("type")} {f.GetProperty("name")}: {f.GetProperty("message")}");
-        var counts = check.GetProperty("counts");
+        var check = UsdCheck.Run(path);
         Assert.Multiple(() =>
         {
-            Assert.That(check.GetProperty("compositionErrors").GetArrayLength(), Is.Zero, "composition errors");
-            Assert.That(findings, Is.Empty, "validation findings");
+            AssertOpensClean(check, Expected(data));
             Assert.That(check.GetProperty("defaultPrim").GetString(), Is.EqualTo(UsdNames.Root));
             Assert.That(check.GetProperty("upAxis").GetString(), Is.EqualTo("Z"));
             Assert.That(check.GetProperty("metersPerUnit").GetDouble(), Is.EqualTo(1.0));
-            Assert.That(counts.GetProperty("meshes").GetInt32(), Is.EqualTo(expected.Meshes), "Mesh prims");
-            Assert.That(counts.GetProperty("instances").GetInt32(), Is.EqualTo(expected.Instances), "instance prims");
-            Assert.That(counts.GetProperty("elements").GetInt32(), Is.EqualTo(expected.Elements), "component prims");
-            Assert.That(counts.GetProperty("materials").GetInt32(), Is.EqualTo(expected.Materials), "Material prims");
             Assert.That(check.GetProperty("prototypes").GetInt32(), Is.LessThanOrEqualTo(summary.Prototypes), "USD prototypes are shared meshes");
         });
     }
 
     /// <summary>A Duplex door read back through usd-core: identity attributes, a number parameter
-    /// whose BOS name is not an identifier, and a string parameter whose BOS group is not one;
-    /// the original strings are on the attribute's declaration under /Model/Descriptors.</summary>
+    /// whose BOS name is not an identifier, a string parameter whose BOS group is not one (the
+    /// original strings are on the declaration under /Model/Descriptors), and the storey it is
+    /// contained in, which has no geometry and is a Scope.</summary>
     [Test]
-    public void Duplex_DoorKeepsItsElementData()
+    public void Duplex_DoorKeepsItsElementDataAndStorey()
     {
         var (_, _, path, _) = Duplex.Value;
-        var prims = UsdCheck.Run(path, DoorPrim, DescriptorsPrim).GetProperty("prims");
-        var door = prims.GetProperty(DoorPrim);
-        var descriptors = prims.GetProperty(DescriptorsPrim);
-        Assert.That(door.ValueKind, Is.EqualTo(JsonValueKind.Object), $"{DoorPrim} exists");
+        var prims = UsdCheck.Run(path, DoorPrim, StoreyPrim, DescriptorsPrim).GetProperty("prims");
+        Assert.That(prims.GetProperty(DoorPrim).ValueKind, Is.EqualTo(JsonValueKind.Object), $"{DoorPrim} exists");
+        var door = prims.GetProperty(DoorPrim).GetProperty("properties");
+        var storey = prims.GetProperty(StoreyPrim);
+        var descriptors = prims.GetProperty(DescriptorsPrim).GetProperty("properties");
 
-        JsonElement Attr(string name) => door.GetProperty(name);
+        JsonElement Prop(string name) => door.GetProperty(name);
         Assert.Multiple(() =>
         {
-            Assert.That(Attr("bim:globalId").GetProperty("value").GetString(), Is.EqualTo("1hOSvn6df7F8_7GcBWlRH8"));
-            Assert.That(Attr("bim:category").GetProperty("value").GetString(), Is.EqualTo("IFCDOOR"));
-            Assert.That(Attr("bim:name").GetProperty("value").GetString(), Does.StartWith("M_Single-Flush:1250mm x 2010mm"));
+            Assert.That(prims.GetProperty(DoorPrim).GetProperty("typeName").GetString(), Is.EqualTo("Xform"));
+            Assert.That(Prop("bim:globalId").GetProperty("value").GetString(), Is.EqualTo("1hOSvn6df7F8_7GcBWlRH8"));
+            Assert.That(Prop("bim:category").GetProperty("value").GetString(), Is.EqualTo("IFCDOOR"));
+            Assert.That(Prop("bim:name").GetProperty("value").GetString(), Does.StartWith("M_Single-Flush:1250mm x 2010mm"));
 
-            var width = Attr("bim:param:IFCDOOR:Ifc_OverallWidth");
+            var width = Prop("bim:param:IFCDOOR:Ifc_OverallWidth");
             Assert.That(width.GetProperty("type").GetString(), Is.EqualTo("float"));
             Assert.That(width.GetProperty("value").GetDouble(), Is.EqualTo(1.25).Within(1e-6));
             Assert.That(descriptors.GetProperty("bim:param:IFCDOOR:Ifc_OverallWidth").GetProperty("displayName").GetString(), Is.EqualTo("Ifc:OverallWidth"));
 
-            var mark = Attr("bim:param:PSet_Revit_Identity_Data:Mark");
+            var mark = Prop("bim:param:PSet_Revit_Identity_Data:Mark");
             Assert.That(mark.GetProperty("type").GetString(), Is.EqualTo("string"));
             Assert.That(mark.GetProperty("value").GetString(), Is.EqualTo("B101"));
             Assert.That(descriptors.GetProperty("bim:param:PSet_Revit_Identity_Data:Mark").GetProperty("displayGroup").GetString(), Is.EqualTo("PSet_Revit_Identity Data"));
+
+            Assert.That(Prop("bim:containedIn").GetProperty("targets").EnumerateArray().Select(t => t.GetString()), Is.EqualTo(new[] { StoreyPrim }));
+            Assert.That(Prop("bim:fills").GetProperty("targets").GetArrayLength(), Is.EqualTo(1), "the opening it fills");
+            Assert.That(storey.GetProperty("typeName").GetString(), Is.EqualTo("Scope"));
+            Assert.That(storey.GetProperty("properties").GetProperty("bim:name").GetProperty("value").GetString(), Is.EqualTo("Level 1"));
+            Assert.That(storey.GetProperty("properties").GetProperty("bim:category").GetProperty("value").GetString(), Is.EqualTo("IFCBUILDINGSTOREY"));
         });
     }
 
-    /// <summary>Schependomlaan (5,978 instances, 335,475 parameters) as a size and speed probe:
-    /// the numbers in README.md come from this test's output.</summary>
+    /// <summary>Schependomlaan (38,947 entities, 5,978 instances, 335,475 parameters) as a size
+    /// and speed probe: the numbers in README.md come from this test's output.</summary>
     [Test]
     public void Schependomlaan_WritesAndOpens()
     {
         var (data, summary, path, elapsed) = Export("schependomlaan");
         var expected = Expected(data);
         Report(path, summary, elapsed);
-        Assert.Multiple(() =>
-        {
-            Assert.That(summary.Elements, Is.EqualTo(expected.Elements), "elements");
-            Assert.That(summary.Instances, Is.EqualTo(expected.Instances), "instances");
-            Assert.That(summary.Prototypes, Is.EqualTo(expected.Meshes), "prototypes");
-        });
+        Assert.Multiple(() => AssertSummary(summary, expected));
 
         var clock = Stopwatch.StartNew();
         var check = UsdCheck.Run(path);
         TestContext.Out.WriteLine($"usd-core open and validate: {clock.Elapsed.TotalMilliseconds:N0} ms");
-        Assert.Multiple(() =>
-        {
-            Assert.That(check.GetProperty("compositionErrors").GetArrayLength(), Is.Zero, "composition errors");
-            Assert.That(check.GetProperty("findings").GetArrayLength(), Is.Zero, "validation findings");
-            Assert.That(check.GetProperty("counts").GetProperty("instances").GetInt32(), Is.EqualTo(expected.Instances));
-        });
+        Assert.Multiple(() => AssertOpensClean(check, expected));
     }
 }

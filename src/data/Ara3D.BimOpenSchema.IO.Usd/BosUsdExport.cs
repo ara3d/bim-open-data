@@ -55,7 +55,7 @@ public static class BosUsdExport
         w.CloseMetadata().Open();
         var materials = UsdGeometry.WriteMaterials(w, g);
         var prototypes = UsdGeometry.WritePrototypes(w, g);
-        var summary = UsdElements.Write(w, data, g, materials, prototypes);
+        var summary = UsdEntities.Write(w, data, g, materials, prototypes);
         w.Close();
         return summary;
     }

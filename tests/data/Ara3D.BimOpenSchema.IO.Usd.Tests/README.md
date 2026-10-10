@@ -8,12 +8,14 @@ dotnet test tests/data/Ara3D.BimOpenSchema.IO.Usd.Tests -c Release
 ```
 
 - `SampleExportTests` writes `samples/public/duplex.bos` and `schependomlaan.bos` (both
-  committed, so no fetch is needed) and checks element, instance, mesh, and material counts
-  against counts taken straight from the BOS tables, in the summary and in the text. It prints
-  each file's size and write time; the README's measurements come from that output.
+  committed, so no fetch is needed) and checks entity, element, instance, mesh, material, and
+  relationship counts against counts taken straight from the BOS tables, in the summary and in
+  the text. It reads a Duplex door back with its storey (a Scope) through `bim:containedIn`. It
+  prints each file's size and write time; the README's measurements come from that output.
 - `SyntheticExportTests` builds a five-entity model by hand to cover what the samples lack:
-  missing values, a duplicate parameter, an instance with no entity, one with no mesh, a hidden
-  one, a rotated and mirrored one, and strings that need escaping.
+  missing values (including local id -1), a duplicate parameter, entities without geometry,
+  duplicate and broken relations, an instance with no entity, one with no mesh, a hidden one,
+  a rotated and mirrored one, and strings that need escaping.
 - `FileWriteTests` makes a write throw partway and checks that the earlier file survives and
   no temporary file is left.
 - `UsdaWriterTests` covers number and string formatting and identifier sanitizing.

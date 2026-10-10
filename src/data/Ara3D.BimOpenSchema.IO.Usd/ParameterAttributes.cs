@@ -1,7 +1,8 @@
 namespace Ara3D.BimOpenSchema.IO.Usd;
 
 /// <summary>
-/// How one BOS parameter descriptor appears as a USD attribute: its full name
+/// How one BOS parameter descriptor appears as a USD property (an attribute, or a
+/// relationship for an entity reference): its full name
 /// (bim:param:{group}:{name}), its USD value type, and the descriptor's own strings, which
 /// the attribute name can only approximate.
 /// </summary>
@@ -40,14 +41,14 @@ internal sealed record ParameterAttribute(string Name, ParameterType Type, strin
     private static string FullName(string groupId, string nameId)
         => UsdNames.ParameterNamespace + groupId + ":" + nameId;
 
-    /// <summary>The USD value type for a BOS parameter type. An entity reference is written as
-    /// the referenced entity's name, because the target usually has no prim of its own.</summary>
+    /// <summary>The USD value type for a BOS parameter type. An entity reference is a
+    /// relationship ("rel") targeting the referenced entity's prim.</summary>
     public static string? UsdTypeOf(ParameterType type) => type switch
     {
         ParameterType.Int => "int",
         ParameterType.Number => "float",
         ParameterType.String => "string",
-        ParameterType.Entity => "string",
+        ParameterType.Entity => "rel",
         ParameterType.Point => "point3f",
         _ => null,
     };
