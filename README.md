@@ -74,7 +74,7 @@ These are the 25 projects in `src/data`, grouped by what they do. Most target `n
 
 | Project | Role |
 |---|---|
-| `BimOpenMcp.Ifc` | An MCP (Model Context Protocol) server with 33 tools for an AI agent: entities, property sets, quantities, spatial structure, SQL over DuckDB, geometry bounds and volumes, GLB export, IFC and Fragments to BOS, and BOS to GLB, USD, and BCF. Runs over stdio, or HTTP with `--http <port>`. |
+| `BimOpenMcp.Ifc` | An MCP (Model Context Protocol) server with 34 tools for an AI agent: entities, property sets, quantities, spatial structure, SQL over DuckDB, geometry bounds and volumes, GLB export, IFC and Fragments to BOS, SQL over any BOS file, and BOS to GLB, USD, and BCF. Runs over stdio, or HTTP with `--http <port>`. |
 | `Ara3D.BimOpenSchema.Browser` | A WPF data-grid viewer for `.bos` files with glTF and Excel export (`net10.0-windows`) |
 | `Ara3D.IfcTypeGen` | The generator behind `Ara3D.IfcTypes` |
 

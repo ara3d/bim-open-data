@@ -30,7 +30,24 @@ public static class BosFileTools
                     .Build(),
                 (args, _) => ToolRunner.RunAsync(
                     () => FragToBos(args.GetRequiredString("path"), args.GetString("outputPath")),
-                    ["bos_export_glb", "bos_export_usd", "bos_export_bcf"]))
+                    ["bos_sql", "bos_export_glb", "bos_export_usd", "bos_export_bcf"]))
+            .Tool(
+                "bos_sql",
+                "Runs a read-only SQL query (DuckDB dialect) over a .bos model, from any source, and "
+                + "returns a page of rows plus the unpaged row count. The views are the ones ifc_sql "
+                + "sees: EntityText, ParameterText, RelationText, StoreyOfEntity, StoreyOfElement. The "
+                + "first call builds a DuckDB database in a temporary folder; later calls reuse it until "
+                + "the .bos file changes.",
+                BosPath()
+                    .String("sql", "A single SELECT or WITH statement.", required: true)
+                    .Paged()
+                    .Build(),
+                (args, _) => ToolRunner.RunAsync(
+                    () => IfcDuck.Query(
+                        CachedDatabase(Input(args.GetRequiredString("bosPath"))),
+                        args.GetRequiredString("sql"),
+                        args.Skip(),
+                        args.Take())))
             .Tool(
                 "bos_export_glb",
                 "Writes a BOS model's geometry to binary glTF (.glb), y-up in metres, one node per "
@@ -67,7 +84,7 @@ public static class BosFileTools
                 BosPath()
                     .String("sql", "A single SELECT or WITH statement returning GlobalId and Title.", required: true)
                     .String("outputPath", "Path of the .bcf file to write.", required: true)
-                    .String("guidSeed", "Optional; the same seed keeps topic GUIDs stable across reruns of one check.")
+                    .String("guidSeed", "Optional; the same seed keeps topic GUIDs stable across reruns of one check. Default: the .bos file name, so two models' topics never share a GUID.")
                     .Build(),
                 (args, _) => ToolRunner.RunAsync(
                     () => ExportBcf(
@@ -88,9 +105,7 @@ public static class BosFileTools
         var data = FragmentsToBos.Read(input);
         data.WriteToParquetZip(bos);
         var database = new FilePath(Path.ChangeExtension(bos.FullPath, ".duckdb"));
-        if (File.Exists(database.FullPath))
-            File.Delete(database.FullPath);
-        bos.BosToDuckDB(database);
+        BuildDatabase(bos, database);
         return new
         {
             path = input.FullPath,
@@ -123,9 +138,40 @@ public static class BosFileTools
         var issues = conn.Query(IfcDuck.ReadOnlyQuery(sql)).ToBcfIssues();
         var output = Output(outputPath);
         var summary = BcfWriter.WriteFile(
-            output.FullPath, issues, new BcfOptions { GuidSeed = guidSeed ?? "" }, ElementBounds.FromBimData(data));
+            output.FullPath, issues, new BcfOptions { GuidSeed = guidSeed ?? Path.GetFileNameWithoutExtension(bosPath) }, ElementBounds.FromBimData(data));
         return new { bosPath, outputPath = output.FullPath, bytes = new FileInfo(output.FullPath).Length, summary };
     }
+
+    /// <summary>Writes the BOS tables and the text views ifc_sql uses into a fresh database. It is
+    /// built under a temporary name and moved into place, so a failed build never leaves a
+    /// half-written database for a later call to reuse.</summary>
+    private static void BuildDatabase(FilePath bos, FilePath database)
+    {
+        var building = new FilePath(database.FullPath + ".building");
+        if (File.Exists(building.FullPath))
+            File.Delete(building.FullPath);
+        bos.BosToDuckDB(building);
+        IfcDuck.CreateViews(building);
+        File.Move(building.FullPath, database.FullPath, overwrite: true);
+    }
+
+    /// <summary>The database for a .bos file, in a temporary folder named by the file's path, size,
+    /// and write time, so a changed .bos gets a new database and the source folder is never written.</summary>
+    private static FilePath CachedDatabase(FilePath bos)
+    {
+        var info = new FileInfo(bos.FullPath);
+        var key = $"{info.FullName}|{info.Length}|{info.LastWriteTimeUtc.Ticks}";
+        var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(key)))[..16];
+        var folder = Path.Combine(Path.GetTempPath(), "bimopenmcp-bos");
+        Directory.CreateDirectory(folder);
+        var database = new FilePath(Path.Combine(folder, $"{Path.GetFileNameWithoutExtension(bos.FullPath)}-{hash}.duckdb"));
+        lock (CacheLock)
+            if (!File.Exists(database.FullPath))
+                BuildDatabase(bos, database);
+        return database;
+    }
+
+    private static readonly object CacheLock = new();
 
     private static FilePath Input(string bosPath)
     {

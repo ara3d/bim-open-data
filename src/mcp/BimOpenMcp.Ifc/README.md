@@ -63,11 +63,12 @@ Client config:
 | `ifc_sql` | A read-only DuckDB query over the converted model, paged. |
 | `ifc_sql_export` | The full result of a query, written to `.csv`, `.parquet`, or `.json`. |
 | `frag_to_bos` | Converts a That Open Fragments 2 file (`.frag`) to BOS, with a DuckDB database beside it. |
+| `bos_sql` | A read-only DuckDB query over any `.bos` model, with the same views as `ifc_sql`, paged. |
 | `bos_export_glb` | Writes a `.bos` model's geometry as GLB, entity index and GlobalId in each node's extras. |
 | `bos_export_usd` | Writes a `.bos` model as an OpenUSD `.usda` stage with element data as `bim:` attributes. |
 | `bos_export_bcf` | Writes the rows of a SQL query over a `.bos` model as BCF 3.0 topics, one per `Title`. |
 
-The four `bos_*`/`frag_*` tools take a `.bos` path (from `ifc_to_bos`'s `bosPath`, or `frag_to_bos`) instead
+The five `bos_*`/`frag_*` tools take a `.bos` path (from `ifc_to_bos`'s `bosPath`, or `frag_to_bos`) instead
 of an IFC session, so they work for any source that becomes BOS.
 
 Anything returning a list takes `skip` and `take` and reports the unpaged `total`, so a caller can

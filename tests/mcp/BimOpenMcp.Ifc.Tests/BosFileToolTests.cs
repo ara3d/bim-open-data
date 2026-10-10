@@ -66,6 +66,26 @@ public sealed class BosFileToolTests
         Assert.That(File.Exists(data["databasePath"]!.GetValue<string>()), Is.True);
         Assert.That(data["entities"]!.GetValue<int>(), Is.GreaterThan(0));
         Assert.That(data["instances"]!.GetValue<int>(), Is.GreaterThan(0));
+        var doors = _mcp.CallData("bos_sql", new JsonObject
+        {
+            ["bosPath"] = output,
+            ["sql"] = "SELECT count(*) AS n FROM EntityText WHERE Category = 'IFCDOOR'",
+        });
+        Assert.That(System.Convert.ToInt32(doors["rows"]![0]![0]!.ToString()), Is.EqualTo(14));
+    }
+
+    [Test]
+    public void Sql_QueriesTheTextViewsOfACommittedSample()
+    {
+        var data = _mcp.CallData("bos_sql", new JsonObject
+        {
+            ["bosPath"] = _bos,
+            ["sql"] = "SELECT GlobalId FROM EntityText WHERE Category = 'IFCDOOR'",
+            ["take"] = 5,
+        });
+
+        Assert.That(data["total"]!.GetValue<long>(), Is.EqualTo(14));
+        Assert.That(data["rows"]!.AsArray(), Has.Count.EqualTo(5));
     }
 
     [Test]
@@ -76,6 +96,7 @@ public sealed class BosFileToolTests
         var payload = _mcp.Call("frag_to_bos", new JsonObject { ["path"] = notFrag });
 
         Assert.That(payload["ok"]!.GetValue<bool>(), Is.False);
+        Assert.That(payload["error"]!.GetValue<string>(), Does.Contain("Fragments").IgnoreCase);
     }
 
     [Test]
