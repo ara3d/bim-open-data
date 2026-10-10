@@ -50,7 +50,10 @@ var summary = BcfWriter.WriteFile("doors.bcf", doors.ToBcfIssues(), new BcfOptio
   its topic GUIDs, so a reader updates those topics instead of adding new ones.
 - **Errors.** A missing required column, a blank title, two issues with the
   same title (after trimming), or two priorities within one topic throw
-  `ArgumentException` with the offending name.
+  `ArgumentException` with the offending name. Every topic is checked before
+  anything is written. `WriteFile` writes a temporary file beside the target and
+  moves it into place only when complete, so a failure leaves an existing file
+  as it was.
 
 The container holds `bcf.version`, `extensions.xml` (the topic types,
 statuses, and priorities used), and one folder per topic named by its GUID, each

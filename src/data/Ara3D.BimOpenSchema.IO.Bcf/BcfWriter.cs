@@ -17,13 +17,59 @@ public static class BcfWriter
     public const string VersionFile = "bcf.version";
     public const string ExtensionsFile = "extensions.xml";
 
+    /// <summary>Writes the container to a stream. Every topic is planned and checked before the
+    /// first byte is written, so an invalid input leaves the stream untouched.</summary>
     /// <exception cref="ArgumentException">An issue has a blank title, or two issues share one.</exception>
     public static BcfSummary Write(Stream output, IReadOnlyList<BcfIssue> issues, BcfOptions? options = null, ElementBounds? bounds = null)
     {
         options ??= new BcfOptions();
+        return Write(output, Plan(issues, options, bounds), options, bounds);
+    }
+
+    /// <summary>Writes to a file and creates its folder. The input is checked before any file is
+    /// opened, and the container is written beside the target and moved over it only when
+    /// complete, so a failure leaves an existing file as it was and no partial file behind.</summary>
+    /// <exception cref="ArgumentException">An issue has a blank title, or two issues share one.</exception>
+    public static BcfSummary WriteFile(string path, IReadOnlyList<BcfIssue> issues, BcfOptions? options = null, ElementBounds? bounds = null)
+    {
+        options ??= new BcfOptions();
+        var topics = Plan(issues, options, bounds);
+        return ReplaceFile(path, stream => Write(stream, topics, options, bounds));
+    }
+
+    /// <summary>Runs <paramref name="write"/> on a new temporary file in the target's folder, then
+    /// moves it over <paramref name="path"/>. If <paramref name="write"/> throws, the temporary
+    /// file is deleted and the target is not touched.</summary>
+    internal static T ReplaceFile<T>(string path, Func<Stream, T> write)
+    {
+        var target = Path.GetFullPath(path);
+        var folder = Path.GetDirectoryName(target)!;
+        Directory.CreateDirectory(folder);
+        var temporary = Path.Combine(folder, $".{Path.GetFileName(target)}.{Guid.NewGuid():N}.tmp");
+        try
+        {
+            T result;
+            using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write))
+                result = write(stream);
+            File.Move(temporary, target, overwrite: true);
+            return result;
+        }
+        catch
+        {
+            File.Delete(temporary);
+            throw;
+        }
+    }
+
+    private static List<BcfTopic> Plan(IReadOnlyList<BcfIssue> issues, BcfOptions options, ElementBounds? bounds)
+    {
         var topics = issues.Select(i => BcfTopic.Plan(i, options, bounds)).ToList();
         RequireDistinctTitles(topics);
+        return topics;
+    }
 
+    private static BcfSummary Write(Stream output, IReadOnlyList<BcfTopic> topics, BcfOptions options, ElementBounds? bounds)
+    {
         var created = new DateTimeOffset(options.CreationDate.UtcDateTime.Ticks / TimeSpan.TicksPerSecond * TimeSpan.TicksPerSecond, TimeSpan.Zero);
         using (var zip = new ZipArchive(output, ZipArchiveMode.Create, leaveOpen: true))
         {
@@ -43,16 +89,6 @@ public static class BcfWriter
             topics.Count(t => t.HasViewpoint),
             topics.Sum(t => t.GlobalIds.Count),
             topics.Sum(t => t.GlobalIds.Count(id => bounds is null || !bounds.TryGet(id, out _))));
-    }
-
-    /// <summary>Writes to a file, replacing it, and creates its folder.</summary>
-    public static BcfSummary WriteFile(string path, IReadOnlyList<BcfIssue> issues, BcfOptions? options = null, ElementBounds? bounds = null)
-    {
-        var folder = Path.GetDirectoryName(Path.GetFullPath(path));
-        if (folder is not null)
-            Directory.CreateDirectory(folder);
-        using var stream = File.Create(path);
-        return Write(stream, issues, options, bounds);
     }
 
     private static void RequireDistinctTitles(IReadOnlyList<BcfTopic> topics)
