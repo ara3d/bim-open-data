@@ -11,12 +11,29 @@ public static class BosUsdExport
 {
     private const int BufferSize = 1 << 16;
 
-    /// <summary>Writes the stage to <paramref name="usdaPath"/>, replacing any file there.</summary>
+    /// <summary>Writes the stage to <paramref name="usdaPath"/>, replacing any file there. The
+    /// text goes to a temporary file in the same folder, which is moved into place only when
+    /// the whole stage is written; if writing fails, the temporary file is deleted and any
+    /// earlier file at <paramref name="usdaPath"/> is left as it was.</summary>
     public static UsdExportSummary WriteUsda(this IBimData data, string usdaPath)
     {
-        using var stream = new FileStream(usdaPath, FileMode.Create, FileAccess.Write, FileShare.None, BufferSize);
-        using var text = new StreamWriter(stream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false), BufferSize);
-        return data.WriteUsda(text);
+        var fullPath = Path.GetFullPath(usdaPath);
+        var temporary = Path.Combine(Path.GetDirectoryName(fullPath)!,
+            "." + Path.GetFileName(fullPath) + "." + Guid.NewGuid().ToString("N") + ".tmp");
+        try
+        {
+            UsdExportSummary summary;
+            using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None, BufferSize))
+            using (var text = new StreamWriter(stream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false), BufferSize))
+                summary = data.WriteUsda(text);
+            File.Move(temporary, fullPath, overwrite: true);
+            return summary;
+        }
+        catch
+        {
+            File.Delete(temporary);
+            throw;
+        }
     }
 
     /// <summary>Writes the stage to <paramref name="output"/>. Numbers are formatted in the

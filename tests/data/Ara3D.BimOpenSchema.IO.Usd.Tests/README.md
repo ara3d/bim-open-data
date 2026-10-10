@@ -14,6 +14,8 @@ dotnet test tests/data/Ara3D.BimOpenSchema.IO.Usd.Tests -c Release
 - `SyntheticExportTests` builds a five-entity model by hand to cover what the samples lack:
   missing values, a duplicate parameter, an instance with no entity, one with no mesh, a hidden
   one, a rotated and mirrored one, and strings that need escaping.
+- `FileWriteTests` makes a write throw partway and checks that the earlier file survives and
+  no temporary file is left.
 - `UsdaWriterTests` covers number and string formatting and identifier sanitizing.
 
 ## The usd-core check

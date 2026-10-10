@@ -18,8 +18,9 @@ var data = new FilePath("samples/public/duplex.bos").ReadBimDataFromParquetZip()
 UsdExportSummary summary = data.WriteUsda("duplex.usda");
 ```
 
-`WriteUsda(this IBimData, string path)` replaces the file; `WriteUsda(this IBimData, TextWriter)`
-writes to a writer the caller owns. Both return a `UsdExportSummary`: counts of materials,
+`WriteUsda(this IBimData, string path)` writes a temporary file beside `path` and moves it into
+place only when the whole stage is written, so a failure leaves any earlier file untouched and
+no partial `.usda`. `WriteUsda(this IBimData, TextWriter)` writes to a writer the caller owns. Both return a `UsdExportSummary`: counts of materials,
 prototypes, declared parameter attributes, elements, instances, and of what was left out
 (instances with no mesh, parameters with no value, duplicate parameters).
 
