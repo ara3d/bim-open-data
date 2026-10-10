@@ -71,7 +71,7 @@ number it passed, and a file with no nodes.
 ## Measured
 
 Release build, one warm process, on the owner's Windows machine (2026-10-10), from
-`Measure_public_samples` in the test project. Triangles are drawn triangles (an instanced mesh
+`PublicSampleTests.Measure_public_samples` in the test project. Triangles are drawn triangles (an instanced mesh
 counts once per node). The Khronos glTF validator 2.0.0-dev.3.10 reports no errors, warnings,
 infos, or hints on any of these files.
 
@@ -83,6 +83,25 @@ infos, or hints on any of these files.
 
 On `duplex.bos` the 21 instances not written are hidden. Tests are in
 [`tests/data/Ara3D.BimOpenSchema.IO.Gltf.Tests`](../../../tests/data/Ara3D.BimOpenSchema.IO.Gltf.Tests).
+
+## Validating the output
+
+The test project's `validator/` folder pins the Khronos glTF validator (npm
+`gltf-validator` 2.0.0-dev.3.10) and holds `validate-gltf.mjs`, which validates .glb files or
+every .glb in a folder and exits 1 when any file has an error:
+
+```
+cd tests/data/Ara3D.BimOpenSchema.IO.Gltf.Tests/validator
+npm ci
+node validate-gltf.mjs path/to/model.glb path/to/folder
+```
+
+To write every public sample and validate them all, run the explicit test (it is ignored when
+node is not on PATH or `npm ci` has not run):
+
+```
+dotnet test tests/data/Ara3D.BimOpenSchema.IO.Gltf.Tests -c Release --filter "FullyQualifiedName~Public_samples_pass_the_Khronos_validator"
+```
 
 ## Dependencies
 

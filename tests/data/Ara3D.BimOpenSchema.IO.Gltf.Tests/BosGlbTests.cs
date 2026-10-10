@@ -186,24 +186,6 @@ public class BosGlbTests
         Assert.That(with.Nodes - without.Nodes, Is.EqualTo(hidden));
     }
 
-    /// <summary>Not part of the gate: prints the numbers the README quotes, for every public sample.</summary>
-    [Test, Explicit("measurement for the README")]
-    public void Measure_public_samples()
-    {
-        foreach (var bos in Directory.GetFiles(RepoPaths.Samples("public"), "*.bos").Order())
-        {
-            var path = OutputPath(Path.ChangeExtension(Path.GetFileName(bos), ".glb"));
-            var watch = Stopwatch.StartNew();
-            var data = ParquetUtils.ReadBimDataFromParquetZip(bos);
-            var read = watch.ElapsedMilliseconds;
-            var summary = data.WriteGlb(path);
-            TestContext.Progress.WriteLine(
-                $"{Path.GetFileName(bos)}: {new FileInfo(bos).Length} bytes in, {data.Geometry.InstanceEntityIndex.Length} instances, " +
-                $"{summary.Nodes} nodes, {summary.Meshes} meshes, {summary.Triangles} triangles, {summary.Bytes} bytes out; " +
-                $"read {read} ms, write {watch.ElapsedMilliseconds - read} ms");
-        }
-    }
-
     private static (Vector3 Min, Vector3 Max) WorldBounds(ModelRoot glb)
     {
         var min = new Vector3(float.MaxValue);
