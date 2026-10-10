@@ -22,8 +22,12 @@ public static class FragmentsToBos
         bdb.Manifest.GeneratorVersion = GeneratorVersion;
         var doc = bdb.AddDocument(title, path);
         var items = new FragmentsItems(model);
-        new FragmentsEntityReader(items, bdb, doc).Read();
-        bdb.Geometry = new BimGeometry();
+        var entities = new FragmentsEntityReader(items, bdb, doc);
+        entities.Read();
+        var geometry = new FragmentsGeometryReader(model.Meshes!.Value, entities.EntityOfItem);
+        bdb.Geometry = geometry.Read();
+        foreach (var (problem, count) in geometry.Problems)
+            bdb.AddDiagnostic(DiagnosticType.ExporterWarning, $"{count} {problem}", doc, BimDataBuilder.InvalidEntityIndex);
         return bdb.Build();
     }
 

@@ -1,3 +1,4 @@
+using System.Numerics;
 using Ara3D.Utils;
 using BimOpenData.TestSupport;
 
@@ -115,6 +116,45 @@ public class DuplexFixtureTests
         }
         Assert.That(mismatches, Is.Empty);
     }
+
+    [Test]
+    public void EveryElementWithGeometry_SitsWhereTheIfcBosPutsIt()
+    {
+        var frag = BoxesByGlobalId(_frag);
+        var ifc = BoxesByGlobalId(_ifc);
+        Assert.That(frag.Keys, Is.EquivalentTo(ifc.Keys));
+        Assert.That(frag, Has.Count.EqualTo(236));
+        var off = frag.Keys
+            .Where(k => Vector3.Distance(frag[k].Min, ifc[k].Min) > 0.002f || Vector3.Distance(frag[k].Max, ifc[k].Max) > 0.002f)
+            .Select(k => $"{_frag.Category(_frag.EntityByGlobalId(k))} {k}: {frag[k]} vs {ifc[k]}");
+        Assert.That(off, Is.Empty, "world boxes more than 2 mm apart");
+    }
+
+    [Test]
+    public void VolumePerClass_MatchesIfcBos()
+    {
+        // Equal signed volumes per class show the triangles cover the same surfaces facing the same
+        // way; That Open merges some coplanar triangles, so the counts may differ (see the README).
+        var frag = PerClass(_frag);
+        var ifc = PerClass(_ifc);
+        foreach (var c in frag.Keys.Order())
+            TestContext.WriteLine($"{c}: triangles {frag[c].Triangles} vs {ifc[c].Triangles}, volume {frag[c].Volume:F3} vs {ifc[c].Volume:F3}");
+        Assert.That(frag.Keys, Is.EquivalentTo(ifc.Keys));
+        Assert.Multiple(() =>
+        {
+            foreach (var c in frag.Keys)
+                Assert.That(frag[c].Volume, Is.EqualTo(ifc[c].Volume).Within(0.05 + 1e-3 * Math.Abs(ifc[c].Volume)), c);
+        });
+    }
+
+    private static Dictionary<string, (Vector3 Min, Vector3 Max)> BoxesByGlobalId(BimData d)
+        => d.Geometry.EntityBoxes().ToDictionary(kv => d.GlobalId(kv.Key), kv => kv.Value);
+
+    /// <summary>Triangles drawn and signed volume of every instance, summed by IFC class.</summary>
+    private static Dictionary<string, (long Triangles, double Volume)> PerClass(BimData d)
+        => Enumerable.Range(0, d.Geometry.InstanceEntityIndex.Length)
+            .GroupBy(i => d.Category(d.Geometry.InstanceEntityIndex[i]))
+            .ToDictionary(g => g.Key, g => (g.Sum(i => (long)d.Geometry.Triangles(i).Count()), g.Sum(d.Geometry.SignedVolume)));
 
     private static Dictionary<string, string> GlobalIds(BimData d)
         => Enumerable.Range(0, d.Entities.Length)

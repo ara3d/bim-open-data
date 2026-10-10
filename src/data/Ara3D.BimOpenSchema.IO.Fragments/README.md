@@ -9,9 +9,6 @@ BimData data = FragmentsToBos.Read("model.frag");        // in memory
 FragmentsToBos.Convert("model.frag", "model.bos");       // to a .bos archive
 ```
 
-Entities, parameters, and relations are read; geometry is not read yet (the
-geometry tables are empty).
-
 A file that is not Fragments 2 throws `FragmentsFormatException`, whose message
 names what was found: a file identifier other than `0001`, a writer version
 other than 3.x, or a buffer that does not hold a `Model` root.
@@ -94,9 +91,49 @@ relation name; malformed JSON is reported the same way.
 An entity with no GlobalId or no Name gets the empty string, as every BOS
 writer does for those two columns.
 
+## Geometry
+
+- **Samples.** A sample places one representation for one item with one
+  material. `sample.item` indexes both `meshes_items` (whose value is the item's
+  position in `local_ids`) and `global_transforms`; the placement is
+  `global_transforms[item] * local_transforms[sample.local_transform]`. Each
+  sample becomes one BOS instance; each representation one mesh, shared.
+- **Transforms.** A `Transform` is a double position and float x and y
+  directions; z is their cross product.
+- **Axes and origin.** web-ifc, inside That Open's importer, turns the IFC
+  model y-up and moves it near the origin (`COORDINATE_TO_ORIGIN`);
+  `meshes.coordinates` records the move (on the Duplex a pure translation of
+  (-2.514, -3.262, -11.635), y-up). Every BOS transform undoes that move and
+  then maps y-up to z-up with (x, y, z) to (x, -z, y), so the geometry sits
+  where the IFC put it, in metres. BOS transforms are single precision, so a
+  model placed hundreds of kilometres from its origin keeps only centimetres
+  there, as with Ara3D.Ifc.Bos.
+- **Shells** (class `SHELL`) are planar polygons: each profile is an outer
+  loop of point indices, each hole names its profile by `profile_id`; a `BIG`
+  shell keeps 32-bit indices in `big_profiles` and `big_holes`. `ShellMesher`
+  projects each profile onto the coordinate plane its Newell normal is most
+  aligned with, triangulates it with holes by `Earcut` (a port of
+  mapbox/earcut 3.0.1, ISC, the library That Open's viewer uses), and winds
+  every triangle to face the way the profile's loop does.
+- **Circle extrusions** (class `CIRCLE_EXTRUSION`, reinforcement bars) are
+  tubes: each axis has a radius and parts (wires, wire sets, arcs) listed by
+  `parts` and `order`. `CircleExtrusionMesher` sweeps a ring along each part
+  with That Open's resolution (round(200 r) points clamped to 6..30; arcs
+  round(4 aperture r) points clamped to 4..32) and caps both ends. In a
+  `CircleCurve`, `x_direction` is the axis the arc turns about and
+  `y_direction` points from the centre to its first point, as That Open's
+  viewer reads them.
+- **Materials** become BOS materials with the file's RGBA and the default
+  roughness and metalness.
+
 ## What it drops
 
 - The IFC value type name (`IFCLENGTHMEASURE`) beyond choosing Int or Number.
+- Per material, `rendered_faces` (double-sided) and `stroke`; BOS materials
+  have neither. Per representation, its bounding box; per shell,
+  `profiles_face_ids`; the `*_ids` arrays of the meshes table (edit ids).
+- The hidden flag: Ara3D.Ifc.Bos hides spaces, sites, and grids; this reader
+  flags nothing, and spaces keep the transparent colour the file gives them.
 - `metadata`, `guid`, `max_local_id`, `unique_attributes`, `relation_names`,
   and `indexes` (`ModelIndex`, user-defined lookups).
 - Classes the importer did not keep. By default That Open's importer skips
@@ -124,3 +161,24 @@ Every IFC class in both has the same count. The 74 GlobalIds only in
 `duplex.bos` are openings, door and window styles, and lining properties; the
 1,480 only in the `.frag` are property and quantity sets, which Ara3D.Ifc.Bos
 keeps as parameters rather than entities.
+
+Geometry, the same comparison (measured 2026-10-10; the box and volume checks are tests in
+`DuplexFixtureTests`):
+
+| | `.frag` read here | `duplex.bos` |
+|---|---:|---:|
+| Elements with geometry | 236 | 236 (the same GlobalIds) |
+| Instances | 713 | 681 |
+| Meshes | 230 | 435 |
+| Triangles stored (unique meshes) | 10,746 | 16,390 |
+| Triangles drawn (all instances) | 27,242 | 27,342 |
+| Vertices stored | 6,039 | 38,086 |
+
+Every element's world bounding box is within 2 mm of the IFC BOS's (the
+largest gap is 1.04 mm), and the signed volume summed per IFC class agrees
+within 0.03 %, which shows the triangles cover the same surfaces facing the
+same way. Triangles drawn differ only for stair flights (2,064 against 2,118),
+standard-case walls (1,382 against 1,412), and windows (2,640 against 2,656):
+That Open's importer merges coplanar triangles into one profile, and earcut
+then needs fewer. Reading the fixture takes about 110 ms; converting it to a
+79,545-byte `.bos` about 215 ms.
