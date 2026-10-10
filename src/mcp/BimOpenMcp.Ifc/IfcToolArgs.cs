@@ -32,8 +32,12 @@ internal static class IfcToolArgs
         => builder.String("ids", "Optional comma-separated entity ids to restrict to, e.g. '173,180'. Omit for the whole model.");
 
     public static IReadOnlyList<int>? GetIds(this McpToolArgs args)
+        => args.GetIntList("ids");
+
+    /// <summary>An optional comma-separated list of integers, null when absent or blank.</summary>
+    public static IReadOnlyList<int>? GetIntList(this McpToolArgs args, string name)
     {
-        var text = args.GetString("ids");
+        var text = args.GetString(name);
         if (string.IsNullOrWhiteSpace(text))
             return null;
 
@@ -41,7 +45,7 @@ internal static class IfcToolArgs
         var ids = new int[parts.Length];
         for (var i = 0; i < parts.Length; i++)
             if (!int.TryParse(parts[i], out ids[i]))
-                throw new ArgumentException($"'ids' must be a comma-separated list of integers; '{parts[i]}' is not one.");
+                throw new ArgumentException($"'{name}' must be a comma-separated list of integers; '{parts[i]}' is not one.");
 
         return ids;
     }

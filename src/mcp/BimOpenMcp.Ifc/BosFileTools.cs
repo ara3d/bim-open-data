@@ -52,14 +52,14 @@ public static class BosFileTools
                 "bos_export_glb",
                 "Writes a BOS model's geometry to binary glTF (.glb), y-up in metres, one node per "
                 + "instance with its entity index and GlobalId in the node's extras so a viewer pick "
-                + "finds the element. Hidden instances are left out. Set 'ids' to entity indices "
-                + "(rows of the Entities table) to export only those elements.",
+                + "finds the element. Hidden instances are left out. Set 'entityIndices' to export only "
+                + "some elements; fails when none of them draws anything.",
                 BosPath()
-                    .Ids()
+                    .String("entityIndices", "Optional comma-separated entity indices (EntityText.EntityIndex, the row in the Entities table; not STEP ids), e.g. '1796,1802'. Omit for the whole model.")
                     .String("outputPath", "Path of the .glb file to write.", required: true)
                     .Build(),
                 (args, _) => ToolRunner.RunAsync(
-                    () => ExportGlb(args.GetRequiredString("bosPath"), args.GetIds(), args.GetRequiredString("outputPath"))))
+                    () => ExportGlb(args.GetRequiredString("bosPath"), args.GetIntList("entityIndices"), args.GetRequiredString("outputPath"))))
             .Tool(
                 "bos_export_usd",
                 "Writes a BOS model as an OpenUSD text stage (.usda) that Omniverse, Blender, Houdini "
@@ -117,10 +117,19 @@ public static class BosFileTools
         };
     }
 
-    private static object ExportGlb(string bosPath, IReadOnlyList<int>? ids, string outputPath)
+    private static object ExportGlb(string bosPath, IReadOnlyList<int>? entityIndices, string outputPath)
     {
         var output = Output(outputPath);
-        var summary = BosGlb.WriteGlb(Input(bosPath).FullPath, output.FullPath, new GlbExportOptions { EntityIndices = ids });
+        var options = new GlbExportOptions { EntityIndices = entityIndices };
+        var summary = BosGlb.WriteGlb(Input(bosPath).FullPath, output.FullPath, options);
+        var requested = entityIndices?.Distinct().Count() ?? 0;
+        if (requested > 0 && summary.UnmatchedEntityIndices == requested)
+        {
+            File.Delete(output.FullPath);
+            throw new ArgumentException(
+                $"None of the {requested} entity indices draws anything: each is out of range, has no geometry, "
+                + "or only hidden instances. entityIndices are EntityText.EntityIndex values, not STEP ids.");
+        }
         return new { bosPath, outputPath = output.FullPath, summary };
     }
 

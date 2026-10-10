@@ -107,11 +107,28 @@ public sealed class BosFileToolTests
         {
             ["bosPath"] = _bos,
             ["outputPath"] = Path.Combine(_scratch, "some.glb"),
-            ["ids"] = string.Join(',', DoorEntityIndices()),
+            ["entityIndices"] = string.Join(',', DoorEntityIndices()),
         });
 
         Assert.That(whole["summary"]!["nodes"]!.GetValue<int>(), Is.EqualTo(660));
         Assert.That(some["summary"]!["nodes"]!.GetValue<int>(), Is.InRange(1, 659), "the 14 doors have fewer instances than the whole model");
+        Assert.That(some["summary"]!["unmatchedEntityIndices"]!.GetValue<int>(), Is.Zero);
+    }
+
+    [Test]
+    public void ExportGlb_FailsWhenNoGivenIndexDrawsAnything()
+    {
+        var output = Path.Combine(_scratch, "none.glb");
+        var payload = _mcp.Call("bos_export_glb", new JsonObject
+        {
+            ["bosPath"] = _bos,
+            ["outputPath"] = output,
+            ["entityIndices"] = "900000,900001",
+        });
+
+        Assert.That(payload["ok"]!.GetValue<bool>(), Is.False);
+        Assert.That(payload["error"]!.GetValue<string>(), Does.Contain("not STEP ids"));
+        Assert.That(File.Exists(output), Is.False);
     }
 
     [Test]
