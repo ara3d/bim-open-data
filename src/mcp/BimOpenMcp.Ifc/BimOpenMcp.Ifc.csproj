@@ -16,6 +16,10 @@
     <ProjectReference Include="..\..\data\Ara3D.BimOpenSchema.IO\Ara3D.BimOpenSchema.IO.csproj" />
     <ProjectReference Include="..\..\data\Ara3D.BimOpenSchema.DuckDb\Ara3D.BimOpenSchema.DuckDb.csproj" />
     <ProjectReference Include="..\..\data\Ara3D.Ifc.Bos\Ara3D.Ifc.Bos.csproj" />
+    <ProjectReference Include="..\..\data\Ara3D.BimOpenSchema.IO.Bcf\Ara3D.BimOpenSchema.IO.Bcf.csproj" />
+    <ProjectReference Include="..\..\data\Ara3D.BimOpenSchema.IO.Fragments\Ara3D.BimOpenSchema.IO.Fragments.csproj" />
+    <ProjectReference Include="..\..\data\Ara3D.BimOpenSchema.IO.Gltf\Ara3D.BimOpenSchema.IO.Gltf.csproj" />
+    <ProjectReference Include="..\..\data\Ara3D.BimOpenSchema.IO.Usd\Ara3D.BimOpenSchema.IO.Usd.csproj" />
     <ProjectReference Include="..\..\data\Ara3D.Ifc.Mesher\Ara3D.Ifc.Mesher.csproj" />
     <PackageReference Include="Ara3D.Models" Version="$(Ara3DSdkVersion)" />
     <PackageReference Include="Ara3D.IO.GltfExporter" Version="$(Ara3DSdkVersion)" />

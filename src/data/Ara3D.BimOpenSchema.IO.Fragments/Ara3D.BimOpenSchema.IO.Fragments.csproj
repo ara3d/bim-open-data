@@ -13,9 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- 25.2.10 matches the flatc that generated Schema/Fragments_generated.cs and the flatbuffers
-         version @thatopen/fragments 3.4.8 writes with. Supervisor: move to Directory.Build.props. -->
-    <PackageReference Include="Google.FlatBuffers" Version="25.2.10" />
+    <PackageReference Include="Google.FlatBuffers" Version="$(Ara3DGoogleFlatBuffersVersion)" />
   </ItemGroup>
 
   <ItemGroup>

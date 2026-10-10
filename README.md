@@ -38,7 +38,7 @@ The tables load straight into DuckDB, an in-process analytical database, which i
 
 ## Projects
 
-These are the 21 projects in `src/data`, grouped by what they do. Most target `net8.0-windows` because the IFC loader does; the schema libraries target plain `net8.0`.
+These are the 25 projects in `src/data`, grouped by what they do. Most target `net8.0-windows` because the IFC loader does; the schema libraries target plain `net8.0`.
 
 ### BIM Open Schema
 
@@ -48,6 +48,10 @@ These are the 21 projects in `src/data`, grouped by what they do. Most target `n
 | `Ara3D.BimOpenSchema.IO` | Reading and writing `.bos` archives (Parquet in a zip); Parquet.Net is its only external dependency |
 | `Ara3D.BimOpenSchema.IO.Export` | Excel, CSV, Markdown, HTML, and SQLite exports of a table |
 | `Ara3D.BimOpenSchema.IO.Bfast` | BFAST serialization of BOS data |
+| `Ara3D.BimOpenSchema.IO.Gltf` | BOS to binary glTF (`.glb`): one node per instance, entity index and GlobalId in node extras, y-up |
+| `Ara3D.BimOpenSchema.IO.Usd` | BOS to an OpenUSD `.usda` stage: instanced meshes, UsdPreviewSurface materials, element data as `bim:` attributes, no native USD dependency |
+| `Ara3D.BimOpenSchema.IO.Bcf` | BCF 3.0 issue files from a table of GlobalIds, with viewpoints framed on BOS geometry |
+| `Ara3D.BimOpenSchema.IO.Fragments` | That Open Fragments 2 (`.frag`) to BOS: entities, properties, relations, triangulated geometry |
 | `Ara3D.BimOpenSchema.DuckDb` | Loading BOS into DuckDB, views, queries, and table helpers |
 | `Ara3D.BimOpenSchema.Harmonizer` | Canonical names and SI units across models from different tools |
 | `Ara3D.BimOpenSchema.Federation` | Unions several BOS documents into one geometry-free BOS and a DuckDB database |
@@ -70,11 +74,11 @@ These are the 21 projects in `src/data`, grouped by what they do. Most target `n
 
 | Project | Role |
 |---|---|
-| `BimOpenMcp.Ifc` | An MCP (Model Context Protocol) server with 29 tools for an AI agent: entities, property sets, quantities, spatial structure, SQL over DuckDB, geometry bounds and volumes, GLB export, and IFC to BOS. Runs over stdio, or HTTP with `--http <port>`. |
+| `BimOpenMcp.Ifc` | An MCP (Model Context Protocol) server with 33 tools for an AI agent: entities, property sets, quantities, spatial structure, SQL over DuckDB, geometry bounds and volumes, GLB export, IFC and Fragments to BOS, and BOS to GLB, USD, and BCF. Runs over stdio, or HTTP with `--http <port>`. |
 | `Ara3D.BimOpenSchema.Browser` | A WPF data-grid viewer for `.bos` files with glTF and Excel export (`net10.0-windows`) |
 | `Ara3D.IfcTypeGen` | The generator behind `Ara3D.IfcTypes` |
 
-Eleven test projects in `tests/data` and one in `tests/mcp` cover them; `tests/BimOpenData.TestSupport` holds the shared paths and the mini IFC fixture.
+Fifteen test projects in `tests/data` and one in `tests/mcp` cover them; `tests/BimOpenData.TestSupport` holds the shared paths and the mini IFC fixture.
 
 ## Dependencies
 
