@@ -1,0 +1,11 @@
+{
+  "name": "fragments-fixture",
+  "private": true,
+  "type": "module",
+  "description": "Writes duplex.frag with @thatopen/fragments' IfcImporter (see make-fixture.mjs).",
+  "dependencies": {
+    "@thatopen/fragments": "3.4.8",
+    "three": "0.182.0",
+    "web-ifc": "0.0.77"
+  }
+}

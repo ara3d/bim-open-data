@@ -1,0 +1,2 @@
+# A .frag is zlib-deflated binary; line-ending conversion would corrupt it.
+*.frag binary

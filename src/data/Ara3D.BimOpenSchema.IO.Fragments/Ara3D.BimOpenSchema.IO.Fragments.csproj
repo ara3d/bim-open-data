@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>Reads That Open Fragments 2 (.frag) files into BIM Open Schema data: entities, parameters, relations, and triangulated geometry.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 25.2.10 matches the flatc that generated Schema/Fragments_generated.cs and the flatbuffers
+         version @thatopen/fragments 3.4.8 writes with. Supervisor: move to Directory.Build.props. -->
+    <PackageReference Include="Google.FlatBuffers" Version="25.2.10" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(DepsRoot)bim-open-schema\src\Ara3D.BimOpenSchema\Ara3D.BimOpenSchema.csproj" />
+    <ProjectReference Include="..\Ara3D.BimOpenSchema.ObjectModel\Ara3D.BimOpenSchema.ObjectModel.csproj" />
+    <ProjectReference Include="..\Ara3D.BimOpenSchema.IO\Ara3D.BimOpenSchema.IO.csproj" />
+  </ItemGroup>
+
+</Project>
