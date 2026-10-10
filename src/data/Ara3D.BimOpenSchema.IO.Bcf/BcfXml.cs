@@ -23,7 +23,7 @@ internal static partial class BcfXml
         => Write(w =>
         {
             w.WriteStartElement("Version");
-            w.WriteAttributeString("VersionId", "3.0");
+            Attribute(w, "VersionId", "3.0");
             w.WriteEndElement();
         });
 
@@ -44,20 +44,20 @@ internal static partial class BcfXml
         {
             w.WriteStartElement("Markup");
             w.WriteStartElement("Topic");
-            w.WriteAttributeString("Guid", topic.Guid);
-            w.WriteAttributeString("TopicType", topic.Type);
-            w.WriteAttributeString("TopicStatus", topic.Status);
-            w.WriteElementString("Title", topic.Title);
+            Attribute(w, "Guid", topic.Guid);
+            Attribute(w, "TopicType", topic.Type);
+            Attribute(w, "TopicStatus", topic.Status);
+            Element(w, "Title", topic.Title);
             Optional(w, "Priority", topic.Priority);
-            w.WriteElementString("CreationDate", Date(created));
-            w.WriteElementString("CreationAuthor", author);
+            Element(w, "CreationDate", Date(created));
+            Element(w, "CreationAuthor", author);
             Optional(w, "Description", topic.Description);
             if (topic.HasViewpoint)
             {
                 w.WriteStartElement("Viewpoints");
                 w.WriteStartElement("ViewPoint");
-                w.WriteAttributeString("Guid", topic.ViewpointGuid);
-                w.WriteElementString("Viewpoint", BcfTopic.ViewpointFile);
+                Attribute(w, "Guid", topic.ViewpointGuid);
+                Element(w, "Viewpoint", BcfTopic.ViewpointFile);
                 w.WriteEndElement();
                 w.WriteEndElement();
             }
@@ -74,32 +74,64 @@ internal static partial class BcfXml
         return Write(w =>
         {
             w.WriteStartElement("VisualizationInfo");
-            w.WriteAttributeString("Guid", topic.ViewpointGuid);
+            Attribute(w, "Guid", topic.ViewpointGuid);
             w.WriteStartElement("Components");
             w.WriteStartElement("Selection");
             foreach (var id in topic.GlobalIds)
             {
                 w.WriteStartElement("Component");
                 if (IfcGuid().IsMatch(id))
-                    w.WriteAttributeString("IfcGuid", id);
+                    Attribute(w, "IfcGuid", id);
                 else
-                    w.WriteElementString("AuthoringToolId", id);
+                    Element(w, "AuthoringToolId", id);
                 w.WriteEndElement();
             }
             w.WriteEndElement();
             w.WriteStartElement("Visibility");
-            w.WriteAttributeString("DefaultVisibility", "true");
+            Attribute(w, "DefaultVisibility", "true");
             w.WriteEndElement();
             w.WriteEndElement();
             w.WriteStartElement("PerspectiveCamera");
             Vector(w, "CameraViewPoint", camera.ViewPoint);
             Vector(w, "CameraDirection", camera.Direction);
             Vector(w, "CameraUpVector", camera.Up);
-            w.WriteElementString("FieldOfView", Number(camera.FieldOfView));
-            w.WriteElementString("AspectRatio", Number(camera.AspectRatio));
+            Element(w, "FieldOfView", Number(camera.FieldOfView));
+            Element(w, "AspectRatio", Number(camera.AspectRatio));
             w.WriteEndElement();
             w.WriteEndElement();
         });
+    }
+
+    /// <summary>Every element text and attribute value goes through these two, so a character
+    /// XML cannot hold never reaches the writer.</summary>
+    private static void Element(XmlWriter w, string name, string value)
+        => w.WriteElementString(name, XmlSafe(value));
+
+    private static void Attribute(XmlWriter w, string name, string value)
+        => w.WriteAttributeString(name, XmlSafe(value));
+
+    /// <summary>Replaces each character XML 1.0 cannot hold (control characters other than tab,
+    /// line feed, and carriage return; U+FFFE and U+FFFF; unpaired surrogates) with U+FFFD, the
+    /// replacement character. Model text can carry them: an IFC <c>\X\02</c> escape decodes to
+    /// U+0002 in a name.</summary>
+    internal static string XmlSafe(string value)
+    {
+        StringBuilder? result = null;
+        for (var i = 0; i < value.Length; i++)
+        {
+            var c = value[i];
+            if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
+            {
+                result?.Append(c).Append(value[i + 1]);
+                i++;
+                continue;
+            }
+            var safe = XmlConvert.IsXmlChar(c);
+            if (!safe && result is null)
+                result = new StringBuilder(value.Length).Append(value, 0, i);
+            result?.Append(safe ? c : '\uFFFD');
+        }
+        return result?.ToString() ?? value;
     }
 
     [GeneratedRegex("^[0-9A-Za-z_$]{22}$")]
@@ -124,22 +156,22 @@ internal static partial class BcfXml
             return;
         w.WriteStartElement(list);
         foreach (var v in distinct)
-            w.WriteElementString(item, v);
+            Element(w, item, v);
         w.WriteEndElement();
     }
 
     private static void Optional(XmlWriter w, string name, string value)
     {
         if (value.Length > 0)
-            w.WriteElementString(name, value);
+            Element(w, name, value);
     }
 
     private static void Vector(XmlWriter w, string name, Vector3 v)
     {
         w.WriteStartElement(name);
-        w.WriteElementString("X", Number(v.X));
-        w.WriteElementString("Y", Number(v.Y));
-        w.WriteElementString("Z", Number(v.Z));
+        Element(w, "X", Number(v.X));
+        Element(w, "Y", Number(v.Y));
+        Element(w, "Z", Number(v.Z));
         w.WriteEndElement();
     }
 

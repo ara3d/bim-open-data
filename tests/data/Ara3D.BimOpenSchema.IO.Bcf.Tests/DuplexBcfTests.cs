@@ -115,6 +115,28 @@ public sealed class DuplexBcfTests
         });
     }
 
+    /// <summary>Characters XML cannot hold (U+0002 comes from an IFC \X\02 escape in a name) become
+    /// U+FFFD in every field, so the archive is still written whole and still validates. A
+    /// surrogate pair (here U+1F6AA, door) is kept; a lone surrogate is replaced.</summary>
+    [Test]
+    public void CharactersXmlCannotHoldAreReplacedAndEveryFileValidates()
+    {
+        var door = DoorIds.First();
+        var issue = new BcfIssue("Door\u0002A", [door, "rv\u0004id"],
+            Description: "lone \uD800 pair \uD83D\uDEAA end\u0001", Status: "Open\u0003", Priority: "\uFFFE", Type: "Check\u001F");
+        var (archive, _) = BcfArchive.Write([issue], BcfArchive.Fixed with { Author = "a\u0000b" }, _bounds);
+        var topic = archive.Markups.Single().Root!.Element("Topic")!;
+        Assert.Multiple(() =>
+        {
+            Assert.That(archive.SchemaErrors(), Is.Empty);
+            Assert.That((string?)topic.Element("Title"), Is.EqualTo("Door\uFFFDA"));
+            Assert.That((string?)topic.Element("Description"), Is.EqualTo("lone \uFFFD pair \uD83D\uDEAA end\uFFFD"));
+            Assert.That((string?)topic.Attribute("TopicStatus"), Is.EqualTo("Open\uFFFD"));
+            Assert.That((string?)topic.Element("CreationAuthor"), Is.EqualTo("a\uFFFDb"));
+            Assert.That((string?)archive.Viewpoints.Single().Descendants("AuthoringToolId").Single(), Is.EqualTo("rv\uFFFDid"));
+        });
+    }
+
     [Test]
     public void WithoutGeometry_NoViewpointNoCameraAndTheIdsAreInTheDescription()
     {

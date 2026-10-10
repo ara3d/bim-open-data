@@ -48,6 +48,10 @@ var summary = BcfWriter.WriteFile("doors.bcf", doors.ToBcfIssues(), new BcfOptio
   `BcfOptions.CreationDate` stamps every topic and zip entry. Fix the date and
   the same input gives the same bytes. Giving a rerun check the same seed keeps
   its topic GUIDs, so a reader updates those topics instead of adding new ones.
+- **Text.** A character XML 1.0 cannot hold is written as U+FFFD, the
+  replacement character, in every field. That covers control characters other
+  than tab and line breaks, U+FFFE, U+FFFF, and unpaired surrogates. An IFC
+  `\X\02` escape in a name, for example, decodes to U+0002.
 - **Errors.** A missing required column, a blank title, two issues with the
   same title (after trimming), or two priorities within one topic throw
   `ArgumentException` with the offending name. Every topic is checked before
