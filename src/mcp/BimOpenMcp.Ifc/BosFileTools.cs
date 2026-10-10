@@ -63,10 +63,12 @@ public static class BosFileTools
             .Tool(
                 "bos_export_usd",
                 "Writes a BOS model as an OpenUSD text stage (.usda) that Omniverse, Blender, Houdini "
-                + "and usdview open: z-up, metres, one prim per element carrying GlobalId, name, "
-                + "category and every parameter as typed bim: attributes, shared meshes as instanced "
+                + "and usdview open: z-up, metres, one prim per entity (an Xform when it has geometry, "
+                + "a Scope when it has none, such as a storey or a type) carrying GlobalId, name, "
+                + "category and every parameter as typed bim: attributes, relations as bim: "
+                + "relationships (bim:containedIn, bim:hostedBy, ...), shared meshes as instanced "
                 + "prototypes. Missing values are left out. Convert to .usdc or .usdz with usd-core "
-                + "when size matters (about nine times smaller).",
+                + "when size matters (about eight times smaller).",
                 BosPath()
                     .String("outputPath", "Path of the .usda file to write.", required: true)
                     .Build(),
