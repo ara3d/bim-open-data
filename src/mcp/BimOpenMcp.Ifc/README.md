@@ -113,7 +113,7 @@ through it to the property set, property name, unit, and rollup rule at each lev
 guessing from names. A model without the provenance set, or whose dictionary file is missing, gets
 the table with its columns and no rows.
 
-**Spatial containers survive the conversion.** `IfcToBosConverter.HiddenIfcNames` reads like an
+**Spatial containers survive the conversion.** `IfcClasses.Hidden` reads like an
 entity filter but is only a geometry-instance visibility flag, so site, building, and storey are all
 present in `EntityText`. The converted relations are a flat edge list, though, so `ifc_spatial_tree`
 is still the way to read the hierarchy.

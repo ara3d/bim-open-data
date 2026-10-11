@@ -9,7 +9,7 @@ namespace BimOpenMcp.Ifc;
 /// A conversion that fails — for example on an IFC relation kind
 /// <c>IfcRelationMapping.ToBos</c> does not map — comes back as a tool error, not a server crash,
 /// because every handler runs through <see cref="ToolRunner"/>.
-/// Spatial containers do survive the conversion — <c>IfcToBosConverter.HiddenIfcNames</c> flags
+/// Spatial containers do survive the conversion — <c>IfcClasses.Hidden</c> flags
 /// geometry instances as hidden, it does not filter entities — but the converted relations are a
 /// flattened edge list, so <c>ifc_spatial_tree</c> is still the way to read the hierarchy.</summary>
 public static class IfcAnalyticsTools

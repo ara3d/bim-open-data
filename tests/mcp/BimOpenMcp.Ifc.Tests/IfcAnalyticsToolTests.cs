@@ -192,7 +192,7 @@ public sealed class IfcAnalyticsToolTests
         Assert.That(File.ReadLines(output).Count(), Is.EqualTo(rows + 1), "CSV export writes a header row.");
     }
 
-    /// <summary>Spatial containers survive the conversion. IfcToBosConverter.HiddenIfcNames is a
+    /// <summary>Spatial containers survive the conversion. IfcClasses.Hidden is a
     /// geometry-instance visibility flag, not an entity filter, so a query can see site, building
     /// and storey — and the BOS storey count has to agree with the entity tools.</summary>
     [Test]

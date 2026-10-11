@@ -95,24 +95,6 @@ public static class IfcGeometry
         return result;
     }
 
-    /// <summary>The same model with only the instances of the given entities kept. Meshes are shared
-    /// unchanged — an unreferenced mesh costs nothing to leave in the list — so a filtered export
-    /// stays byte-for-byte the geometry the mesher produced for those elements.</summary>
-    public static Model3D Filtered(this IfcSession session, IReadOnlyList<int>? ids)
-    {
-        var model = session.Model();
-        if (ids == null)
-            return model;
-
-        var filter = new HashSet<int>(ids);
-        var instances = new List<InstanceStruct>();
-        foreach (var instance in model.Instances)
-            if (filter.Contains(instance.EntityIndex))
-                instances.Add(instance);
-
-        return new Model3D(model.Meshes, instances);
-    }
-
     private sealed class Accumulator
     {
         public readonly List<Point3D> Points = [];
