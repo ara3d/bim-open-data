@@ -22,6 +22,8 @@ public sealed class BosDuckDbAbsenceTests
         var wall = bdb.AddEntity(6, "guid-wall", doc, "Wall", bare, none);
         bdb.AddParameter(wall, (int)BimDataBuilder.InvalidNumberIndex, bdb.AddDescriptor("Area", "m2", "Dimensions", ParameterType.Number));
         bdb.AddParameter(wall, "", "Mark", null, "Identity");
+        bdb.AddParameter(wall, new Point(1.5f, 2f, -3f), "Where", "m", "Geometry");
+        bdb.AddParameter(wall, (PointIndex)(-1), "Nowhere", "m", "Geometry");
         bdb.AddRelation(wall, bare, RelationType.ContainedIn);
         return bdb.Build();
     }
@@ -53,7 +55,7 @@ public sealed class BosDuckDbAbsenceTests
     [Test]
     public void AbsentParameterValueIsNull_AndAnEmptyStringValueIsKept()
     {
-        var rows = _conn.Query("SELECT Name, Units, Value FROM ParameterText ORDER BY Name").Rows;
+        var rows = _conn.Query("SELECT Name, Units, Value FROM ParameterText WHERE Name IN ('Area', 'Mark') ORDER BY Name").Rows;
         Assert.That(rows, Has.Count.EqualTo(2));
         Assert.Multiple(() =>
         {
@@ -62,6 +64,20 @@ public sealed class BosDuckDbAbsenceTests
             Assert.That(rows[1][0], Is.EqualTo("Mark"));
             Assert.That(rows[1][1], Is.Null, "units passed as null are absent");
             Assert.That(rows[1][2], Is.EqualTo(""));
+        });
+    }
+
+    [Test]
+    public void PointParameter_ShowsItsCoordinates_AndAnAbsentPointIsNull()
+    {
+        var rows = _conn.Query("SELECT Name, Value FROM ParameterText WHERE ValueType = 'Point' ORDER BY Name").Rows;
+        Assert.That(rows, Has.Count.EqualTo(2));
+        Assert.Multiple(() =>
+        {
+            Assert.That(rows[0][0], Is.EqualTo("Nowhere"));
+            Assert.That(rows[0][1], Is.Null);
+            Assert.That(rows[1][0], Is.EqualTo("Where"));
+            Assert.That(rows[1][1], Is.EqualTo("Point { X = 1.5, Y = 2.0, Z = -3.0 }"));
         });
     }
 

@@ -10,9 +10,14 @@ namespace Ara3D.BimOpenSchema.DuckDb;
 /// joining on <c>rowid</c>, which is the order the BOS arrays were written in.
 /// <para>Every join is a LEFT JOIN, so an index of -1 (absent, as the specification defines it)
 /// gives NULL and keeps its row. A GlobalId or an entity name stored as "" by files written before
-/// -1 meant absent also reads as NULL; a String parameter value of "" stays "".</para></summary>
+/// -1 meant absent also reads as NULL; a String parameter value of "" stays "". A Point parameter shows as <c>Point { X = 1, Y = 2, Z = 3 }</c>, the text the C# readers give
+    /// the Point record; an absent point (-1) is NULL.</para></summary>
 public static class BosDuckDbViews
 {
+    // Braces cannot appear literally in the interpolated raw string of ParameterText.
+    private const string PointOpen = "{";
+    private const string PointClose = "}";
+
     public static void CreateViews(FilePath database)
     {
         using var conn = BosDuckDb.Open(database);
@@ -42,6 +47,7 @@ public static class BosDuckDbViews
                        WHEN {(int)ParameterType.String} THEN sv.Strings
                        WHEN {(int)ParameterType.Number} THEN CAST(nv.Numbers AS VARCHAR)
                        WHEN {(int)ParameterType.Entity} THEN NULLIF(ev.Strings, '')
+                       WHEN {(int)ParameterType.Point} THEN 'Point {PointOpen} X = ' || CAST(pv.X AS VARCHAR) || ', Y = ' || CAST(pv.Y AS VARCHAR) || ', Z = ' || CAST(pv.Z AS VARCHAR) || ' {PointClose}'
                        ELSE CAST(p.Value AS VARCHAR)
                    END AS Value
             FROM Parameters p
@@ -53,6 +59,7 @@ public static class BosDuckDbViews
             LEFT JOIN Numbers nv ON nv.rowid = p.Value
             LEFT JOIN Entities ee ON ee.rowid = p.Value
             LEFT JOIN Strings ev ON ev.rowid = ee.Name
+            LEFT JOIN Points pv ON pv.rowid = p.Value
             """);
 
         conn.Execute($"""
