@@ -81,18 +81,53 @@ public sealed class VertexRoundingTests
     }
 
     [Test]
-    public void FiveCentimetreTube_KeepsVolumeWithinOneHundredthOfAPercent()
+    public void EveryVertexOfATube_IsWithinHalfAUnitOfItsSource()
     {
-        // Rounding error per vertex is random, so the volume error shrinks as 1/sqrt(segments):
-        // about 0.03 % at 256 segments, well inside 0.01 % at 4096. Truncation loses 0.29 % at any count.
-        var tube = Tube(radius: 0.05f, length: 1f, segments: 4096);
-        var expected = SignedVolume(tube.Points, tube.FaceIndices);
+        // Rounding to the nearest 0.1 mm unit moves each coordinate by at most 0.05 mm, plus the float error of
+        // the source (a float near 0.5 m is exact to about 6e-8 m, far below a unit).
+        var tube = Tube(radius: 0.05f, length: 1f, segments: 256);
+        var rounded = Build(tube).GetMesh(0);
 
+        Assert.That(rounded.Points.Count, Is.EqualTo(tube.Points.Count));
+        for (var i = 0; i < tube.Points.Count; i++)
+        {
+            Assert.That((double)rounded.Points[i].X, Is.EqualTo((double)tube.Points[i].X).Within(5.01e-5));
+            Assert.That((double)rounded.Points[i].Y, Is.EqualTo((double)tube.Points[i].Y).Within(5.01e-5));
+            Assert.That((double)rounded.Points[i].Z, Is.EqualTo((double)tube.Points[i].Z).Within(5.01e-5));
+        }
+    }
+
+    [Test]
+    public void FiveCentimetreTube_VolumeErrorStaysWithinTheWorstCaseBound()
+    {
+        // Guarantee. Each vertex moves by at most 0.05 mm per axis, so at most sqrt(3) * 0.05 mm = 0.087 mm in
+        // any direction. To first order the volume changes by (surface area x normal displacement) at most.
+        // Area = 2 pi r L + 2 pi r^2 = 0.330 m^2, so |dV| <= 0.330 * 8.7e-5 = 2.9e-5 m^3 against
+        // V = pi r^2 L = 7.85e-3 m^3: 0.37 %. Use 0.4 %. This holds for any segment count.
+        var tube = Tube(radius: 0.05f, length: 1f, segments: 64);
+
+        Assert.That(RelativeVolumeError(tube), Is.LessThan(4e-3));
+    }
+
+    [Test]
+    public void FiveCentimetreTube_RoundingDoesNotShrinkItTowardTheOrigin()
+    {
+        // Observation, not a guarantee. Rounding errors are random and unbiased, so they cancel as 1/sqrt(vertices):
+        // the standard deviation of one normal displacement is about 0.03 mm, so at 4096 segments (8194 vertices)
+        // the mean is about 3e-7 m and the volume error about 1e-5 (0.001 %). The bound 1e-4 (0.01 %) is
+        // 10 standard deviations. Truncation toward the origin loses 0.26 % at any segment count.
+        var tube = Tube(radius: 0.05f, length: 1f, segments: 4096);
+
+        Assert.That(RelativeVolumeError(tube), Is.LessThan(1e-4));
+    }
+
+    static double RelativeVolumeError(TriangleMesh3D tube)
+    {
+        var expected = SignedVolume(tube.Points, tube.FaceIndices);
         var roundTripped = Build(tube).GetMesh(0);
         var actual = SignedVolume(roundTripped.Points, roundTripped.FaceIndices);
-
         Assert.That(expected, Is.GreaterThan(0.0));
-        Assert.That(Math.Abs(actual - expected) / expected, Is.LessThan(1e-4));
+        return Math.Abs(actual - expected) / expected;
     }
 
     static BimGeometry Build(TriangleMesh3D mesh)
