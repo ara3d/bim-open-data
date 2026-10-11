@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Description>The IFC rules every BIM Open Schema reader of IFC content shares: parameter names, hidden and non-element classes, material sets, and the IFC relations that become BOS relations. Portable: no IFC loader, no native code.</Description>
+    <Description>The IFC rules every BIM Open Schema reader of IFC content shares: parameter names, entity names, hidden and non-element classes, material sets, and the IFC relations that become BOS relations. Portable: no IFC loader, no native code.</Description>
   </PropertyGroup>
 
   <ItemGroup>

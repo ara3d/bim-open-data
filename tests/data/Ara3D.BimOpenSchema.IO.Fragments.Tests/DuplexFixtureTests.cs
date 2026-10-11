@@ -1,4 +1,5 @@
 using System.Numerics;
+using Ara3D.Ifc.Conventions;
 using Ara3D.Utils;
 using BimOpenData.TestSupport;
 
@@ -101,6 +102,58 @@ public class DuplexFixtureTests
             Assert.That(Get("PSet_Revit_Type_Construction", "Function").Type, Is.EqualTo(ParameterType.Int));
         });
     }
+
+    /// <summary>Both readers name an entity by Ara3D.Ifc.Conventions' IfcNames: a space by its
+    /// LongName with its Name as the room number, a layer set by its LayerSetName. Entities are
+    /// paired by STEP id (the importer keeps it as the local id) and class, so entities without a
+    /// GlobalId, such as material layers and sets, are compared too. The committed duplex.bos
+    /// predates Ara3D.Ifc.Bos reading an enumeration as a name, so its SI units are unnamed;
+    /// <see cref="UnitsUnnamedInTheCommittedSample"/> goes once samples/public is regenerated.</summary>
+    [Test]
+    public void EveryEntityBothReadersKeep_HasTheSameNameAndRoomNumber()
+    {
+        var pairs = PairsByLocalId();
+        var fragRooms = RoomNumbers(_frag);
+        var ifcRooms = RoomNumbers(_ifc);
+        var mismatches = pairs
+            .Where(p => _frag.Name(p.Frag) != _ifc.Name(p.Ifc) || fragRooms.GetValueOrDefault(p.Frag) != ifcRooms.GetValueOrDefault(p.Ifc))
+            .Select(p => $"{_frag.Category(p.Frag)} #{_frag.Entities[p.Frag].LocalId}: " +
+                         $"'{_frag.Name(p.Frag)}' room '{fragRooms.GetValueOrDefault(p.Frag)}' vs '{_ifc.Name(p.Ifc)}' room '{ifcRooms.GetValueOrDefault(p.Ifc)}'")
+            .ToList();
+        Assert.Multiple(() =>
+        {
+            Assert.That(pairs.Select(p => _frag.Category(p.Frag)).Distinct(),
+                Does.Contain("IFCSPACE").And.Contain("IFCMATERIALLAYERSET").And.Contain("IFCDOOR"));
+            Assert.That(fragRooms, Has.Count.EqualTo(ifcRooms.Count).And.Count.GreaterThan(0));
+            Assert.That(mismatches, Is.EquivalentTo(UnitsUnnamedInTheCommittedSample));
+        });
+    }
+
+    private static readonly string[] UnitsUnnamedInTheCommittedSample =
+    [
+        "IFCSIUNIT #15: 'METRE' room '' vs '' room ''", "IFCSIUNIT #16: 'SQUARE_METRE' room '' vs '' room ''",
+        "IFCSIUNIT #17: 'CUBIC_METRE' room '' vs '' room ''", "IFCSIUNIT #18: 'RADIAN' room '' vs '' room ''",
+        "IFCSIUNIT #22: 'SECOND' room '' vs '' room ''",
+    ];
+
+    /// <summary>(Fragments entity, IFC BOS entity) pairs with the same local id and class.</summary>
+    private List<(int Frag, int Ifc)> PairsByLocalId()
+    {
+        var ifcByLocalId = Enumerable.Range(0, _ifc.Entities.Length)
+            .Where(i => _ifc.Category(i) != null)
+            .ToDictionary(i => _ifc.Entities[i].LocalId);
+        return Enumerable.Range(0, _frag.Entities.Length)
+            .Where(i => _frag.Category(i) != null)
+            .Select(i => (Frag: i, Ifc: ifcByLocalId.GetValueOrDefault(_frag.Entities[i].LocalId, -1)))
+            .Where(p => p.Ifc >= 0 && _ifc.Category(p.Ifc) == _frag.Category(p.Frag))
+            .ToList();
+    }
+
+    /// <summary>The Ifc:Room:Number of each entity that has one.</summary>
+    private static Dictionary<int, string> RoomNumbers(BimData d)
+        => d.Parameters
+            .Where(p => d.Strings[(int)d.Descriptors[(int)p.Descriptor].Name] == IfcParameterNames.RoomNumber)
+            .ToDictionary(p => (int)p.Entity, p => d.Strings[p.Value]);
 
     [Test]
     public void EveryPropertyOfTheIfcBos_IsOnTheSameElement()

@@ -115,8 +115,8 @@ public class IfcToBosConverter
         {
             var e = GetEntity(id);
             var catEi = GetCatEntityIndex(id);
-            var name = NameOrNull(e, schema.Entities[e.GetEntityCode()].Attributes);
-            var gid = OptionalString(e, 0);
+            var name = e.GetName(schema.Entities[e.GetEntityCode()].Attributes).Name;
+            var gid = e.GetOptionalString(0);
             var ei = BimDataBuilder.AddEntity(id, gid, _docIndex, name, catEi, InvalidEntityIndex);
             IfcIdToBosId.Add(id, ei);
         }
@@ -145,9 +145,9 @@ public class IfcToBosConverter
             var attributes = ifcEntityPrototype.Attributes;
             
             // Only an IfcRoot has a GlobalId; any other entity keeps none (-1), as does an unset one.
-            var gid = attributes.Length > 0 && attributes[0].Name == "GlobalId" ? OptionalString(e, 0) : null;
+            var gid = attributes.Length > 0 && attributes[0].Name == "GlobalId" ? e.GetOptionalString(0) : null;
 
-            var name = NameOrNull(e, attributes);
+            var (name, roomNumber) = e.GetName(attributes);
 
             if (TypeRelations.InstancesToTypes.TryGetValue(id, out var typeId))
                 typeEi = GetBosEntityIndexFromIfc(typeId);
@@ -156,12 +156,8 @@ public class IfcToBosConverter
             var ei = BimDataBuilder.AddEntity(id, gid, _docIndex, name, catEi, typeEi);
             IfcIdToBosId.Add(id, ei);
 
-            if (e.GetEntityName() == "IFCSPACE")
-            {
-                var roomNumber = e.GetStringOrEmpty(2).DecodeIfc();
-                if (!string.IsNullOrEmpty(roomNumber))
-                    BimDataBuilder.AddParameter(ei, roomNumber, IfcParameterNames.RoomNumber, "", e.GetEntityName());
-            }
+            if (roomNumber != null)
+                BimDataBuilder.AddParameter(ei, roomNumber, IfcParameterNames.RoomNumber, "", e.GetEntityName());
             else if (e.GetEntityName() == "IFCGRIDAXIS")
             {
                 // IFCGRIDAXIS is not an IfcRoot, so attribute 0 is AxisTag rather than GlobalId.
@@ -373,36 +369,6 @@ public class IfcToBosConverter
         {
             BimDataBuilder.AddParameter(bosId, val.ToString()?.DecodeIfc(), name, "", propSetName);
         }
-    }
-
-    /// <summary>The attribute's decoded text, or null when it is not a STEP string: unset ($),
-    /// redeclared (*), a reference, a number, a list, or past the entity's attributes. A stored ''
-    /// is returned as "": it is a value.</summary>
-    public static string? OptionalString(IfcEntity entity, int index)
-        => index < entity.Attributes.Count && entity.Attributes[index].IsString
-            ? entity.GetString(index).DecodeIfc()
-            : null;
-
-    /// <summary>The schema attributes that name an instance of their class, in the order they
-    /// are tried: IfcRoot.Name and the Name of the resource classes that have one (materials,
-    /// layers, presentation layers, organisations, units), IfcMaterialLayerSet.LayerSetName,
-    /// IfcProfileDef.ProfileName, and IfcApplication.ApplicationFullName.</summary>
-    public static readonly IReadOnlyList<string> NameAttributes = ["Name", "LayerSetName", "ProfileName", "ApplicationFullName"];
-
-    /// <summary>The entity's name: IfcSpace.LongName when it has one (exporters put the room
-    /// number in Name), else the first of <see cref="NameAttributes"/> its class has in
-    /// <paramref name="schemaAttributes"/>. Null when the class has no name attribute or the
-    /// file gives it no string: no "#id", reference, number, or list stands in for a name.</summary>
-    public static string? NameOrNull(IfcEntity entity, IReadOnlyList<IfcAttribute> schemaAttributes)
-    {
-        if (entity.GetEntityName() == "IFCSPACE" && OptionalString(entity, 7) is { Length: > 0 } longName)
-            return longName;
-        // The position in the schema's list is the position in the STEP line, inherited attributes first.
-        foreach (var name in NameAttributes)
-            for (var i = 0; i < schemaAttributes.Count; i++)
-                if (schemaAttributes[i].Name == name)
-                    return OptionalString(entity, i);
-        return null;
     }
 
     /// <summary>See <see cref="IfcClasses.IsMaterialResource"/>.</summary>

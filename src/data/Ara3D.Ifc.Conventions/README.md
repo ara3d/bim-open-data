@@ -12,6 +12,7 @@ portable).
 | Type | Holds |
 |---|---|
 | `IfcParameterNames` | `Ifc:<attribute>` and the named parameters: `Ifc:Room:Number`, `Ifc:AxisTag`, `Ifc:LengthUnit`, `Ifc:LengthUnitToMetre`, `Ifc:LayerSet`, `Ifc:LayerIndex`, `Ifc:ConstituentSet`, `Ifc:ConstituentIndex`; the IfcRoot attributes that are not parameters |
+| `IfcNames` | How an entity is named: the name attributes in the order tried, and a space named by its LongName with its Name kept as `Ifc:Room:Number`; `Ara3D.IfcLoader`'s `IfcEntity.GetEntityLabel` uses it too |
 | `IfcClasses` | Classes whose geometry is flagged hidden (sites, buildings, storeys, spaces, zones, grids, annotations) and the flag rule; classes that never become entities; the material resource family |
 | `IfcMaterialSets` | Layer and constituent sets: where the member list is, and the parameters each member gets |
 | `IfcRelationNames` | IFC relation classes that become BOS relations, with the inverse attribute names that reach them; the type and property-set names a reader of inverse attributes follows |

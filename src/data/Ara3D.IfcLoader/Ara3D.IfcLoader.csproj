@@ -22,6 +22,7 @@
   <ItemGroup>
     <PackageReference Include="Ara3D.IO.StepParser" Version="$(Ara3DSdkVersion)" />
     <PackageReference Include="Ara3D.Models" Version="$(Ara3DSdkVersion)" />
+    <ProjectReference Include="..\Ara3D.Ifc.Conventions\Ara3D.Ifc.Conventions.csproj" />
   </ItemGroup>
 
   <Import Project="..\Ara3D.IfcTypes\Ara3D.IfcTypes.projitems" Label="Shared" />

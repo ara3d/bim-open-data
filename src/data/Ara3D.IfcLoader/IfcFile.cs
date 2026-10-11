@@ -28,13 +28,7 @@ public class IfcFile : IDisposable
         if (Document == null)
             throw new Exception($"Could not load Document from {fp}");
 
-        var header = Document.Header;
-        var tmp = IfcSchemaEnum.Ifc2x3;
-        if (header.FileSchema.StartsWith("IFC4X3", StringComparison.InvariantCultureIgnoreCase))
-            tmp = IfcSchemaEnum.Ifc4x3;
-        else if (header.FileSchema.StartsWith("IFC4", StringComparison.InvariantCultureIgnoreCase))
-            tmp = IfcSchemaEnum.Ifc4;
-        Schema = IfcSchema.GetSchema(tmp);
+        Schema = SchemaOf(Document);
 
         logger?.Log($"Retrieving schema"); 
         EntityResolver = new(Document);
@@ -45,6 +39,17 @@ public class IfcFile : IDisposable
 
         if (includeGeometry)
             LoadGeometryData(logger);
+    }
+
+    /// <summary>The schema the document's header names: IFC4X3, IFC4, else IFC2X3.</summary>
+    public static IfcSchema SchemaOf(StepDocument document)
+    {
+        var fileSchema = document.Header.FileSchema;
+        if (fileSchema.StartsWith("IFC4X3", StringComparison.InvariantCultureIgnoreCase))
+            return IfcSchema.GetSchema(IfcSchemaEnum.Ifc4x3);
+        if (fileSchema.StartsWith("IFC4", StringComparison.InvariantCultureIgnoreCase))
+            return IfcSchema.GetSchema(IfcSchemaEnum.Ifc4);
+        return IfcSchema.GetSchema(IfcSchemaEnum.Ifc2x3);
     }
 
     public (double X, double Y, double Z) GetSitePlacement()

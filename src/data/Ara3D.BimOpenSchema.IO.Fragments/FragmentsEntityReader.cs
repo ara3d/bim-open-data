@@ -67,7 +67,10 @@ internal sealed class FragmentsEntityReader
         {
             var category = _items.Categories[i] is { } c ? categories[c] : BimDataBuilder.InvalidEntityIndex;
             var type = typeOfItem[i] >= 0 ? _entityOfItem[typeOfItem[i]] : BimDataBuilder.InvalidEntityIndex;
-            _bdb.UpdateEntity(_entityOfItem[i], _items.LocalIds[i], _items.GlobalIds[i], _doc, NameOf(i), category, type);
+            var (name, roomNumber) = NameOf(i);
+            _bdb.UpdateEntity(_entityOfItem[i], _items.LocalIds[i], _items.GlobalIds[i], _doc, name, category, type);
+            if (roomNumber != null)
+                _bdb.AddParameter(_entityOfItem[i], roomNumber, IfcParameterNames.RoomNumber, "", _items.Categories[i]!);
         }
     }
 
@@ -118,13 +121,13 @@ internal sealed class FragmentsEntityReader
     /// GetDistinctProperties does).</summary>
     private void AddSetProperties(EntityIndex entity, int set, HashSet<(string, string, string)> seen)
     {
-        var setName = NameOf(set);
+        var setName = NameOf(set).Name;
         // Members are resolved without counting: a set shared by many objects is expanded once per
         // object, and its unresolved members are already counted where the set's own relations are read.
         var members = _items.Relations[set].Where(r => IfcRelationNames.SetMembers.Contains(r.Name)).SelectMany(r => Items(r, count: false));
         foreach (var member in members)
         {
-            var name = NameOf(member);
+            var name = NameOf(member).Name;
             var value = IfcPropertyValues.ValueAttributes
                 .Select(v => _items.Attributes[member].FirstOrDefault(a => a.Name == v))
                 .FirstOrDefault(a => a != null);
@@ -134,10 +137,13 @@ internal sealed class FragmentsEntityReader
         }
     }
 
-    private string? NameOf(int item)
-        => _items.Attributes[item].FirstOrDefault(a => a.Name == IfcParameterNames.NameAttribute)?.Value is { ValueKind: JsonValueKind.String } v
-            ? v.GetString()
-            : null;
+    /// <summary>The item's name and room number by <see cref="IfcNames.NameOf"/>, the rule
+    /// Ara3D.Ifc.Bos applies to the same IFC entity.</summary>
+    private IfcEntityName NameOf(int item)
+        => IfcNames.NameOf(_items.Categories[item], attribute =>
+            _items.Attributes[item].FirstOrDefault(a => a.Name == attribute)?.Value is { ValueKind: JsonValueKind.String } v
+                ? v.GetString()
+                : null);
 
     /// <summary>A JSON value as the BOS parameter of its kind: a string as String, a boolean as
     /// Int 0 or 1 (BOS stores booleans as Int), a number as Int when its IFC type is an integer
