@@ -16,6 +16,27 @@ using DataColumn = Parquet.Data.DataColumn;
 
 namespace Ara3D.BimOpenSchema.IO;
 
+/// <summary>The tables of a <c>.bos</c> archive a reader may be asked for. The names match the
+/// <see cref="BimData"/> properties (a read adds the tables a selected one indexes into, see
+/// <see cref="ParquetUtils.WithReferencedTables"/>); <see cref="Geometry"/> stands for the six geometry tables
+/// (Instances, Meshes, VertexBuffer, IndexBuffer, Materials, Transforms) as a group.</summary>
+[Flags]
+public enum BosTables
+{
+    None = 0,
+    Diagnostics = 1 << 0,
+    Descriptors = 1 << 1,
+    Parameters = 1 << 2,
+    Numbers = 1 << 3,
+    Documents = 1 << 4,
+    Entities = 1 << 5,
+    Strings = 1 << 6,
+    Points = 1 << 7,
+    Relations = 1 << 8,
+    Geometry = 1 << 9,
+    All = (1 << 10) - 1,
+}
+
 public static class ParquetUtils
 {
     public static async Task WriteParquetAsync(
@@ -277,21 +298,28 @@ public static class ParquetUtils
     public static BimGeometry ReadBimGeometryFromParquetZip(this FilePath fp)
         => Task.Run(() => fp.ReadBimGeometryFromParquetZipAsync()).GetAwaiter().GetResult();
 
-    /// <summary>
-    /// Reads every "*.parquet" entry from <paramref name="zipPath"/>
-    /// and returns them as a list of tables.
-    /// </summary>
-    public static async Task<BimData> ReadBimDataFromParquetZipAsync(this FilePath zipPath, ILogger logger = null)
+    /// <summary>Reads every table of the archive into a <see cref="BimData"/>.</summary>
+    public static Task<BimData> ReadBimDataFromParquetZipAsync(this FilePath zipPath, ILogger logger = null)
+        => zipPath.ReadBimDataFromParquetZipAsync(BosTables.All, logger);
+
+    /// <summary>Reads only the tables named in <paramref name="tables"/>, plus the tables their rows
+    /// index into (see <see cref="WithReferencedTables"/>). A table that is not read comes back
+    /// empty (an empty array, or an empty <see cref="BimGeometry"/>), never invented, and its
+    /// archive entry is not even copied out of the zip.</summary>
+    public static async Task<BimData> ReadBimDataFromParquetZipAsync(this FilePath zipPath, BosTables tables, ILogger logger = null)
     {
         var geometryTables = new List<IDataTable>();
 
         await using var fs = new FileStream(zipPath, FileMode.Open, FileAccess.Read, FileShare.Read);
         using var zip = new ZipArchive(fs, ZipArchiveMode.Read, leaveOpen: false);
 
-        var entries = zip.Entries
+        var allEntries = zip.Entries
             .Where(e => e.Name.EndsWith(".parquet", StringComparison.OrdinalIgnoreCase))
             .OrderBy(e => e.FullName)
             .ToList();
+
+        tables = WithReferencedTables(tables);
+        var entries = allEntries.Where(e => IsWanted(tables, Path.GetFileNameWithoutExtension(e.Name))).ToList();
 
         logger?.Log("Creating memory streams");
         var streams = new List<MemoryStream>();
@@ -307,7 +335,7 @@ public static class ParquetUtils
         }
         logger?.Log("Creating data table reading tasks");
 
-        var tables = new IDataTable[streams.Count];
+        var otherTables = new IDataTable[streams.Count];
         var dop = Math.Max(1, Environment.ProcessorCount - 1);
 
         using var sem = new SemaphoreSlim(dop);
@@ -349,7 +377,7 @@ public static class ParquetUtils
 
                 if (ctor == null)
                 {
-                    tables[i] = await ReadParquetAsync(stream, name).ConfigureAwait(false);
+                    otherTables[i] = await ReadParquetAsync(stream, name).ConfigureAwait(false);
                 }
                 else
                 {
@@ -379,7 +407,7 @@ public static class ParquetUtils
         MergeLegacyParameters(bimData, legacyParams, legacySingles);
 
         logger?.Log("Create BIM geometry from geometry data tables");
-        foreach (var table in tables)
+        foreach (var table in otherTables)
         {
             if (table == null)
                 continue;
@@ -495,7 +523,51 @@ public static class ParquetUtils
     }
 
     public static BimData ReadBimDataFromParquetZip(this FilePath fp)
-        => Task.Run(() => fp.ReadBimDataFromParquetZipAsync()).GetAwaiter().GetResult();
+        => fp.ReadBimDataFromParquetZip(BosTables.All);
+
+    /// <summary>Synchronous form of <see cref="ReadBimDataFromParquetZipAsync(FilePath, BosTables, ILogger)"/>.</summary>
+    public static BimData ReadBimDataFromParquetZip(this FilePath fp, BosTables tables)
+        => Task.Run(() => fp.ReadBimDataFromParquetZipAsync(tables)).GetAwaiter().GetResult();
+
+    /// <summary>The selection flag an archive table belongs to, or None for a name the schema does not define.</summary>
+    private static BosTables TableOf(string name)
+    {
+        if (BimGeometry.TableNames.Contains(name))
+            return BosTables.Geometry;
+        if (LegacyParameterTableNames.Contains(name) || name == LegacySingleParameterTableName)
+            return BosTables.Parameters;
+        return name switch
+        {
+            nameof(BimData.Diagnostics) => BosTables.Diagnostics,
+            nameof(BimData.Descriptors) => BosTables.Descriptors,
+            nameof(BimData.Parameters) => BosTables.Parameters,
+            nameof(BimData.Numbers) => BosTables.Numbers,
+            nameof(BimData.Documents) => BosTables.Documents,
+            nameof(BimData.Entities) => BosTables.Entities,
+            nameof(BimData.Strings) => BosTables.Strings,
+            nameof(BimData.Points) => BosTables.Points,
+            nameof(BimData.Relations) => BosTables.Relations,
+            _ => BosTables.None,
+        };
+    }
+
+    /// <summary>Adds to <paramref name="tables"/> the tables that its rows hold indices into, so a
+    /// selected row never points into an empty table: Entities, Descriptors, Documents, and
+    /// Diagnostics index Strings; Parameters index Descriptors, Strings, Numbers, and Points.
+    /// This also covers older files, whose single-valued parameters are interned into Numbers.</summary>
+    public static BosTables WithReferencedTables(BosTables tables)
+    {
+        const BosTables stringUsers = BosTables.Entities | BosTables.Descriptors | BosTables.Documents | BosTables.Diagnostics;
+        if ((tables & BosTables.Parameters) != 0)
+            tables |= BosTables.Descriptors | BosTables.Numbers | BosTables.Points;
+        if ((tables & (stringUsers | BosTables.Parameters)) != 0)
+            tables |= BosTables.Strings;
+        return tables;
+    }
+
+    // Selecting everything also reads entries the schema does not define, as a full read always has.
+    private static bool IsWanted(BosTables tables, string name)
+        => tables == BosTables.All || (TableOf(name) & tables) != 0;
 
     /// <summary>Writes the data tables and, when <see cref="IBimData.Geometry"/> is set, the
     /// geometry tables (Instances, Meshes, ...) into one <c>.bos</c> archive.</summary>
