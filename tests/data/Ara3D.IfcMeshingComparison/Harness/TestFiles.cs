@@ -27,6 +27,10 @@ public static class TestFiles
     /// <summary>Meshes and probes a test writes, named after the model file they came from.</summary>
     public static readonly DirectoryPath ProbesDir = ArtifactsDir.RelativeFolder("probes");
 
+    /// <summary>The committed benchmark folder: the parity scorecard over the quick files is written
+    /// here so a run can be compared with the last one in git.</summary>
+    public static readonly DirectoryPath BenchDir = new(Path.Combine(RepoPaths.Root, "bench", "ifc-mesher"));
+
     public static FilePath Example => ResolveIfc("example.ifc");
     public static FilePath IfcOpenHouse => ResolveIfc("IfcOpenHouse_IFC4.ifc");
     public static FilePath SampleEntities => ResolveIfc("Sample_entities.ifc");

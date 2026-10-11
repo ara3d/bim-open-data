@@ -8,11 +8,12 @@ namespace Ara3D.IfcMeshingComparison.Tests.Comparison;
 [TestFixture]
 public sealed class ScorecardTests
 {
-    static FilePath ScorecardPath => TestFiles.ReportsDir.RelativeFile("scorecard.json");
+    /// <summary>The committed scorecard; see bench/ifc-mesher/README.md.</summary>
+    static FilePath ScorecardPath => TestFiles.BenchDir.RelativeFile("scorecard.json");
 
     [Test]
     [Category("IfcMesherParity")]
-    [Explicit("Diagnostic web-ifc parity scorecard — run via test.bat ifcmesher parity")]
+    [Explicit("Writes bench/ifc-mesher/scorecard.json; run with --filter Category=IfcMesherParity")]
     public void ScoreQuickComparisonFiles()
     {
         WebIfcBfastOracle.GenerateAll(TestFiles.QuickComparisonFiles(), TestContext.WriteLine);

@@ -207,8 +207,7 @@ public static class ModelComparer
 
     public static void WriteScorecard(IReadOnlyList<ModelComparisonResult> results, FilePath path)
     {
-        TestFiles.ReportsDir.Create();
-        path.GetParent().Create();
+        Directory.CreateDirectory(Path.GetDirectoryName(path.Value)!);
         var payload = new ScorecardDocument(
             DateTime.UtcNow,
             results.Select(ScorecardEntry.FromResult).ToList());

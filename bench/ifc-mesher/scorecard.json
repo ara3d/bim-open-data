@@ -1,0 +1,452 @@
+{
+  "generatedUtc": "2026-10-11T18:28:36.6685681Z",
+  "files": [
+    {
+      "fileName": "IfcOpenHouse_IFC4.ifc",
+      "parityScore": 0.9633104479209224,
+      "metrics": {
+        "meshCount": 1,
+        "instanceCount": 1,
+        "entityInstances": 1,
+        "entityBoundingBox": 1,
+        "entityShape": 0.977713732004051,
+        "meshBoundingBox": 1,
+        "meshShape": 0.9554331284955189,
+        "mergedMesh": 0.7333870207035779
+      },
+      "meshCount": {
+        "score": 1,
+        "candidate": 19,
+        "oracle": 19
+      },
+      "instanceCount": {
+        "score": 1,
+        "candidate": 38,
+        "oracle": 38
+      },
+      "entityInstances": {
+        "score": 1,
+        "keyJaccard": 1,
+        "deltaHistogram": {
+          "0": 35,
+          "1": 0,
+          "2-5": 0,
+          "6\u002B": 0
+        },
+        "sharedEntityCount": 35,
+        "candidateOnlyEntityCount": 0,
+        "oracleOnlyEntityCount": 0
+      },
+      "entityBoundingBox": {
+        "score": 1,
+        "comparedCount": 35,
+        "matchedCount": 35,
+        "candidateOnlyCount": 0,
+        "oracleOnlyCount": 0
+      },
+      "entityShape": {
+        "score": 0.977713732004051,
+        "comparedCount": 35,
+        "matchedCount": 32,
+        "worstEntities": [
+          {
+            "entityId": 268,
+            "score": 0.8612574845463771,
+            "volumeRatio": 0.5362556740973256,
+            "areaRatio": 0.9751660735290687,
+            "boundaryRatio": 0,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 281,
+            "score": 0.8807137586556798,
+            "volumeRatio": 0.5006901622742889,
+            "areaRatio": 0.9696656861780397,
+            "boundaryRatio": 0,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 40,
+            "score": 0.890969121259524,
+            "volumeRatio": 0.9999999545551342,
+            "areaRatio": 0.9999999823124416,
+            "boundaryRatio": 0,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 2858,
+            "score": 0.9654370124913433,
+            "volumeRatio": 0.9999971929612431,
+            "areaRatio": 0.9999999434920123,
+            "boundaryRatio": 1,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 2566,
+            "score": 0.965437308743285,
+            "volumeRatio": 0.999998421074515,
+            "areaRatio": 0.9999999434920429,
+            "boundaryRatio": 1,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 2633,
+            "score": 0.965437308743285,
+            "volumeRatio": 0.999998421074515,
+            "areaRatio": 0.9999999434920429,
+            "boundaryRatio": 1,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 2852,
+            "score": 0.9654375127634469,
+            "volumeRatio": 0.9999992172869475,
+            "areaRatio": 0.9999999434920429,
+            "boundaryRatio": 1,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 2639,
+            "score": 0.9654375459927561,
+            "volumeRatio": 0.9999993319929649,
+            "areaRatio": 0.9999999434919649,
+            "boundaryRatio": 1,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 2706,
+            "score": 0.9654375459927561,
+            "volumeRatio": 0.9999993319929649,
+            "areaRatio": 0.9999999434919649,
+            "boundaryRatio": 1,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 2560,
+            "score": 0.9654375465008401,
+            "volumeRatio": 0.9999993522365207,
+            "areaRatio": 0.9999999434920429,
+            "boundaryRatio": 1,
+            "misTagSuspectId": -1
+          }
+        ],
+        "excludedMisTagCount": 0
+      },
+      "meshBoundingBox": {
+        "score": 1,
+        "comparedCount": 19,
+        "matchedCount": 19,
+        "candidateOnlyCount": 0,
+        "oracleOnlyCount": 0
+      },
+      "meshShapeScore": 0.9554331284955189,
+      "mergedMesh": {
+        "score": 0.7333870207035779,
+        "candidatePointCount": 855,
+        "oraclePointCount": 3218,
+        "candidateTriangleCount": 1175,
+        "oracleTriangleCount": 1098,
+        "boundsClose": true
+      },
+      "comparedUtc": "2026-10-11T18:28:35.2462711Z"
+    },
+    {
+      "fileName": "example.ifc",
+      "parityScore": 0.9384014439931718,
+      "metrics": {
+        "meshCount": 1,
+        "instanceCount": 1,
+        "entityInstances": 1,
+        "entityBoundingBox": 0.9939655172413793,
+        "entityShape": 0.9268801804995852,
+        "meshBoundingBox": 0.9919191919191921,
+        "meshShape": 0.9004893929238549,
+        "mergedMesh": 0.6794167239372358
+      },
+      "meshCount": {
+        "score": 1,
+        "candidate": 99,
+        "oracle": 99
+      },
+      "instanceCount": {
+        "score": 1,
+        "candidate": 120,
+        "oracle": 120
+      },
+      "entityInstances": {
+        "score": 1,
+        "keyJaccard": 1,
+        "deltaHistogram": {
+          "0": 116,
+          "1": 0,
+          "2-5": 0,
+          "6\u002B": 0
+        },
+        "sharedEntityCount": 116,
+        "candidateOnlyEntityCount": 0,
+        "oracleOnlyEntityCount": 0
+      },
+      "entityBoundingBox": {
+        "score": 0.9939655172413793,
+        "comparedCount": 116,
+        "matchedCount": 115,
+        "candidateOnlyCount": 0,
+        "oracleOnlyCount": 0
+      },
+      "entityShape": {
+        "score": 0.9268801804995852,
+        "comparedCount": 116,
+        "matchedCount": 88,
+        "worstEntities": [
+          {
+            "entityId": 12954,
+            "score": 0.49427485782080083,
+            "volumeRatio": 0.9696696839580107,
+            "areaRatio": 0,
+            "boundaryRatio": 0,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 9028,
+            "score": 0.7336953063905675,
+            "volumeRatio": 0,
+            "areaRatio": 0.9903436585166345,
+            "boundaryRatio": 1,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 9298,
+            "score": 0.7340987706230366,
+            "volumeRatio": 0,
+            "areaRatio": 0.9921015829401906,
+            "boundaryRatio": 1,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 8218,
+            "score": 0.7342834561636798,
+            "volumeRatio": 0,
+            "areaRatio": 0.994467071197152,
+            "boundaryRatio": 1,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 12530,
+            "score": 0.7343956371169437,
+            "volumeRatio": 0,
+            "areaRatio": 0.9937153028384288,
+            "boundaryRatio": 1,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 11334,
+            "score": 0.7344213882347669,
+            "volumeRatio": 0,
+            "areaRatio": 0.993883416821893,
+            "boundaryRatio": 1,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 8488,
+            "score": 0.7346583976821057,
+            "volumeRatio": 0,
+            "areaRatio": 0.9959959986578757,
+            "boundaryRatio": 1,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 8758,
+            "score": 0.7348336365700182,
+            "volumeRatio": 0,
+            "areaRatio": 0.9937121173362793,
+            "boundaryRatio": 1,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 12799,
+            "score": 0.7414150876387147,
+            "volumeRatio": 0,
+            "areaRatio": 0.9881896057023285,
+            "boundaryRatio": 1,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 12261,
+            "score": 0.7422492761686844,
+            "volumeRatio": 0,
+            "areaRatio": 0.9936208518821701,
+            "boundaryRatio": 1,
+            "misTagSuspectId": -1
+          }
+        ],
+        "excludedMisTagCount": 0
+      },
+      "meshBoundingBox": {
+        "score": 0.9919191919191921,
+        "comparedCount": 99,
+        "matchedCount": 98,
+        "candidateOnlyCount": 0,
+        "oracleOnlyCount": 0
+      },
+      "meshShapeScore": 0.9004893929238549,
+      "mergedMesh": {
+        "score": 0.6794167239372358,
+        "candidatePointCount": 6450,
+        "oraclePointCount": 31030,
+        "candidateTriangleCount": 12494,
+        "oracleTriangleCount": 15046,
+        "boundsClose": true
+      },
+      "comparedUtc": "2026-10-11T18:28:35.4962857Z"
+    },
+    {
+      "fileName": "steelplates.ifc",
+      "parityScore": 0.9184610249203935,
+      "metrics": {
+        "meshCount": 1,
+        "instanceCount": 1,
+        "entityInstances": 1,
+        "entityBoundingBox": 1,
+        "entityShape": 0.9622184273342935,
+        "meshBoundingBox": 1,
+        "meshShape": 0.7271503821225516,
+        "mergedMesh": 0.5519137987456505
+      },
+      "meshCount": {
+        "score": 1,
+        "candidate": 14,
+        "oracle": 14
+      },
+      "instanceCount": {
+        "score": 1,
+        "candidate": 14,
+        "oracle": 14
+      },
+      "entityInstances": {
+        "score": 1,
+        "keyJaccard": 1,
+        "deltaHistogram": {
+          "0": 14,
+          "1": 0,
+          "2-5": 0,
+          "6\u002B": 0
+        },
+        "sharedEntityCount": 14,
+        "candidateOnlyEntityCount": 0,
+        "oracleOnlyEntityCount": 0
+      },
+      "entityBoundingBox": {
+        "score": 1,
+        "comparedCount": 14,
+        "matchedCount": 14,
+        "candidateOnlyCount": 0,
+        "oracleOnlyCount": 0
+      },
+      "entityShape": {
+        "score": 0.9622184273342935,
+        "comparedCount": 14,
+        "matchedCount": 10,
+        "worstEntities": [
+          {
+            "entityId": 1473,
+            "score": 0.8778543997104079,
+            "volumeRatio": 0.8959540975844583,
+            "areaRatio": 0.9693858774411847,
+            "boundaryRatio": 0,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 1193,
+            "score": 0.8789568149972989,
+            "volumeRatio": 0,
+            "areaRatio": 0.9732204592595577,
+            "boundaryRatio": 0,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 1385,
+            "score": 0.8854784273195112,
+            "volumeRatio": 0.1681608306897222,
+            "areaRatio": 0.9720020462604678,
+            "boundaryRatio": 0,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 633,
+            "score": 0.8862481727345921,
+            "volumeRatio": 0.13591954938848438,
+            "areaRatio": 0.9751627803432564,
+            "boundaryRatio": 0,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 808,
+            "score": 0.9895357391567606,
+            "volumeRatio": 0.9888675380507191,
+            "areaRatio": 0.9836993078803943,
+            "boundaryRatio": 1,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 1078,
+            "score": 0.9902250045732658,
+            "volumeRatio": 0.9999480722457168,
+            "areaRatio": 0.9999995402587727,
+            "boundaryRatio": 1,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 720,
+            "score": 0.9906645854304044,
+            "volumeRatio": 0.9933829414552675,
+            "areaRatio": 0.9836993078803943,
+            "boundaryRatio": 1,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 895,
+            "score": 0.9921592120387784,
+            "volumeRatio": 0.9947484325765912,
+            "areaRatio": 0.9847049245841843,
+            "boundaryRatio": 1,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 982,
+            "score": 0.9926259503918272,
+            "volumeRatio": 0.9948317056816102,
+            "areaRatio": 0.9846699231628763,
+            "boundaryRatio": 1,
+            "misTagSuspectId": -1
+          },
+          {
+            "entityId": 174,
+            "score": 0.9971121720110193,
+            "volumeRatio": 0.9995711135139348,
+            "areaRatio": 0.9999983982669837,
+            "boundaryRatio": 1,
+            "misTagSuspectId": -1
+          }
+        ],
+        "excludedMisTagCount": 0
+      },
+      "meshBoundingBox": {
+        "score": 1,
+        "comparedCount": 14,
+        "matchedCount": 14,
+        "candidateOnlyCount": 0,
+        "oracleOnlyCount": 0
+      },
+      "meshShapeScore": 0.7271503821225516,
+      "mergedMesh": {
+        "score": 0.5519137987456505,
+        "candidatePointCount": 576,
+        "oraclePointCount": 3732,
+        "candidateTriangleCount": 716,
+        "oracleTriangleCount": 1428,
+        "boundsClose": true
+      },
+      "comparedUtc": "2026-10-11T18:28:36.5500557Z"
+    }
+  ]
+}
