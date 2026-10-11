@@ -33,7 +33,11 @@ var summary = BcfWriter.WriteFile("doors.bcf", doors.ToBcfIssues(), new BcfOptio
 - **Viewpoints.** With `ElementBounds`, each topic whose elements have geometry
   gets one `viewpoint.bcfv`. The viewpoint selects the elements, keeps the rest
   of the model visible, and holds a perspective camera that frames their
-  bounding box from the south-east, above. Coordinates are BOS's z-up metres,
+  bounding box from the south-east, above. Each element's box comes from
+  `BosScene.Bounds` in Ara3D.BimOpenSchema.ObjectModel, the view the GLB, USD and
+  BCF writers share: its visible instances, each mesh's box moved by the
+  instance's transform. `ElementBounds.FromScene` takes a scene a caller keeps.
+  Coordinates are BOS's z-up metres,
   which are the IFC file's own coordinates and so also BCF's. A 22-character IFC
   GlobalId is written as the component's `IfcGuid`. Any other id, such as a
   Revit UniqueId, is written as `AuthoringToolId`, because BCF rejects it as an
