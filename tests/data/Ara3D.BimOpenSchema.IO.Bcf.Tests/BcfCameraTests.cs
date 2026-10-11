@@ -5,7 +5,7 @@ namespace Ara3D.BimOpenSchema.IO.Bcf.Tests;
 [TestFixture]
 public sealed class BcfCameraTests
 {
-    private static readonly ElementBox Box = new(new Vector3(10, 20, 0), new Vector3(14, 22, 3));
+    private static readonly BosBox Box = new(new Vector3(10, 20, 0), new Vector3(14, 22, 3));
 
     [Test]
     public void TheCameraLooksAtTheBoxCentreFromAbove()
@@ -40,7 +40,7 @@ public sealed class BcfCameraTests
     [Test]
     public void APointLikeBoxIsFramedFromTheMinimumRadius()
     {
-        var point = new ElementBox(Vector3.One, Vector3.One);
+        var point = new BosBox(Vector3.One, Vector3.One);
         var camera = BcfCamera.Frame(point, 60, 1);
         var expected = BcfCamera.MinimumRadius / Math.Sin(30 * Math.PI / 180);
         Assert.That(Vector3.Distance(camera.ViewPoint, Vector3.One), Is.EqualTo(expected).Within(1e-5));

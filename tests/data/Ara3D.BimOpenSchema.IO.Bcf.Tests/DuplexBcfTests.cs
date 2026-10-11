@@ -191,7 +191,7 @@ public sealed class DuplexBcfTests
     private static Vector3 Vector(XElement e)
         => new((float)e.Element("X")!, (float)e.Element("Y")!, (float)e.Element("Z")!);
 
-    internal static IEnumerable<Vector3> Corners(ElementBox b)
+    internal static IEnumerable<Vector3> Corners(BosBox b)
         => from x in new[] { b.Min.X, b.Max.X }
            from y in new[] { b.Min.Y, b.Max.Y }
            from z in new[] { b.Min.Z, b.Max.Z }

@@ -21,7 +21,7 @@ public readonly record struct BcfCamera(
 
     /// <summary>Looks along <see cref="ViewDirection"/> at the box's centre, from just far
     /// enough that the box's bounding sphere fits the narrower of the two fields of view.</summary>
-    public static BcfCamera Frame(ElementBox box, double fieldOfView, double aspectRatio)
+    public static BcfCamera Frame(BosBox box, double fieldOfView, double aspectRatio)
     {
         var radius = Math.Max(box.Size.Length() / 2, MinimumRadius);
         var halfVertical = fieldOfView * Math.PI / 360;
