@@ -132,8 +132,6 @@ writer does for those two columns.
 - Per material, `rendered_faces` (double-sided) and `stroke`; BOS materials
   have neither. Per representation, its bounding box; per shell,
   `profiles_face_ids`; the `*_ids` arrays of the meshes table (edit ids).
-- The hidden flag: Ara3D.Ifc.Bos hides spaces, sites, and grids; this reader
-  flags nothing, and spaces keep the transparent colour the file gives them.
 - `metadata`, `guid`, `max_local_id`, `unique_attributes`, `relation_names`,
   and `indexes` (`ModelIndex`, user-defined lookups).
 - Classes the importer did not keep. By default That Open's importer skips

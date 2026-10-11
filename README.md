@@ -38,7 +38,7 @@ The tables load straight into DuckDB, an in-process analytical database, which i
 
 ## Projects
 
-These are the 25 projects in `src/data`, grouped by what they do. Most target `net8.0-windows` because the IFC loader does; the schema libraries target plain `net8.0`.
+These are the 26 projects in `src/data`, grouped by what they do. Most target `net8.0-windows` because the IFC loader does; the schema libraries target plain `net8.0`.
 
 ### BIM Open Schema
 
@@ -67,6 +67,7 @@ These are the 25 projects in `src/data`, grouped by what they do. Most target `n
 | `Ara3D.Ifc.Mesher` | Tessellation in pure C# |
 | `Ara3D.Ifc.Editing` | Property-set patching that locates each entity by byte range, so every byte you did not edit comes out identical |
 | `Ara3D.Ifc.Bos` | IFC to BOS conversion |
+| `Ara3D.Ifc.Conventions` | Portable (net8.0) IFC rules shared by the IFC and Fragments readers: hidden classes, parameter and relation names, material sets |
 | `Ara3D.Ifc.DuckDb` | One call from an IFC file to a queryable DuckDB database: convert to BOS, load the tables, create the text views |
 | `Ara3D.Ids` | Evaluates buildingSMART IDS 1.0 specifications over BOS tables in DuckDB, as a verdict table |
 
@@ -78,7 +79,7 @@ These are the 25 projects in `src/data`, grouped by what they do. Most target `n
 | `Ara3D.BimOpenSchema.Browser` | A WPF data-grid viewer for `.bos` files with glTF and Excel export (`net10.0-windows`) |
 | `Ara3D.IfcTypeGen` | The generator behind `Ara3D.IfcTypes` |
 
-Fifteen test projects in `tests/data` and one in `tests/mcp` cover them; `tests/BimOpenData.TestSupport` holds the shared paths and the mini IFC fixture.
+Seventeen test projects in `tests/data` and one in `tests/mcp` cover them; `tests/BimOpenData.TestSupport` holds the shared paths and the mini IFC fixture.
 
 ## Dependencies
 

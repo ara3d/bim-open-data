@@ -22,5 +22,6 @@ IFC stack. Nothing here references `src/flow` or `src/mcp`; those build on this.
 | `Ara3D.Ifc.Mesher` | Pure C# tessellation |
 | `Ara3D.Ifc.Editing` | Byte-exact property-set patching |
 | `Ara3D.Ifc.Bos` | IFC to BOS conversion |
+| `Ara3D.Ifc.Conventions` | Portable (net8.0) IFC rules shared by the IFC and Fragments readers: hidden classes, parameter and relation names, material sets |
 
 Tests are under `tests/data`.
