@@ -102,7 +102,8 @@ public sealed class MaterialLayerTests
         Assert.That(Cells(rows), Is.EqualTo(new[]
         {
             new[] { "Cavity 195", "1", "Outer leaf", "Brick", "115.0" },
-            new[] { "Cavity 195", "2", "#13", "Insulation", "80.0" },
+            // Layer #13 leaves its Name unset ($): the name is absent, not a "#13" made from the STEP id.
+            new[] { "Cavity 195", "2", null, "Insulation", "80.0" },
         }));
     }
 

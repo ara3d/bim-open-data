@@ -29,7 +29,7 @@ public class IfcToBosConverter
     public IfcInstanceTypeRelations TypeRelations;
     public BimDataBuilder BimDataBuilder = new();
     public BimGeometryBuilder BimGeometryBuilder = new();
-    public BimGeometry BimGeometry => BimDataBuilder.Geometry;
+    public BimGeometry BimGeometry { get; }
     public List<IfcEntity> BosEntities;
     public Dictionary<int, EntityIndex> IfcIdToBosId = new();
     public Dictionary<string, EntityIndex> CatEntities = new();
@@ -104,7 +104,7 @@ public class IfcToBosConverter
         var uniqueNames = BosEntities.Select(e => e.GetEntityName().DecodeIfc()).Distinct().ToList();
         foreach (var stepEntityName in uniqueNames)
         {
-            var ei = BimDataBuilder.AddEntity(-1, "", _docIndex, stepEntityName, (EntityIndex)(-1), (EntityIndex)(-1));
+            var ei = BimDataBuilder.AddEntity(-1, null, _docIndex, stepEntityName, (EntityIndex)(-1), (EntityIndex)(-1));
             CatEntities.Add(stepEntityName, ei);
         }
 
@@ -115,8 +115,8 @@ public class IfcToBosConverter
         {
             var e = GetEntity(id);
             var catEi = GetCatEntityIndex(id);
-            var name = e.GetEntityLabel().DecodeIfc();
-            var gid = e.GetIfcRootGlobalId();
+            var name = NameOrNull(e);
+            var gid = OptionalString(e, 0);
             var ei = BimDataBuilder.AddEntity(id, gid, _docIndex, name, catEi, InvalidEntityIndex);
             IfcIdToBosId.Add(id, ei);
         }
@@ -144,11 +144,10 @@ public class IfcToBosConverter
 
             var attributes = ifcEntityPrototype.Attributes;
             
-            var gid = "";
-            if (attributes.Length > 0 && attributes[0].Name == "GlobalId")
-                gid = e.GetString(0).DecodeIfc();
+            // Only an IfcRoot has a GlobalId; any other entity keeps none (-1), as does an unset one.
+            var gid = attributes.Length > 0 && attributes[0].Name == "GlobalId" ? OptionalString(e, 0) : null;
 
-            var name = e.GetEntityLabel().DecodeIfc();
+            var name = NameOrNull(e);
 
             if (TypeRelations.InstancesToTypes.TryGetValue(id, out var typeId))
                 typeEi = GetBosEntityIndexFromIfc(typeId);
@@ -245,9 +244,8 @@ public class IfcToBosConverter
             {
                 var propSetName = propSet.Name.DecodeIfc();
                 var propName = p.Name.DecodeIfc();
-                if (!p.Value.HasValue)
-                    BimDataBuilder.AddParameter(bosId, "", propName, "", propSetName);
-                else
+                // A property without a value adds no row: absent is not "".
+                if (p.Value.HasValue)
                     ProcessPropValue(propName, p.Value.Value, p, bosId, propSetName);
             }
         }
@@ -335,7 +333,7 @@ public class IfcToBosConverter
         logger?.Log($"Found {missingIdCount} missing IDs");
 
         logger?.Log("Building geometry");
-        BimDataBuilder.Geometry = BimGeometryBuilder.BuildModel();
+        BimDataBuilder.Geometry = BimGeometry = BimGeometryBuilder.BuildModel();
 
         logger?.Log("Building BIM data");
         var bimData = BimDataBuilder.Build();
@@ -344,12 +342,17 @@ public class IfcToBosConverter
         DataSet = bimData.ToDataSet();
     }
 
+    /// <summary>Adds the property's value as a parameter; an unset ($ or *) value, or a reference
+    /// to an entity that was not converted, adds nothing.</summary>
     private void ProcessPropValue(string name, StepToken val, IfcPropValue p, EntityIndex bosId, string propSetName)
     {
+        if (val.IsUnassignedOrRedeclared)
+            return;
         if (val.IsId)
         {
             var refId = GetBosEntityIndexFromIfc(p.Value!.Value.AsId());
-            BimDataBuilder.AddParameter(bosId, refId, name, "", propSetName);
+            if (refId != InvalidEntityIndex)
+                BimDataBuilder.AddParameter(bosId, refId, name, "", propSetName);
         }
         else if (val.IsEntity)
         {
@@ -368,9 +371,28 @@ public class IfcToBosConverter
         }
         else
         {
-            var str = val.ToString()?.DecodeIfc() ?? "";
-            BimDataBuilder.AddParameter(bosId, str, name, "", propSetName);
+            BimDataBuilder.AddParameter(bosId, val.ToString()?.DecodeIfc(), name, "", propSetName);
         }
+    }
+
+    /// <summary>The attribute's decoded text, or null when it is unset ($), redeclared (*), or
+    /// past the entity's attributes. A stored '' is returned as "": it is a value.</summary>
+    public static string? OptionalString(IfcEntity entity, int index)
+        => index < entity.Attributes.Count && !entity.Attributes[index].IsUnassignedOrRedeclared
+            ? entity.GetString(index).DecodeIfc()
+            : null;
+
+    /// <summary>The entity's name, chosen as <see cref="IfcEntity.GetEntityLabel"/> chooses it
+    /// (IfcSpace.LongName, a material resource's name attribute, then IfcRoot.Name), or null
+    /// when that attribute is unset: no "#id" stands in for a missing name.</summary>
+    public static string? NameOrNull(IfcEntity entity)
+    {
+        var ifcClass = entity.GetEntityName();
+        if (ifcClass == "IFCSPACE" && OptionalString(entity, 7) is { Length: > 0 } longName)
+            return longName;
+        if (ifcClass.StartsWith("IFCMATERIAL", StringComparison.Ordinal))
+            return IfcEntity.MaterialNameIndex.TryGetValue(ifcClass, out var nameIndex) ? OptionalString(entity, nameIndex) : null;
+        return OptionalString(entity, 2);
     }
 
     /// <summary>See <see cref="IfcClasses.IsMaterialResource"/>.</summary>
@@ -471,7 +493,7 @@ public class IfcToBosConverter
             zipCompressionLevel);
 
         logger?.Log($"Writing geometry data to Zip file {output}");
-        BimDataBuilder.Geometry.WriteParquetToZip(
+        BimGeometry.WriteParquetToZip(
             zip,
             parquetCompressionMethod,
             parquetCompressionLevel,
