@@ -24,8 +24,9 @@ public static class IdsEvaluator
         if (model.LengthToMetre is { } scale && Math.Abs(scale - 1) > 1e-9)
             warnings.Add($"numbers are compared in the model's own units (1 length unit = {scale.ToString(System.Globalization.CultureInfo.InvariantCulture)} m); IDS values are in SI, so a bound on a length may not mean what it says");
         var verdicts = new List<IdsVerdict>();
+        var index = 0;
         foreach (var specification in ids.AllSpecifications())
-            Evaluate(specification, model, verdicts, warnings);
+            Evaluate(specification, index++, model, verdicts, warnings);
         return new(verdicts, warnings.List);
     }
 
@@ -42,7 +43,7 @@ public static class IdsEvaluator
     internal static IReadOnlyList<IFacet> Facets(FacetGroup? group)
         => group?.Facets?.ToList() ?? [];
 
-    private static void Evaluate(Specification specification, IdsModel model, List<IdsVerdict> verdicts, IdsWarnings warnings)
+    private static void Evaluate(Specification specification, int index, IdsModel model, List<IdsVerdict> verdicts, IdsWarnings warnings)
     {
         var checkId = CheckId(specification);
         var title = CheckTitle(specification);
@@ -51,7 +52,7 @@ public static class IdsEvaluator
         var requirements = Facets(specification.Requirement);
 
         void Row(IdsEntity? entity, Outcome outcome)
-            => verdicts.Add(new(entity?.GlobalId ?? "", entity?.EntityIndex ?? -1, checkId, title, citation, outcome.Verdict, outcome.Reason));
+            => verdicts.Add(new(entity?.GlobalId ?? "", entity?.EntityIndex ?? -1, checkId, title, citation, outcome.Verdict, outcome.Reason, index));
 
         if (applicability.Any(f => !IdsFacets.IsSupported(f)))
         {

@@ -22,6 +22,7 @@ public sealed class IdsEvaluatorTests
         Assert.That(ByGlobalId(report).Keys, Is.EquivalentTo(new[] { Door1, Door2 }));
         Assert.That(report.Verdicts.Select(v => v.Verdict), Has.All.EqualTo(Verdict.Pass), "no requirements: applicable means pass");
         Assert.That(report.Warnings, Is.Empty);
+        Assert.That(report.Verdicts.Select(v => v.Specification), Has.All.EqualTo(0));
     }
 
     [Test]
@@ -42,6 +43,14 @@ public sealed class IdsEvaluatorTests
         Assert.That(verdicts[Wall1].Verdict, Is.EqualTo(Verdict.Pass));
         Assert.That(verdicts[Wall2].Verdict, Is.EqualTo(Verdict.Fail), "an empty value is absent");
         Assert.That(verdicts[Wall2].Reason, Does.Contain("no Pset_WallCommon.FireRating"));
+    }
+
+    [Test]
+    public void PropertyFacet_WarnsOnceThatTypePropertySetsAreNotSeen()
+    {
+        var report = Run(Entity("IFCWALL"), Property("Pset_WallCommon", "FireRating") + Property("Pset_WallCommon", "LoadBearing"));
+        Assert.That(report.Warnings, Is.EqualTo(new[] { IdsFacets.TypePropertySetsWarning }));
+        Assert.That(Run(Entity("IFCWALL")).Warnings, Is.Empty, "no property facet, no warning");
     }
 
     [Test]
@@ -88,6 +97,7 @@ public sealed class IdsEvaluatorTests
         var report = Run(Entity("IFCWALL"), Property("Pset_WallCommon", "FireRating", dataType: "IFCWIDGET"));
         Assert.That(ByGlobalId(report)[Wall1].Verdict, Is.EqualTo(Verdict.Pass));
         Assert.That(report.Warnings, Has.Exactly(1).Contains("IFCWIDGET"));
+        Assert.That(report.Warnings, Has.Count.EqualTo(2), "plus the type property set warning");
     }
 
     [Test]

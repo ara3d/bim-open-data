@@ -68,8 +68,14 @@ internal static class IdsFacets
             : FacetMatch.No($"PredefinedType '{predefined?.Token}' is not {facet.PredefinedType!.Short()}");
     }
 
+    /// <summary>Raised once per report whenever a property facet is evaluated, until TKT-237
+    /// (bim-open-toolkit) brings type-object property sets into BOS.</summary>
+    internal const string TypePropertySetsWarning =
+        "property sets on type objects are not in BOS yet, so a value an occurrence inherits from its type is not seen (TKT-237)";
+
     private static FacetMatch MatchProperty(IfcPropertyFacet facet, IdsEntity entity, IdsWarnings warnings)
     {
+        warnings.Add(TypePropertySetsWarning);
         var candidates = entity.Properties
             .Where(v => Satisfies(facet.PropertySetName, v.Group, ignoreCase: false)
                 && Satisfies(facet.PropertyName, v.Name, ignoreCase: false) && v.IsPresent)

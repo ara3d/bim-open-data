@@ -45,6 +45,30 @@ public static class IdsTables
         return builder.Build();
     }
 
+    /// <summary>One row per specification of the IDS, in its order, with the report's counts:
+    /// CheckId, CheckTitle, Pass, Fail, InfoNotAvailable, Rows. A specification with no rows (a
+    /// prohibited one nothing matched, an optional one that applied to nothing) has zeros; two
+    /// specifications with one name stay two rows.</summary>
+    public static IDataTable Summary(Xids ids, IdsReport report, string name = "summary")
+    {
+        var specs = ids.AllSpecifications().ToList();
+        var rows = report.Verdicts.ToLookup(v => v.Specification);
+        var builder = new DataTableBuilder(name);
+        builder.AddColumn(specs.Select(s => (object?)IdsEvaluator.CheckId(s)).ToArray(), IssueColumns.CheckId, typeof(string));
+        builder.AddColumn(specs.Select(s => (object?)IdsEvaluator.CheckTitle(s)).ToArray(), IssueColumns.CheckTitle, typeof(string));
+        builder.AddColumn(Counts(specs, rows, v => v.Verdict == Verdict.Pass), "Pass", typeof(long));
+        builder.AddColumn(Counts(specs, rows, v => v.Verdict == Verdict.Fail), "Fail", typeof(long));
+        builder.AddColumn(Counts(specs, rows, v => v.Verdict == Verdict.InfoNotAvailable), "InfoNotAvailable", typeof(long));
+        builder.AddColumn(Counts(specs, rows, _ => true), "Rows", typeof(long));
+        return builder.Build();
+    }
+
+    public static IDataTable Summary(IdsDocument document, IdsReport report, string name = "summary")
+        => Summary(document.Ids, report, name);
+
+    private static object?[] Counts(IReadOnlyList<Specification> specs, ILookup<int, IdsVerdict> rows, Func<IdsVerdict, bool> which)
+        => specs.Select((_, i) => (object?)(long)rows[i].Count(which)).ToArray();
+
     private static string Facets(FacetGroup? group)
         => string.Join("; ", IdsEvaluator.Facets(group).Select(f => f.Short()));
 
