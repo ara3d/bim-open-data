@@ -57,7 +57,7 @@ public static class BosTests
         }
     }
 
-    public static void GroupAndCountBy(string groupType, Func<EntityModel, string> f, BimObjectModel bom)
+    public static void GroupAndCountBy(string groupType, Func<EntityModel, string?> f, BimObjectModel bom)
     {
         Console.WriteLine($"Grouping by {groupType}");
 

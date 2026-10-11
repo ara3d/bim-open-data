@@ -8,7 +8,7 @@ namespace Ara3D.BimOpenSchema;
 /// </summary>
 public static class BosRoomJson
 {
-    public static bool IsRoomCategory(string category)
+    public static bool IsRoomCategory(string? category)
         => category is "IFCSPACE" or "IfcSpace" or "Room";
 
     public static bool IsRoomEntity(this EntityModel entity)

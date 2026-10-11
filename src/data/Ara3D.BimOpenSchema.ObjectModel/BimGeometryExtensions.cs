@@ -84,7 +84,12 @@ public static class BimGeometryExtensions
             self.GetInstanceMatrix(instanceIndex), 
             self.InstanceMeshIndex[instanceIndex], 
             self.GetInstanceMaterial(instanceIndex),
-            self.InstanceFlags[instanceIndex]);
+            self.GetInstanceFlags(instanceIndex));
+
+    /// <summary>The instance's flags, or 0 (visible) past the end of an InstanceFlags column
+    /// shorter than the Instances table, as in older files and hand-built geometry.</summary>
+    public static byte GetInstanceFlags(this BimGeometry self, int instanceIndex)
+        => instanceIndex < self.InstanceFlags.Length ? self.InstanceFlags[instanceIndex] : (byte)0;
 
     public static Material GetMaterial(this BimGeometry self, int materialIndex)
         => new(
@@ -244,11 +249,18 @@ public static class BimGeometryExtensions
         return bgb.BuildModel();
     }
 
-    public static IDataTable GetTable(this IDataSet self, BimGeometryTableName name)
+    /// <summary>The table, or null when the set has none of that name.</summary>
+    public static IDataTable? GetTable(this IDataSet self, BimGeometryTableName name)
         => self.GetTable(name.ToString());
 
-    public static T[] ReadColumn<T>(this IDataSet set, BimGeometryTableName tableName, string columnName)
-        => set.GetTable(tableName).GetColumn(columnName)?.GetTypedValues<T>();
+    /// <summary>The column's values, or null when the table or the column is missing.</summary>
+    public static T[]? ReadColumn<T>(this IDataSet set, BimGeometryTableName tableName, string columnName)
+        => set.GetTable(tableName)?.GetColumn(columnName)?.GetTypedValues<T>();
+
+    // A missing column reads as empty, like BimGeometry's own defaults: readers that check
+    // table lengths, such as BosScene, then report the instances it leaves undrawable.
+    static T[] Column<T>(IDataSet set, BimGeometryTableName tableName, string columnName)
+        => set.ReadColumn<T>(tableName, columnName) ?? [];
 
     public static BimGeometry ToBimGeometry(this IDataSet self)
     {
@@ -256,40 +268,40 @@ public static class BimGeometryExtensions
         //Debugger.Break();
 
         var r = new BimGeometry();
-        r.MaterialRed = ReadColumn<byte>(self, BimGeometryTableName.Materials, nameof(r.MaterialRed));
-        r.MaterialGreen = ReadColumn<byte>(self, BimGeometryTableName.Materials, nameof(r.MaterialGreen));
-        r.MaterialBlue = ReadColumn<byte>(self, BimGeometryTableName.Materials, nameof(r.MaterialBlue));
-        r.MaterialAlpha = ReadColumn<byte>(self, BimGeometryTableName.Materials, nameof(r.MaterialAlpha));
-        r.MaterialMetallic = ReadColumn<byte>(self, BimGeometryTableName.Materials, nameof(r.MaterialMetallic));
-        r.MaterialRoughness = ReadColumn<byte>(self, BimGeometryTableName.Materials, nameof(r.MaterialRoughness));
+        r.MaterialRed = Column<byte>(self, BimGeometryTableName.Materials, nameof(r.MaterialRed));
+        r.MaterialGreen = Column<byte>(self, BimGeometryTableName.Materials, nameof(r.MaterialGreen));
+        r.MaterialBlue = Column<byte>(self, BimGeometryTableName.Materials, nameof(r.MaterialBlue));
+        r.MaterialAlpha = Column<byte>(self, BimGeometryTableName.Materials, nameof(r.MaterialAlpha));
+        r.MaterialMetallic = Column<byte>(self, BimGeometryTableName.Materials, nameof(r.MaterialMetallic));
+        r.MaterialRoughness = Column<byte>(self, BimGeometryTableName.Materials, nameof(r.MaterialRoughness));
 
-        r.TransformTX = ReadColumn<float>(self, BimGeometryTableName.Transforms, nameof(r.TransformTX));
-        r.TransformTY = ReadColumn<float>(self, BimGeometryTableName.Transforms, nameof(r.TransformTY));
-        r.TransformTZ = ReadColumn<float>(self, BimGeometryTableName.Transforms, nameof(r.TransformTZ));
-        r.TransformQX = ReadColumn<float>(self, BimGeometryTableName.Transforms, nameof(r.TransformQX));
-        r.TransformQY = ReadColumn<float>(self, BimGeometryTableName.Transforms, nameof(r.TransformQY));
-        r.TransformQZ = ReadColumn<float>(self, BimGeometryTableName.Transforms, nameof(r.TransformQZ));
-        r.TransformQW = ReadColumn<float>(self, BimGeometryTableName.Transforms, nameof(r.TransformQW));
-        r.TransformSX = ReadColumn<float>(self, BimGeometryTableName.Transforms, nameof(r.TransformSX));
-        r.TransformSY = ReadColumn<float>(self, BimGeometryTableName.Transforms, nameof(r.TransformSY));
-        r.TransformSZ = ReadColumn<float>(self, BimGeometryTableName.Transforms, nameof(r.TransformSZ));
+        r.TransformTX = Column<float>(self, BimGeometryTableName.Transforms, nameof(r.TransformTX));
+        r.TransformTY = Column<float>(self, BimGeometryTableName.Transforms, nameof(r.TransformTY));
+        r.TransformTZ = Column<float>(self, BimGeometryTableName.Transforms, nameof(r.TransformTZ));
+        r.TransformQX = Column<float>(self, BimGeometryTableName.Transforms, nameof(r.TransformQX));
+        r.TransformQY = Column<float>(self, BimGeometryTableName.Transforms, nameof(r.TransformQY));
+        r.TransformQZ = Column<float>(self, BimGeometryTableName.Transforms, nameof(r.TransformQZ));
+        r.TransformQW = Column<float>(self, BimGeometryTableName.Transforms, nameof(r.TransformQW));
+        r.TransformSX = Column<float>(self, BimGeometryTableName.Transforms, nameof(r.TransformSX));
+        r.TransformSY = Column<float>(self, BimGeometryTableName.Transforms, nameof(r.TransformSY));
+        r.TransformSZ = Column<float>(self, BimGeometryTableName.Transforms, nameof(r.TransformSZ));
 
-        r.VertexX = ReadColumn<int>(self, BimGeometryTableName.VertexBuffer, nameof(r.VertexX));
-        r.VertexY = ReadColumn<int>(self, BimGeometryTableName.VertexBuffer, nameof(r.VertexY));
-        r.VertexZ = ReadColumn<int>(self, BimGeometryTableName.VertexBuffer, nameof(r.VertexZ));
-        r.IndexBuffer = ReadColumn<int>(self, BimGeometryTableName.IndexBuffer, nameof(r.IndexBuffer));
+        r.VertexX = Column<int>(self, BimGeometryTableName.VertexBuffer, nameof(r.VertexX));
+        r.VertexY = Column<int>(self, BimGeometryTableName.VertexBuffer, nameof(r.VertexY));
+        r.VertexZ = Column<int>(self, BimGeometryTableName.VertexBuffer, nameof(r.VertexZ));
+        r.IndexBuffer = Column<int>(self, BimGeometryTableName.IndexBuffer, nameof(r.IndexBuffer));
 
-        r.InstanceEntityIndex = ReadColumn<int>(self, BimGeometryTableName.Instances, nameof(r.InstanceEntityIndex));
-        r.InstanceMaterialIndex = ReadColumn<int>(self, BimGeometryTableName.Instances, nameof(r.InstanceMaterialIndex));
-        r.InstanceMeshIndex = ReadColumn<int>(self, BimGeometryTableName.Instances, nameof(r.InstanceMeshIndex));
-        r.InstanceTransformIndex = ReadColumn<int>(self, BimGeometryTableName.Instances, nameof(r.InstanceTransformIndex));
+        r.InstanceEntityIndex = Column<int>(self, BimGeometryTableName.Instances, nameof(r.InstanceEntityIndex));
+        r.InstanceMaterialIndex = Column<int>(self, BimGeometryTableName.Instances, nameof(r.InstanceMaterialIndex));
+        r.InstanceMeshIndex = Column<int>(self, BimGeometryTableName.Instances, nameof(r.InstanceMeshIndex));
+        r.InstanceTransformIndex = Column<int>(self, BimGeometryTableName.Instances, nameof(r.InstanceTransformIndex));
 
         // Flags are not present on older files
         var numInstances = r.InstanceTransformIndex.Length;
         r.InstanceFlags = ReadColumn<byte>(self, BimGeometryTableName.Instances, nameof(r.InstanceFlags)) ?? new byte[numInstances];
 
-        r.MeshIndexOffset = ReadColumn<int>(self, BimGeometryTableName.Meshes, nameof(r.MeshIndexOffset));
-        r.MeshVertexOffset = ReadColumn<int>(self, BimGeometryTableName.Meshes, nameof(r.MeshVertexOffset));
+        r.MeshIndexOffset = Column<int>(self, BimGeometryTableName.Meshes, nameof(r.MeshIndexOffset));
+        r.MeshVertexOffset = Column<int>(self, BimGeometryTableName.Meshes, nameof(r.MeshVertexOffset));
 
         return r;
     }
@@ -303,5 +315,5 @@ public static class BimGeometryExtensions
             self.InstanceMaterialIndex[i], 
             self.InstanceMeshIndex[i],
             self.InstanceTransformIndex[i],
-            self.InstanceFlags[i]); 
+            self.GetInstanceFlags(i));
 }

@@ -74,7 +74,7 @@ public sealed class BosScene
         for (var i = 0; i < InstanceCount; i++)
         {
             var f = Fault.None;
-            if (i < g.InstanceFlags.Length && (g.InstanceFlags[i] & (byte)BimGeometry.InstanceFlagEnum.IsHidden) != 0)
+            if ((g.GetInstanceFlags(i) & (byte)BimGeometry.InstanceFlagEnum.IsHidden) != 0)
                 f |= Fault.Hidden;
             var mesh = g.InstanceMeshIndex[i];
             if ((uint)mesh >= (uint)MeshCount)

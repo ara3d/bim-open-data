@@ -8,7 +8,7 @@ namespace Ara3D.BimOpenSchema;
 /// </summary>
 public static class BosToiletJson
 {
-    public static bool IsToiletCategory(string category)
+    public static bool IsToiletCategory(string? category)
         => category is
             "IFCFLOWTERMINAL" 
             or "IFCSANITARYTERMINAL"

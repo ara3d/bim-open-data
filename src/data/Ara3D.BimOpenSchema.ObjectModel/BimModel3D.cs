@@ -21,6 +21,6 @@ public class BimModel3D
     public static BimModel3D Create(IBimData data, bool computeParametersAndRelations)
         => new(new BimObjectModel(data, data.Geometry.ToModel3D(), computeParametersAndRelations));
     
-    public EntityModel GetEntityModel(InstanceStruct inst)
-        => ObjectModel.Entities.ElementAtOrDefault(inst.EntityIndex);
+    public EntityModel? GetEntityModel(InstanceStruct inst)
+        => ObjectModel.Get((EntityIndex)inst.EntityIndex);
 }

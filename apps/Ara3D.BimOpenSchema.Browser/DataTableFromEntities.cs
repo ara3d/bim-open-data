@@ -98,7 +98,9 @@ public class DataTableFromEntities : IDataTable
 
             foreach (var pm in e.Parameters)
             {
-                var paramName = pm.Descriptor.Name;
+                // A descriptor without a name has no key in ParameterValues, so no column.
+                if (pm.Descriptor.Name is not { } paramName)
+                    continue;
                 if (parameterFilter != null && !parameterFilter.Contains(paramName))
                     continue;
 

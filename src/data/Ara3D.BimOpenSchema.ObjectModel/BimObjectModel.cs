@@ -28,7 +28,7 @@ namespace Ara3D.BimOpenSchema
         { }
 
         public BimObjectModel(IBimData data, IModel3D model, bool computeParametersAndRelations)
-        {   
+        {
             Data = data;
             Model3D = model;
 
@@ -36,7 +36,7 @@ namespace Ara3D.BimOpenSchema
                 Documents.Add(new DocumentModel
                 {
                     Path = Get(d.Path),
-                    Title = Get(d.Title)
+                    Title = Data.Label(d.Title)
                 });
 
             foreach (var e in Data.Entities)
@@ -49,7 +49,7 @@ namespace Ara3D.BimOpenSchema
 
             Entities = data.
                 EntityIndices().Select(Create).ToList();
-            
+
             if (Entities.Count > 0)
             {
                 var numElements = Model3D.Instances.Count;
@@ -57,10 +57,7 @@ namespace Ara3D.BimOpenSchema
                 {
                     var inst = Model3D.Instances[i];
                     var entityIndex = inst.EntityIndex;
-                    if (entityIndex >= 0)
-                    {
-                        Entities[entityIndex]?.AddInstance(inst);
-                    }
+                    Get((EntityIndex)entityIndex)?.AddInstance(inst);
                 }
             }
 
@@ -72,12 +69,13 @@ namespace Ara3D.BimOpenSchema
 
         public void ComputeParametersAndRelations()
         {
-            // This is probably a mistake 
+            // This is probably a mistake
             Debug.Assert(!_parametersComputed);
             _parametersComputed = true;
 
             foreach (var p in Data.Parameters)
-                AddParameter(p.Entity, Create(p));
+                if (Create(p) is { } pm)
+                    AddParameter(pm);
 
             foreach (var r in Data.Relations)
             {
@@ -102,23 +100,27 @@ namespace Ara3D.BimOpenSchema
             ParameterType = desc.Type
         };
 
-        public EntityModel Get(EntityIndex ei) => ei < 0 ? null : Entities[(int)ei];
-        public DescriptorModel Get(DescriptorIndex di) => di < 0 ? null : Descriptors[(int)di];
+        /// <summary>The entity, or null when the index is -1 (absent) or outside the table.</summary>
+        public EntityModel? Get(EntityIndex ei) => (uint)ei < (uint)Entities.Count ? Entities[(int)ei] : null;
+        public DescriptorModel? Get(DescriptorIndex di) => (uint)di < (uint)Descriptors.Count ? Descriptors[(int)di] : null;
         public Point? Get(PointIndex pi) => Data.Get(pi);
-        public string Get(StringIndex si) => Data.Get(si);
+        public string? Get(StringIndex si) => Data.Get(si);
         public float? Get(NumberIndex ni) => Data.Get(ni);
 
-        public void AddParameter(EntityIndex ei, ParameterModel pm)
+        /// <summary>Adds the parameter to its entity. A descriptor without a name is kept in
+        /// Parameters but has no key in ParameterValues.</summary>
+        public void AddParameter(ParameterModel pm)
         {
-            var e = Get(ei);
-            e.ParameterValues[pm.Descriptor.Name] = pm.Value;
-            e.Parameters.Add(pm);
+            if (pm.Descriptor.Name is { } name)
+                pm.Entity.ParameterValues[name] = pm.Value;
+            pm.Entity.Parameters.Add(pm);
         }
 
-        public object GetParameterValue(Parameter p)
-            => GetParameterValue(Get(p.Descriptor).ParameterType, p.Value);
-        
-        public object GetParameterValue(ParameterType pt, int value)
+        /// <summary>The value, or null when the descriptor or the value is absent.</summary>
+        public object? GetParameterValue(Parameter p)
+            => Get(p.Descriptor) is { } d ? GetParameterValue(d.ParameterType, p.Value) : null;
+
+        public object? GetParameterValue(ParameterType pt, int value)
         {
             return pt switch
             {
@@ -132,8 +134,11 @@ namespace Ara3D.BimOpenSchema
         }
 
 
-        public ParameterModel Create(Parameter p) 
-            => new(GetParameterValue(p), Get(p.Entity), Get(p.Descriptor));
+        /// <summary>The parameter's model, or null when its entity or descriptor is absent.</summary>
+        public ParameterModel? Create(Parameter p)
+            => Get(p.Entity) is { } e && Get(p.Descriptor) is { } d
+                ? new(GetParameterValue(d.ParameterType, p.Value), e, d)
+                : null;
     }
 
     public class EntityModel
@@ -149,7 +154,7 @@ namespace Ara3D.BimOpenSchema
         // Stored data
         public BimObjectModel Model { get;  }
         public EntityIndex Index { get; }
-        
+
         public bool IsType { get; }
         public bool IsCategory { get; }
         public bool IsTypeInstance => HasType;
@@ -157,37 +162,41 @@ namespace Ara3D.BimOpenSchema
 
         public List<InstanceStruct> Instances { get; } = new();
 
-        // Always accessible data 
+        // Always accessible data
         public IBimData Data => Model.Data;
         public Entity Entity => Model.Data.Get(Index) ?? default;
-        public DocumentModel Document => Model.Documents.ElementAtOrDefault((int)Entity.Document);
-        public string DocumentTitle => Document?.Title;
+        public DocumentModel? Document => Model.Documents.ElementAtOrDefault((int)Entity.Document);
+        public string? DocumentTitle => Document?.Title;
         public long LocalId => Entity.LocalId;
-        public string GlobalId => Data.Get(Entity.GlobalId);
-        public string Category => GetEntityModel(Entity.Category)?.Name;
-        public string BuiltInCategory => GetEntityModel(Entity.Category)?.GetParameterAsString(CommonRevitParameters.CategoryBuiltInType);
-        public string Name => Data.Get(Entity.Name);
+        /// <summary>Null when absent; "" stored by files written before -1 meant absent also reads as null.</summary>
+        public string? GlobalId => Data.Label(Entity.GlobalId);
+        public string? Category => GetEntityModel(Entity.Category)?.Name;
+        public string? BuiltInCategory => GetEntityModel(Entity.Category)?.GetParameterAsString(CommonRevitParameters.CategoryBuiltInType);
+        /// <summary>Null when absent; "" stored by files written before -1 meant absent also reads as null.</summary>
+        public string? Name => Data.Label(Entity.Name);
         public bool HasGeometry => Instances.Count > 0;
         public bool HasType => Entity.Type >= 0;
 
-        public EntityModel GetEntityModel(EntityIndex ei)
-            => ei < 0 ? null : Model.Entities[(int)ei];
+        public EntityModel? GetEntityModel(EntityIndex ei)
+            => Model.Get(ei);
 
         // Commonly present data stored in parameters
-        public string CategoryType => GetEntityModel(Entity.Category)?.GetParameterAsString(CommonRevitParameters.CategoryCategoryType);
-        public string ClassName => GetParameterAsString(CommonRevitParameters.ObjectTypeName);
-        public string LevelName => GetParameterAsEntity(CommonRevitParameters.ElementLevel)?.Name;
-        public string GroupName => GetParameterAsEntity(CommonRevitParameters.ElementGroup)?.Name;
-        public string AssemblyName => GetParameterAsEntity(CommonRevitParameters.ElementAssemblyInstance)?.Index.ToString();
-        public int WorksetId => GetParameterAsInt(CommonRevitParameters.ElementWorksetId);
-        public float Elevation => GetParameterAsEntity(CommonRevitParameters.ElementLevel)?.GetParameterAsNumber(CommonRevitParameters.LevelElevation) ?? 0;
-        public string TypeName => Type?.Name ?? "";
-        public EntityModel Type => GetEntityModel(Entity.Type);
+        public string? CategoryType => GetEntityModel(Entity.Category)?.GetParameterAsString(CommonRevitParameters.CategoryCategoryType);
+        public string? ClassName => GetParameterAsString(CommonRevitParameters.ObjectTypeName);
+        public string? LevelName => GetParameterAsEntity(CommonRevitParameters.ElementLevel)?.Name;
+        public string? GroupName => GetParameterAsEntity(CommonRevitParameters.ElementGroup)?.Name;
+        public string? AssemblyName => GetParameterAsEntity(CommonRevitParameters.ElementAssemblyInstance)?.Index.ToString();
+        public int? WorksetId => GetParameterAsInt(CommonRevitParameters.ElementWorksetId);
+        /// <summary>The level's elevation, or null when the element has no level or the level no elevation.</summary>
+        public float? Elevation => GetParameterAsEntity(CommonRevitParameters.ElementLevel)?.GetParameterAsNumber(CommonRevitParameters.LevelElevation);
+        public string? TypeName => Type?.Name;
+        public EntityModel? Type => GetEntityModel(Entity.Type);
 
         // Family instance parameters
-        public string RoomName => GetParameterAsEntity(CommonRevitParameters.FISpace)?.Name;
+        public string? RoomName => GetParameterAsEntity(CommonRevitParameters.FISpace)?.Name;
 
-        public Dictionary<string, object> ParameterValues { get; } = new();
+        /// <summary>Values by descriptor name; a null value is a parameter whose value is absent.</summary>
+        public Dictionary<string, object?> ParameterValues { get; } = new();
         public List<RelationModel> OutgoingRelations { get; } = new();
         public List<RelationModel> IncomingRelations { get; } = new();
         public List<ParameterModel> Parameters { get; } = new();
@@ -195,16 +204,19 @@ namespace Ara3D.BimOpenSchema
         public override string ToString()
             => $"{Name}(#{LocalId})";
 
-        public int GetParameterAsInt(string name)
-            => (int)ParameterValues.GetValueOrDefault(name, -1);
+        // Each getter returns null when the parameter is missing, its value is absent,
+        // or its value has another type.
 
-        public string GetParameterAsString(string name)
+        public int? GetParameterAsInt(string name)
+            => ParameterValues.GetValueOrDefault(name) as int?;
+
+        public string? GetParameterAsString(string name)
             => ParameterValues.GetValueOrDefault(name) as string;
 
-        public float GetParameterAsNumber(string name)
-            => (float)ParameterValues.GetValueOrDefault(name);
+        public float? GetParameterAsNumber(string name)
+            => ParameterValues.GetValueOrDefault(name) as float?;
 
-        public EntityModel GetParameterAsEntity(string name)
+        public EntityModel? GetParameterAsEntity(string name)
             => ParameterValues.GetValueOrDefault(name) as EntityModel;
 
         public void AddInstance(InstanceStruct inst)
@@ -227,11 +239,12 @@ namespace Ara3D.BimOpenSchema
 
     public class ParameterModel
     {
-        public object Value { get; }
+        /// <summary>Null when the value is absent.</summary>
+        public object? Value { get; }
         public EntityModel Entity { get; }
         public DescriptorModel Descriptor { get; }
-        
-        public ParameterModel(object value, EntityModel entity, DescriptorModel descriptor)
+
+        public ParameterModel(object? value, EntityModel entity, DescriptorModel descriptor)
         {
             Value = value;
             Entity = entity;
@@ -244,16 +257,17 @@ namespace Ara3D.BimOpenSchema
 
     public class DocumentModel
     {
-        public string Path { get; init; }
-        public string Title { get; init; }
+        public string? Path { get; init; }
+        /// <summary>Null when absent or "" (files written before -1 meant absent).</summary>
+        public string? Title { get; init; }
     }
 
     public class DescriptorModel
     {
         public DescriptorIndex Index { get; init; }
-        public string Name { get; init; }
-        public string Units { get; init; }
-        public string Group { get; init; }
+        public string? Name { get; init; }
+        public string? Units { get; init; }
+        public string? Group { get; init; }
         public ParameterType ParameterType { get; init; }
     }
 }

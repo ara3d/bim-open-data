@@ -77,13 +77,10 @@ public static class BosEntityJson
             ["entity"] = ToEntityRef(target),
         };
 
-    static JsonNode ToJsonValue(object value)
-    {
-        if (value == null)
-            return null;
-
-        return value switch
+    static JsonNode? ToJsonValue(object? value)
+        => value switch
         {
+            null => null,
             EntityModel entity => ToEntityRef(entity),
             string s => s,
             int i => i,
@@ -92,5 +89,4 @@ public static class BosEntityJson
             bool b => b,
             _ => value.ToString(),
         };
-    }
 }

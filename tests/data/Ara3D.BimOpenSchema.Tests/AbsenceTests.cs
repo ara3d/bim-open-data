@@ -104,6 +104,28 @@ public static class AbsenceTests
         Assert.That(data.GetEntityLabel(named), Is.EqualTo($"[{named}]"));
     }
 
+    /// <summary>The object model's JSON projection reads a legacy "" GlobalId and name as absent.</summary>
+    [Test]
+    public static void EntityJsonWritesLegacyEmptyIdentityAsNull()
+    {
+        var (bdb, _, named) = BuilderWithUnnamedEntity();
+        bdb.Geometry = new BimGeometry();
+        var json = bdb.Build().ToEntityJsonObjects(e => e.Index == named).Single()["entity"]!;
+        Assert.That(json["globalId"], Is.Null);
+        Assert.That(json["name"], Is.Null);
+    }
+
+    [Test]
+    public static void ObjectModelReadsNumberIndexMinusOneAsNull()
+    {
+        var bdb = new BimDataBuilder { Geometry = new BimGeometry() };
+        var e = bdb.AddEntity(1, "g", BimDataBuilder.InvalidDocumentIndex, "e", BimDataBuilder.InvalidEntityIndex, BimDataBuilder.InvalidEntityIndex);
+        var d = bdb.AddDescriptor("Area", "m2", "G", ParameterType.Number);
+        bdb.AddParameter(e, (int)BimDataBuilder.InvalidNumberIndex, d);
+        var model = new BimObjectModel(bdb.Build(), computeParametersAndRelations: true);
+        Assert.That(model.Entities[(int)e].GetParameterAsNumber("Area"), Is.Null);
+    }
+
     [Test]
     public static void MinusOneSurvivesAddBimData()
     {
