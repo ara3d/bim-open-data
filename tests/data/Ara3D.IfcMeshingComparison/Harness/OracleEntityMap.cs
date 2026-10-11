@@ -227,7 +227,7 @@ public static class OracleEntityMap
 /// <summary>
 /// One candidate entity paired with the oracle entity whose mesh best matches by shape. When
 /// <see cref="OracleEntityId"/> differs from <see cref="CandidateEntityId"/>, the oracle BFAST
-/// mis-tagged the mesh (web-ifc artifact — see WP-O1 / WP-W9).
+/// mis-tagged the mesh (a web-ifc artifact).
 /// </summary>
 public sealed record TrustedEntityPair(int CandidateEntityId, int OracleEntityId, double MatchScore);
 

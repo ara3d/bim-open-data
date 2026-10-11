@@ -1,6 +1,6 @@
 # Ara3D.IfcMeshingComparison
 
-Tests of `Ara3D.Ifc.Mesher`, the pure C# IFC mesher, and its comparison against web-ifc's tessellation of the same files. NUnit drives both; the comparison runs are `[Explicit]`, chosen by name or category.
+Tests of `Ara3D.Ifc.Mesher`, the pure C# IFC mesher, over real model files, and its comparison against web-ifc's tessellation of the same files. NUnit drives both; the comparison runs are `[Explicit]`, chosen by name or category. The fast tests that need no model files are in `tests/data/Ara3D.Ifc.Mesher.Tests`, which this project references for `MicroIfc`, `MeshTestAssert`, and the geometry oracles.
 
 ## Backends
 
@@ -16,9 +16,9 @@ Tests of `Ara3D.Ifc.Mesher`, the pure C# IFC mesher, and its comparison against 
 ```
 Tests/
   Native/        web-ifc checks
-  PureCSharp/    the mesher: micro-IFC fixtures that assert exact meshes, and corpus tests over model files
-  Comparison/    backend smoke tests, the parity scorecard, and the per-model comparison runs
-  Support/       MicroIfc (a STEP snippet to a MeshingContext), MeshTestAssert, GeometryCoverageAttribute
+  Corpus/        the mesher over model files, one fixture per model or entity family (CorpusBrepTests, SchependomlaanPlacementTests, PrimarkParityTests, ...)
+  Comparison/    backend smoke tests, the parity scorecard, mis-tag and surface-distance metrics, and the per-model comparison runs
+  Support/       OracleComparison and the shared DigitalHub comparison
 Harness/         TestFiles (where models are and outputs go), the web-ifc BFAST oracle, ModelComparer and its metrics
 Meshers/         IMeshingBackend and the two backends
 Reporting/       Markdown and JSON reports of a comparison run

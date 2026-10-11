@@ -2,7 +2,8 @@ using System.Text.Json;
 using Ara3D.Geometry;
 using Ara3D.Ifc.Mesher;
 using Ara3D.IfcLoader;
-using Ara3D.IfcMeshingComparison.Harness.GeometryOracles;
+using Ara3D.Ifc.Mesher.Tests;
+using Ara3D.Ifc.Mesher.Tests.GeometryOracles;
 using Ara3D.Models;
 using Ara3D.Utils;
 

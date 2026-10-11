@@ -1,3 +1,4 @@
+using Ara3D.Ifc.Mesher.Tests;
 using Ara3D.IfcMeshingComparison.Harness;
 using Ara3D.Utils;
 

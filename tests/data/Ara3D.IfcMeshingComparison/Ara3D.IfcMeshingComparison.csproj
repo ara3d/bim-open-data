@@ -29,6 +29,7 @@
     <PackageReference Include="Ara3D.Models" Version="$(Ara3DSdkVersion)" />
     <PackageReference Include="Ara3D.Utils" Version="$(Ara3DSdkVersion)" />
     <ProjectReference Include="..\..\..\src\data\Ara3D.Ifc.Mesher\Ara3D.Ifc.Mesher.csproj" />
+    <ProjectReference Include="..\Ara3D.Ifc.Mesher.Tests\Ara3D.Ifc.Mesher.Tests.csproj" />
   </ItemGroup>
 
   <ItemGroup>

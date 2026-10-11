@@ -36,7 +36,7 @@ public sealed class ScorecardTests
     }
 
     [Test]
-    [Explicit("WP-H-stretch: AC20-FZK-Haus parity and gap diagnosis")]
+    [Explicit("AC20-FZK-Haus parity and gap diagnosis")]
     public void ScoreAc20FzkHausStretch()
     {
         var ifcPath = TestFiles.Ac20FzkHaus;
@@ -127,7 +127,7 @@ public sealed class ScorecardTests
     }
 
     [Test]
-    [Explicit("WP-V-stretch: duplex.ifc parity and gap diagnosis")]
+    [Explicit("duplex.ifc parity and gap diagnosis")]
     public void ScoreDuplexStretch()
     {
         var ifcPath = TestFiles.Duplex;
@@ -285,7 +285,7 @@ public sealed class ScorecardTests
     }
 
     [Test]
-    [Explicit("WP-P-stretch: FM_ARC_DigitalHub advanced-brep parity")]
+    [Explicit("FM_ARC_DigitalHub advanced-brep parity")]
     [Category("Slow")]
     public void ScoreDigitalHubStretch()
     {
@@ -301,7 +301,7 @@ public sealed class ScorecardTests
     }
 
     [Test]
-    [Explicit("WP-R-stretch: AISC sculpture mapped-brep parity")]
+    [Explicit("AISC sculpture mapped-brep parity")]
     [Category("Slow")]
     public void ScoreAiscSculptureStretch()
     {

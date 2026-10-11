@@ -8,7 +8,7 @@ namespace Ara3D.IfcMeshingComparison.Tests.Comparison;
 public sealed class ExampleGapDiagnostic
 {
     [Test]
-    [Explicit("WP-G-example gap diagnosis")]
+    [Explicit("example.ifc gap diagnosis")]
     public void DiagnoseExampleGaps()
     {
         var ifcPath = TestFiles.Example;

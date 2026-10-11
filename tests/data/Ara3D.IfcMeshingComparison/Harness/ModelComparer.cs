@@ -317,7 +317,7 @@ public static class ModelComparer
             return new EntityShapeMetricScore(1.0, 0, 0, []);
 
         // Flag mis-tags on every entity, then exclude suspects from the scored average so parity
-        // reflects candidate quality rather than oracle-side per-entity mesh permutations (WP-W9).
+        // reflects candidate quality rather than oracle-side per-entity mesh permutations.
         var flagged = gaps
             .Select(g => FlagMisTagSuspect(g, candDesc, oracleDesc))
             .ToList();
@@ -434,7 +434,7 @@ public static class ModelComparer
         var boundary = RatioSimilarity(a.BoundaryLength, b.BoundaryLength);
 
         // Signed volume is only meaningful when both meshes are closed. When either is an open shell
-        // (WP-G2 / §4.2) the volume term is noise and punishes the better mesh, so drop it and fold
+        // the volume term is noise and punishes the better mesh, so drop it and fold
         // its weight onto the rotation-invariant area/OBB terms.
         if (IsWatertight(a) && IsWatertight(b))
         {

@@ -306,7 +306,7 @@ public static class TransformComparison
 
     /// <summary>
     /// Pairs candidate and oracle instances of one entity by world-centroid nearest-assignment
-    /// (WP-T1). The previous exact-triangle-count pairing mixed dissimilar 12-tri stubs and put a
+    /// The previous exact-triangle-count pairing mixed dissimilar 12-tri stubs and put a
     /// ~0.5 m noise floor under every placement metric. Triangle-count agreement is only a
     /// tiebreak/confidence signal now, not a hard gate.
     /// </summary>

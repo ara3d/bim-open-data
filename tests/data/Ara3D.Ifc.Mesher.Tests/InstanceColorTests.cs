@@ -1,0 +1,124 @@
+using Ara3D.Geometry;
+using Ara3D.Ifc.Mesher;
+using Ara3D.Models;
+
+namespace Ara3D.Ifc.Mesher.Tests;
+
+[TestFixture]
+public sealed class InstanceColorTests
+{
+    [Test]
+    public void StyledItem_ViaPresentationStyleAssignment_SetsInstanceColorAndAlpha()
+    {
+        using var model = MicroIfc.WriteTemp("""
+            #1=IFCRECTANGLEPROFILEDEF(.AREA.,'Box',$,2.,2.);
+            #2=IFCDIRECTION((0.,0.,1.));
+            #3=IFCEXTRUDEDAREASOLID(#1,$,#2,4.);
+            #10=IFCCOLOURRGB($,1.,0.25,0.);
+            #11=IFCSURFACESTYLERENDERING(#10,0.4,$,$,$,$,$,$,.PHONG.);
+            #12=IFCSURFACESTYLE($,.BOTH.,(#11));
+            #13=IFCPRESENTATIONSTYLEASSIGNMENT((#12));
+            #14=IFCSTYLEDITEM(#3,(#13),$);
+            #4=IFCSHAPEREPRESENTATION($,'Body','SweptSolid',(#14));
+            #5=IFCPRODUCTDEFINITIONSHAPE($,$,(#4));
+            #6=IFCCARTESIANPOINT((0.,0.,0.));
+            #7=IFCAXIS2PLACEMENT3D(#6,$,$);
+            #8=IFCLOCALPLACEMENT($,#7);
+            #9=IFCWALL('g',$,'Wall',$,$,#8,#5,$);
+            """);
+
+        var (built, _) = ModelAssembler.BuildModel(model.Context.Resolver);
+        Assert.That(built.Instances, Has.Count.EqualTo(1));
+
+        var color = built.Instances[0].Color;
+        Assert.That((float)color.R.Value, Is.EqualTo(1f).Within(1f / 255f));
+        Assert.That((float)color.G.Value, Is.EqualTo(0.25f).Within(1f / 255f));
+        Assert.That((float)color.B.Value, Is.EqualTo(0f).Within(1f / 255f));
+        Assert.That((float)color.A.Value, Is.EqualTo(0.6f).Within(1f / 255f));
+    }
+
+    [Test]
+    public void StyledItem_DirectSurfaceStyle_SetsInstanceColor()
+    {
+        using var model = MicroIfc.WriteTemp("""
+            #1=IFCRECTANGLEPROFILEDEF(.AREA.,'Box',$,2.,2.);
+            #2=IFCDIRECTION((0.,0.,1.));
+            #3=IFCEXTRUDEDAREASOLID(#1,$,#2,4.);
+            #10=IFCCOLOURRGB($,0.,0.5,1.);
+            #11=IFCSURFACESTYLESHADING(#10,$);
+            #12=IFCSURFACESTYLE($,.BOTH.,(#11));
+            #14=IFCSTYLEDITEM(#3,(#12),$);
+            #4=IFCSHAPEREPRESENTATION($,'Body','SweptSolid',(#14));
+            #5=IFCPRODUCTDEFINITIONSHAPE($,$,(#4));
+            #6=IFCCARTESIANPOINT((0.,0.,0.));
+            #7=IFCAXIS2PLACEMENT3D(#6,$,$);
+            #8=IFCLOCALPLACEMENT($,#7);
+            #9=IFCWALL('g',$,'Wall',$,$,#8,#5,$);
+            """);
+
+        var (built, _) = ModelAssembler.BuildModel(model.Context.Resolver);
+        Assert.That(built.Instances, Has.Count.EqualTo(1));
+
+        var color = built.Instances[0].Color;
+        Assert.That((float)color.R.Value, Is.EqualTo(0f).Within(1f / 255f));
+        Assert.That((float)color.G.Value, Is.EqualTo(0.5f).Within(1f / 255f));
+        Assert.That((float)color.B.Value, Is.EqualTo(1f).Within(1f / 255f));
+        Assert.That((float)color.A.Value, Is.EqualTo(1f).Within(1f / 255f));
+    }
+
+    [Test]
+    public void UnstyledProduct_KeepsDefaultMaterial()
+    {
+        using var model = MicroIfc.WriteTemp("""
+            #1=IFCRECTANGLEPROFILEDEF(.AREA.,'Box',$,2.,2.);
+            #2=IFCDIRECTION((0.,0.,1.));
+            #3=IFCEXTRUDEDAREASOLID(#1,$,#2,4.);
+            #4=IFCSHAPEREPRESENTATION($,'Body','SweptSolid',(#3));
+            #5=IFCPRODUCTDEFINITIONSHAPE($,$,(#4));
+            #6=IFCCARTESIANPOINT((0.,0.,0.));
+            #7=IFCAXIS2PLACEMENT3D(#6,$,$);
+            #8=IFCLOCALPLACEMENT($,#7);
+            #9=IFCWALL('g',$,'Wall',$,$,#8,#5,$);
+            """);
+
+        var (built, _) = ModelAssembler.BuildModel(model.Context.Resolver);
+        Assert.That(built.Instances, Has.Count.EqualTo(1));
+
+        var expected = Material.Default.Color;
+        var color = built.Instances[0].Color;
+        Assert.That((float)color.R.Value, Is.EqualTo((float)expected.R.Value).Within(1f / 255f));
+        Assert.That((float)color.G.Value, Is.EqualTo((float)expected.G.Value).Within(1f / 255f));
+        Assert.That((float)color.B.Value, Is.EqualTo((float)expected.B.Value).Within(1f / 255f));
+        Assert.That((float)color.A.Value, Is.EqualTo((float)expected.A.Value).Within(1f / 255f));
+    }
+
+    [Test]
+    public void StyledByItem_InverseOnBodySolid_SetsInstanceColor()
+    {
+        // Body lists the solid; StyledItem references it (common IFC authoring pattern).
+        using var model = MicroIfc.WriteTemp("""
+            #1=IFCRECTANGLEPROFILEDEF(.AREA.,'Box',$,2.,2.);
+            #2=IFCDIRECTION((0.,0.,1.));
+            #3=IFCEXTRUDEDAREASOLID(#1,$,#2,4.);
+            #10=IFCCOLOURRGB($,0.75,0.75,0.75);
+            #11=IFCSURFACESTYLERENDERING(#10,0.,$,$,$,$,$,$,.PHONG.);
+            #12=IFCSURFACESTYLE($,.BOTH.,(#11));
+            #13=IFCPRESENTATIONSTYLEASSIGNMENT((#12));
+            #14=IFCSTYLEDITEM(#3,(#13),$);
+            #4=IFCSHAPEREPRESENTATION($,'Body','SweptSolid',(#3));
+            #5=IFCPRODUCTDEFINITIONSHAPE($,$,(#4));
+            #6=IFCCARTESIANPOINT((0.,0.,0.));
+            #7=IFCAXIS2PLACEMENT3D(#6,$,$);
+            #8=IFCLOCALPLACEMENT($,#7);
+            #9=IFCWALL('g',$,'Wall',$,$,#8,#5,$);
+            """);
+
+        var (built, _) = ModelAssembler.BuildModel(model.Context.Resolver);
+        Assert.That(built.Instances, Has.Count.EqualTo(1));
+
+        var color = built.Instances[0].Color;
+        Assert.That((float)color.R.Value, Is.EqualTo(0.75f).Within(1f / 255f));
+        Assert.That((float)color.G.Value, Is.EqualTo(0.75f).Within(1f / 255f));
+        Assert.That((float)color.B.Value, Is.EqualTo(0.75f).Within(1f / 255f));
+    }
+}

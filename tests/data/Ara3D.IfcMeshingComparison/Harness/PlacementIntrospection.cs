@@ -7,7 +7,7 @@ using Ara3D.Models;
 
 namespace Ara3D.IfcMeshingComparison.Harness;
 
-/// <summary>One mapping/profile operator's handedness fingerprint (WP-T2 §5.2).</summary>
+/// <summary>One mapping/profile operator's handedness fingerprint.</summary>
 public sealed record OperatorAudit(int Id, string Name, bool HasExplicitAxis2, double Determinant);
 
 /// <summary>

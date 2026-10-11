@@ -5,7 +5,7 @@ namespace Ara3D.IfcMeshingComparison.Tests.Support;
 
 /// <summary>
 /// One comparison of FM_ARC_DigitalHub against its web-ifc oracle, shared by the tests that assert on it.
-/// Meshing and comparing this file takes about a minute, and WP-W11 and WP-W12 read different scores from
+/// Meshing and comparing this file takes about a minute, and DigitalHubDedupTests and DigitalHubTessellationTests read different scores from
 /// the same result, so running it once per test run halves their cost without changing what either checks.
 /// </summary>
 public static class DigitalHubComparison
