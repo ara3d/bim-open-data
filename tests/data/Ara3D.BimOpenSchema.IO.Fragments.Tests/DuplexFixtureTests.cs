@@ -106,9 +106,7 @@ public class DuplexFixtureTests
     /// <summary>Both readers name an entity by Ara3D.Ifc.Conventions' IfcNames: a space by its
     /// LongName with its Name as the room number, a layer set by its LayerSetName. Entities are
     /// paired by STEP id (the importer keeps it as the local id) and class, so entities without a
-    /// GlobalId, such as material layers and sets, are compared too. The committed duplex.bos
-    /// predates Ara3D.Ifc.Bos reading an enumeration as a name, so its SI units are unnamed;
-    /// <see cref="UnitsUnnamedInTheCommittedSample"/> goes once samples/public is regenerated.</summary>
+    /// GlobalId, such as material layers and sets, are compared too.</summary>
     [Test]
     public void EveryEntityBothReadersKeep_HasTheSameNameAndRoomNumber()
     {
@@ -125,16 +123,9 @@ public class DuplexFixtureTests
             Assert.That(pairs.Select(p => _frag.Category(p.Frag)).Distinct(),
                 Does.Contain("IFCSPACE").And.Contain("IFCMATERIALLAYERSET").And.Contain("IFCDOOR"));
             Assert.That(fragRooms, Has.Count.EqualTo(ifcRooms.Count).And.Count.GreaterThan(0));
-            Assert.That(mismatches, Is.EquivalentTo(UnitsUnnamedInTheCommittedSample));
+            Assert.That(mismatches, Is.Empty);
         });
     }
-
-    private static readonly string[] UnitsUnnamedInTheCommittedSample =
-    [
-        "IFCSIUNIT #15: 'METRE' room '' vs '' room ''", "IFCSIUNIT #16: 'SQUARE_METRE' room '' vs '' room ''",
-        "IFCSIUNIT #17: 'CUBIC_METRE' room '' vs '' room ''", "IFCSIUNIT #18: 'RADIAN' room '' vs '' room ''",
-        "IFCSIUNIT #22: 'SECOND' room '' vs '' room ''",
-    ];
 
     /// <summary>(Fragments entity, IFC BOS entity) pairs with the same local id and class.</summary>
     private List<(int Frag, int Ifc)> PairsByLocalId()
