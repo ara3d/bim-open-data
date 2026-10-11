@@ -23,12 +23,12 @@ var summary = BcfWriter.WriteFile("doors.bcf", doors.ToBcfIssues(), new BcfOptio
 ```
 
 - **Input.** `ToBcfIssues(table, columns)` reads the columns named by
-  `BcfColumns` (case-insensitive): `GlobalId` and `Title` are required;
+  `BcfColumns` (case-insensitive): `GlobalId` and `Title` are required (names come from `IssueColumns`);
   `Description`, `Status`, `Priority`, and `Type` are optional. Rows group by
   title in order of first appearance. A topic lists each GlobalId once, and
   joins its rows' distinct descriptions with line breaks. Status, priority, and
   type must agree within a title. `BcfColumns.Verdicts` reads a verdict table
-  (`checkTitle`, `citation`). Filter it to failing rows first, because every
+  (`CheckTitle`, `Citation`). Filter it to failing rows first, because every
   row becomes part of a topic. A list of `BcfIssue` records works too.
 - **Viewpoints.** With `ElementBounds`, each topic whose elements have geometry
   gets one `viewpoint.bcfv`. The viewpoint selects the elements, keeps the rest

@@ -43,8 +43,8 @@ public sealed class BcfIssueTableTests
             ("globalId", [WallA]),
             ("verdict", ["Fail"]),
             ("checkId", ["W1"]),
-            ("checkTitle", ["Walls carry a fire rating"]),
-            ("citation", ["Building code 3.1.4"])).ToBcfIssues(BcfColumns.Verdicts).Single();
+            (IssueColumns.CheckTitle, ["Walls carry a fire rating"]),
+            (IssueColumns.Citation, ["Building code 3.1.4"])).ToBcfIssues(BcfColumns.Verdicts).Single();
         Assert.Multiple(() =>
         {
             Assert.That(issue.Title, Is.EqualTo("Walls carry a fire rating"));

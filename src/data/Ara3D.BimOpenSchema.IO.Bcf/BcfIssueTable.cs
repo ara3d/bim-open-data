@@ -1,24 +1,25 @@
 using System.Globalization;
+using Ara3D.BimOpenSchema;
 using Ara3D.DataTable;
 
 namespace Ara3D.BimOpenSchema.IO.Bcf;
 
 /// <summary>Which columns of an issues table hold what. Names match case-insensitively, so
-/// <c>GlobalId</c> from DuckDB's <c>EntityText</c> view and <c>checkTitle</c> from a verdict
+/// <c>GlobalId</c> from DuckDB's <c>EntityText</c> view and <c>CheckTitle</c> from a verdict
 /// table both resolve. Only <see cref="GlobalId"/> and <see cref="Title"/> must exist; a
 /// missing optional column leaves that field empty.</summary>
 public sealed record BcfColumns(
-    string GlobalId = "GlobalId",
-    string Title = "Title",
-    string Description = "Description",
-    string Status = "Status",
-    string Priority = "Priority",
-    string Type = "Type")
+    string GlobalId = IssueColumns.GlobalId,
+    string Title = IssueColumns.Title,
+    string Description = IssueColumns.Description,
+    string Status = IssueColumns.Status,
+    string Priority = IssueColumns.Priority,
+    string Type = IssueColumns.Type)
 {
     /// <summary>A verdict table (the <c>check.*</c> nodes' columns, or <c>Ara3D.Ids</c>'s
     /// <c>IdsVerdict</c> rows as a table): one topic per check title, the citation as its
     /// description. Filter it to the failing rows first; every row becomes part of a topic.</summary>
-    public static readonly BcfColumns Verdicts = new(Title: "checkTitle", Description: "citation");
+    public static readonly BcfColumns Verdicts = new(Title: IssueColumns.CheckTitle, Description: IssueColumns.Citation);
 }
 
 /// <summary>Turns a table into issues: one issue per distinct title, in order of first appearance.</summary>
