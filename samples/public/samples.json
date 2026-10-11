@@ -99,7 +99,7 @@
       "geometry": true,
       "counts": { "IFCBUILDINGSTOREY": 3, "IFCSPACE": 64, "IFCDOOR": 64, "IFCWINDOW": 47, "IFCWALL": 178 },
       "relations": {},
-      "entities": 2972
+      "entities": 3640
     },
     {
       "name": "digitalhub-hzg",
@@ -135,7 +135,7 @@
       "geometry": true,
       "counts": { "IFCBUILDINGSTOREY": 12, "IFCSPACE": 64, "IFCDOOR": 64, "IFCWINDOW": 47, "IFCWALL": 178, "IFCSYSTEM": 65, "IFCSPACEHEATER": 63, "IFCPIPESEGMENT": 1418, "IFCDUCTSEGMENT": 595, "IFCAIRTERMINAL": 148, "IFCSANITARYTERMINAL": 72 },
       "relations": { "ConnectsTo": 4208 },
-      "entities": 18551
+      "entities": 19219
     },
     {
       "name": "duplex",
