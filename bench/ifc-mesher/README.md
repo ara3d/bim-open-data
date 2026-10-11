@@ -13,9 +13,9 @@ The quick comparison set is three files from the [ara3d/IFC-toolkit](https://git
 | Entity bbox | Per product, the world bounds of its geometry within 5 % |
 | Entity shape | Per product, volume, oriented box, principal axes, and boundary, rotation invariant; products whose oracle mesh matches a different product better are excluded as mis-tags |
 | Mesh bbox, mesh shape | The same per distinct mesh, paired by fingerprint |
-| Merged mesh | The triangle count of the whole model, candidate over oracle, as a density ratio |
+| Merged mesh | The whole model as one mesh: the mean of point-count similarity, triangle-count similarity, and bounds closeness |
 
-**Parity** is the weighted mean of these; the weights are `ComparisonOptions.DefaultWeights` in `Harness/ModelComparer.cs`. A score of 1 means the two meshers agree on every metric, not that either is right.
+**Parity** is the weighted mean of these; the weights are `ModelComparerOptions.DefaultWeights` in `Harness/ModelComparer.cs`. A score of 1 means the two meshers agree on every metric, not that either is right.
 
 ## Running it
 
@@ -28,7 +28,7 @@ dotnet test tests/data/Ara3D.IfcMeshingComparison -c Release --no-build --filter
 dotnet test tests/data/Ara3D.IfcMeshingComparison -c Release --no-build --filter "Category=IfcMesherParity"
 ```
 
-The first test rewrites `scorecard.json` here; the web-ifc tessellations it needs are generated once into `artifacts/ifc-mesher/oracles/` and reused. The second runs the regression gates that read the same comparison: parity at least 0.85 and instance Jaccard at least 0.99 on each quick file, round-trip of entity assignment through the BFAST cache, and the duplex placement control. After a change to the mesher, run both, read the diff of `scorecard.json`, and add a dated section to `RESULTS.md` when a number moves.
+The first test rewrites `scorecard.json` here; the web-ifc tessellations it needs are generated once into `artifacts/ifc-mesher/oracles/` and reused. The second runs the regression gates in `Tests/Comparison/ParityGates.cs`, which read the same comparison: parity at least 0.85 and instance Jaccard at least 0.99 on each quick file, round-trip of entity assignment through the BFAST cache, and the duplex placement control. After a change to the mesher, run both, read the diff of `scorecard.json`, and add a dated section to `RESULTS.md` when a number moves.
 
 `scorecard.json` carries the run's timestamp, so a rerun that changes no score still changes the file; commit it only when a score moved.
 
