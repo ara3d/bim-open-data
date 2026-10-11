@@ -26,6 +26,7 @@ public static class FragmentsToBos
         entities.Read();
         var geometry = new FragmentsGeometryReader(model.Meshes!.Value, entities.EntityOfItem);
         bdb.Geometry = geometry.Read();
+        entities.MarkHidden(bdb.Geometry);
         foreach (var (problem, count) in geometry.Problems)
             bdb.AddDiagnostic(DiagnosticType.ExporterWarning, $"{count} {problem}", doc, BimDataBuilder.InvalidEntityIndex);
         return bdb.Build();

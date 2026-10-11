@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Ara3D.BimOpenSchema.IO\Ara3D.BimOpenSchema.IO.csproj" />
+    <ProjectReference Include="..\Ara3D.Ifc.Conventions\Ara3D.Ifc.Conventions.csproj" />
     <ProjectReference Include="..\Ara3D.IfcLoader\Ara3D.IfcLoader.csproj" />
     <PackageReference Include="Parquet.Net" Version="$(Ara3DParquetNetVersion)" />
   </ItemGroup>

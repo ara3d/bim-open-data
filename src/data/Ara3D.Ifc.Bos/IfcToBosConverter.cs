@@ -1,4 +1,5 @@
 ﻿using Ara3D.DataTable;
+using Ara3D.Ifc.Conventions;
 using Ara3D.IfcLoader;
 using Ara3D.IfcTypes;
 using Ara3D.IO.StepParser;
@@ -19,7 +20,8 @@ public class IfcToBosConverter
 {
     public const EntityIndex InvalidEntityIndex = (EntityIndex)(-1);
 
-    public const string AxisTagParameter = "Ifc:AxisTag";          // String, on each IFCGRIDAXIS entity, group "IFCGRIDAXIS"
+    /// <summary>Kept for callers; the name lives in <see cref="IfcParameterNames.AxisTag"/>.</summary>
+    public const string AxisTagParameter = IfcParameterNames.AxisTag;
 
     public IfcFile IfcFile;
     public IfcPropData PropData;
@@ -54,56 +56,8 @@ public class IfcToBosConverter
     public EntityIndex GetBosEntityIndexFromIfc(int id)
         => IfcIdToBosId.GetValueOrDefault(id, InvalidEntityIndex);
 
-    public static readonly HashSet<string> HiddenIfcNames = new([
-        "IFCSITE",
-        "IFCBUILDING",
-        "IFCBUILDINGSTOREY",
-        "IFCSPACE",
-        "IFCSPATIALZONE",
-        "IFCZONE",
-        "IFCSITE",  
-        "IFCGRID",
-        "IFCGRIDAXIS",
-        "IFCANNOTATION",
-        "IFCVIRTUALGRIDINTERSECTION",   
-    ]);
-
-    public static readonly HashSet<string> NonElementIfcClassNames = new([
-        "IFCINDEXEDPOLYGONALFACE",
-        "IFCPOLYLOOP",
-        "IFCFACE",
-        "IFCFACEOUTERBOUND",
-        "IFCCARTESIANPOINT",
-        "IFCRELDEFINESBYPROPERTIES",
-        "IFCPROPERTYSET",
-        "IFCPROPERTYSINGLEVALUE",
-        "IFCAXIS2PLACEMENT3D",
-        "IFCSHAPEREPRESENTATION",
-        "IFCQUANTITYLENGTH",
-        "IFCSTYLEDITEM",
-        "IFCLOCALPLACEMENT",
-        "IFCQUANTITYAREA",
-        "IFCPRODUCTDEFINITIONSHAPE",
-        "IFCCARTESIANPOINTLIST3D",
-        "IFCMAPPEDITEM",
-        "IFCPOLYGONALFACESET",
-        "IFCINDEXEDPOLYCURVE",
-        "IFCQUANTITYVOLUME",
-        "IFCELEMENTQUANTITY",
-        "IFCCARTESIANPOINTLIST2D",
-        "IFCEXTRUDEDAREASOLID",
-        "IFCINDEXEDCOLOURMAP",
-        "IFCCOLOURRGBLIST",
-        "IFCARBITRARYCLOSEDPROFILEDEF",
-        "IFCDIRECTION"
-    ]);
-
     public static bool IsMaybeIfcElement(IfcEntity entity)
-    {
-        var name = entity.GetEntityName();
-        return !NonElementIfcClassNames.Contains(name)
-            && !name.StartsWith("IFCREL", StringComparison.Ordinal);
-    }
+        => IfcClasses.IsMaybeElement(entity.GetEntityName());
 
     public static void Convert(FilePath input, FilePath output, ILogger? logger = null)
         => new IfcToBosConverter(input, logger).SaveToBos(output);
@@ -207,7 +161,7 @@ public class IfcToBosConverter
             {
                 var roomNumber = e.GetStringOrEmpty(2).DecodeIfc();
                 if (!string.IsNullOrEmpty(roomNumber))
-                    BimDataBuilder.AddParameter(ei, roomNumber, "Ifc:Room:Number", "", e.GetEntityName());
+                    BimDataBuilder.AddParameter(ei, roomNumber, IfcParameterNames.RoomNumber, "", e.GetEntityName());
             }
             else if (e.GetEntityName() == "IFCGRIDAXIS")
             {
@@ -216,7 +170,7 @@ public class IfcToBosConverter
                 // recorded here instead.
                 var axisTag = e.GetStringOrEmpty(0).DecodeIfc();
                 if (!string.IsNullOrEmpty(axisTag))
-                    BimDataBuilder.AddParameter(ei, axisTag, AxisTagParameter, "", e.GetEntityName());
+                    BimDataBuilder.AddParameter(ei, axisTag, IfcParameterNames.AxisTag, "", e.GetEntityName());
             }
 
             // Additional attributes are added as properties. An IfcRoot entity's first three are
@@ -374,8 +328,7 @@ public class IfcToBosConverter
             }
 
             var entity = IfcFile.EntityResolver.GetEntity(ifcId);
-            var hidden = entity != null && HiddenIfcNames.Contains(entity.GetEntityName());
-            var flags = hidden ? (byte)1 : inst.Flags;
+            var flags = IfcClasses.InstanceFlags(entity?.GetEntityName(), inst.Flags);
             BimGeometryBuilder.AddInstance((int)entityIndex, matIndex, inst.MeshIndex, tfmIndex, flags);
         }
 
@@ -420,15 +373,9 @@ public class IfcToBosConverter
         }
     }
 
-    public const string LayerSetParameter = "Ifc:LayerSet";
-    public const string LayerIndexParameter = "Ifc:LayerIndex";
-    public const string ConstituentSetParameter = "Ifc:ConstituentSet";
-    public const string ConstituentIndexParameter = "Ifc:ConstituentIndex";
-
-    /// <summary>IfcMaterial, its layers, constituents, profiles, and the sets and usages that group
-    /// them. None is IfcRoot.</summary>
+    /// <summary>See <see cref="IfcClasses.IsMaterialResource"/>.</summary>
     public static bool IsMaterialResource(IfcEntity entity)
-        => entity.GetEntityName().StartsWith("IFCMATERIAL", StringComparison.Ordinal);
+        => IfcClasses.IsMaterialResource(entity.GetEntityName());
 
     /// <summary>Gives each layer of an IfcMaterialLayerSet, and each constituent of an
     /// IfcMaterialConstituentSet, its set and its 1-based position in it, so a query can list a
@@ -437,13 +384,10 @@ public class IfcToBosConverter
     {
         foreach (var set in BosEntities)
         {
-            var (setParameter, indexParameter, membersAttribute) = set.GetEntityName() switch
-            {
-                "IFCMATERIALLAYERSET" => (LayerSetParameter, LayerIndexParameter, 0),
-                "IFCMATERIALCONSTITUENTSET" => (ConstituentSetParameter, ConstituentIndexParameter, 2),
-                _ => (null, null, -1),
-            };
-            if (setParameter == null || set.Attributes.Count <= membersAttribute || !set.GetAttribute(membersAttribute).IsList)
+            if (IfcMaterialSets.Of(set.GetEntityName()) is not { } materialSet)
+                continue;
+            var membersAttribute = materialSet.MembersAttribute;
+            if (set.Attributes.Count <= membersAttribute || !set.GetAttribute(membersAttribute).IsList)
                 continue;
 
             var setEi = GetBosEntityIndexFromIfc(set.Id);
@@ -454,25 +398,26 @@ public class IfcToBosConverter
                 if (memberEi == InvalidEntityIndex)
                     continue;
                 var group = GetEntity(members[i]).GetEntityName();
-                BimDataBuilder.AddParameter(memberEi, setEi, setParameter, "", group);
-                BimDataBuilder.AddParameter(memberEi, i + 1, indexParameter!, "", group);
+                BimDataBuilder.AddParameter(memberEi, setEi, materialSet.SetParameter, "", group);
+                BimDataBuilder.AddParameter(memberEi, i + 1, materialSet.IndexParameter, "", group);
             }
         }
     }
 
+    /// <summary>Kept for callers; see <see cref="IfcParameterNames.Attribute"/>.</summary>
     public static string ToIfcStdPropName(string name)
-        => $"Ifc:{name}";
+        => IfcParameterNames.Attribute(name);
 
     private void ProcessAttributeAsProp(IfcEntity entity, IfcAttribute attribute, int attributeIndex, EntityIndex bosId)
     {
         var name = attribute.Name;
-        if (name == "GlobalId" || name == "OwnerHistory" || name == "Name")
+        if (IfcParameterNames.NotParameters.Contains(name))
             return;
         var val = entity.GetAttribute(attributeIndex);
         if (val.IsUnassignedOrRedeclared)
             return;
 
-        var ifcPropName = ToIfcStdPropName(name);
+        var ifcPropName = IfcParameterNames.Attribute(name);
         var entityName = entity.GetEntityName();
         if (val.IsId)
         {

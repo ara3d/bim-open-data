@@ -14,6 +14,15 @@ needed both sides, so it lives here instead, referencing
 The classes keep their original `Ara3D.BimOpenSchema.IO` namespace so existing
 consumers work unchanged; only a project reference has to be added.
 
+The IFC rules a reader needs that do not depend on the loader (parameter names
+such as `Ifc:<attribute>` and `Ifc:LayerSet`, the classes flagged hidden, the
+classes that never become entities, the material sets) live in the portable
+`Ara3D.Ifc.Conventions` (net8.0), which the Fragments reader shares.
+`IfcToBosConverter.AxisTagParameter`, `ToIfcStdPropName`, and
+`IfcLengthUnit.NameParameter` / `ScaleParameter` forward to it for existing
+callers. `IfcRelationMapping` stays here: it maps `Ara3D.IfcLoader`'s
+`IfcRelationKind`, which the portable project cannot see.
+
 ## Length unit and grid axis tag (TKT-30 C2)
 
 `IfcLengthUnit.Read(IfcFile)` resolves the project's `LENGTHUNIT`: the

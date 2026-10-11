@@ -1,61 +1,15 @@
 using System.Text.Json;
+using Ara3D.Ifc.Conventions;
 
 namespace Ara3D.BimOpenSchema.IO.Fragments;
 
 /// <summary>Turns the items of a Fragments model into BOS entities, parameters, and relations,
-/// with the conventions <c>Ara3D.Ifc.Bos</c> uses for the same IFC content: one category entity
-/// per IFC class, attributes as <c>Ifc:&lt;name&gt;</c> parameters grouped by class, property-set
-/// values as parameters named by the property and grouped by the set.</summary>
+/// with the conventions <c>Ara3D.Ifc.Bos</c> uses for the same IFC content, taken from
+/// <c>Ara3D.Ifc.Conventions</c>: one category entity per IFC class, attributes as
+/// <c>Ifc:&lt;name&gt;</c> parameters grouped by class, property-set values as parameters named by
+/// the property and grouped by the set, and geometry of hidden classes flagged hidden.</summary>
 internal sealed class FragmentsEntityReader
 {
-    /// <summary>Relation names on the related side of an IFC relation, mapped to BOS relations
-    /// from the item to its targets, as Ara3D.IfcLoader's IfcRelations maps the same IFC relations.</summary>
-    private static readonly Dictionary<string, RelationType> RelatedSide = new()
-    {
-        ["ContainedInStructure"] = RelationType.ContainedIn,
-        ["Decomposes"] = RelationType.MemberOf,
-        ["Nests"] = RelationType.ChildOf,
-        ["HasAssociations"] = RelationType.HasMaterial,
-    };
-
-    /// <summary>The relating side of the same relations: each repeats a related-side entry from
-    /// the other end, so it adds nothing.</summary>
-    private static readonly HashSet<string> RelatingSide =
-    [
-        "ContainsElements", "IsDecomposedBy", "IsNestedBy", "AssociatedTo",
-        "DefinesOccurrence", "ReferencesElements",
-    ];
-
-    /// <summary>On a type: the instances it types (IfcRelDefinesByType, relating side).</summary>
-    private const string ObjectTypeOf = "ObjectTypeOf";
-
-    /// <summary>On an object: its property sets, quantity sets, and type.</summary>
-    private const string IsDefinedBy = "IsDefinedBy";
-
-    /// <summary>On a type: its own property sets.</summary>
-    private const string HasPropertySets = "HasPropertySets";
-
-    /// <summary>On a property set or a quantity set: its members.</summary>
-    private static readonly HashSet<string> SetMembers = ["HasProperties", "Quantities"];
-
-    /// <summary>The attribute holding a property's or quantity's value, first match wins.</summary>
-    private static readonly string[] ValueAttributes =
-    [
-        "NominalValue", "LengthValue", "AreaValue", "VolumeValue", "CountValue", "WeightValue",
-        "TimeValue", "EnumerationValues", "ListValues", "LowerBoundValue", "UpperBoundValue",
-    ];
-
-    /// <summary>IFC defined types whose values are integers; a number with one of these types
-    /// becomes an Int parameter, any other number a Number parameter.</summary>
-    private static readonly HashSet<string> IntegerTypes =
-    [
-        "IFCINTEGER", "IFCPOSITIVEINTEGER", "IFCDIMENSIONCOUNT", "IFCYEARNUMBER", "IFCMONTHINYEARNUMBER",
-        "IFCDAYINMONTHNUMBER", "IFCDAYINWEEKNUMBER", "IFCHOURINDAY", "IFCMINUTEINHOUR",
-    ];
-
-    public const string IfcParameterPrefix = "Ifc:";
-    public const string NameAttribute = "Name";
-
     private readonly FragmentsItems _items;
     private readonly BimDataBuilder _bdb;
     private readonly DocumentIndex _doc;
@@ -93,7 +47,7 @@ internal sealed class FragmentsEntityReader
     {
         var typeOf = Enumerable.Repeat(-1, _items.Count).ToArray();
         for (var t = 0; t < _items.Count; t++)
-            foreach (var rel in _items.Relations[t].Where(r => r.Name == ObjectTypeOf))
+            foreach (var rel in _items.Relations[t].Where(r => r.Name == IfcRelationNames.ObjectTypeOf))
                 foreach (var instance in Items(rel))
                     typeOf[instance] = t;
         return typeOf;
@@ -112,8 +66,7 @@ internal sealed class FragmentsEntityReader
         {
             var category = _items.Categories[i] is { } c ? categories[c] : BimDataBuilder.InvalidEntityIndex;
             var type = typeOfItem[i] >= 0 ? _entityOfItem[typeOfItem[i]] : BimDataBuilder.InvalidEntityIndex;
-            var name = _items.Attributes[i].FirstOrDefault(a => a.Name == NameAttribute && a.Value.ValueKind == JsonValueKind.String)?.Value.GetString();
-            _bdb.UpdateEntity(_entityOfItem[i], _items.LocalIds[i], _items.GlobalIds[i] ?? "", _doc, name ?? "", category, type);
+            _bdb.UpdateEntity(_entityOfItem[i], _items.LocalIds[i], _items.GlobalIds[i] ?? "", _doc, NameOf(i) ?? "", category, type);
         }
     }
 
@@ -121,8 +74,8 @@ internal sealed class FragmentsEntityReader
     {
         var group = _items.Categories[item] ?? "";
         foreach (var a in _items.Attributes[item])
-            if (a.Name != NameAttribute)
-                AddValue(_entityOfItem[item], IfcParameterPrefix + a.Name, group, a.Value, a.IfcType);
+            if (!IfcParameterNames.NotParameters.Contains(a.Name))
+                AddValue(_entityOfItem[item], IfcParameterNames.Attribute(a.Name), group, a.Value, a.IfcType);
     }
 
     private void AddRelations(int item, int[] typeOfItem)
@@ -132,21 +85,21 @@ internal sealed class FragmentsEntityReader
         var seenProperties = new HashSet<(string Set, string Name, string Value)>();
         foreach (var rel in _items.Relations[item])
         {
-            if (rel.Name == ObjectTypeOf || RelatingSide.Contains(rel.Name))
+            if (rel.Name == IfcRelationNames.ObjectTypeOf || IfcRelationNames.SkippedRelatingInverses.Contains(rel.Name))
                 continue;
-            if (SetMembers.Contains(rel.Name))
+            if (IfcRelationNames.SetMembers.Contains(rel.Name))
             {
                 // Read where the set is expanded, onto each object it defines; here only counted.
                 CountAbsentTargets(rel);
                 continue;
             }
-            if (RelatedSide.TryGetValue(rel.Name, out var relationType))
+            if (IfcRelationNames.ByRelatedInverse.TryGetValue(rel.Name, out var relationType))
             {
                 foreach (var target in Items(rel))
                     _bdb.AddRelation(entity, _entityOfItem[target], relationType);
                 continue;
             }
-            if (rel.Name is IsDefinedBy or HasPropertySets)
+            if (rel.Name is IfcRelationNames.IsDefinedBy or IfcRelationNames.HasPropertySets)
             {
                 // A type reached through IsDefinedBy is already the entity's Type.
                 foreach (var set in Items(rel).Where(t => t != typeOfItem[item]))
@@ -154,7 +107,7 @@ internal sealed class FragmentsEntityReader
                 continue;
             }
             foreach (var target in Items(rel))
-                _bdb.AddParameter(entity, _entityOfItem[target], IfcParameterPrefix + rel.Name, "", group);
+                _bdb.AddParameter(entity, _entityOfItem[target], IfcParameterNames.Attribute(rel.Name), "", group);
         }
     }
 
@@ -167,11 +120,11 @@ internal sealed class FragmentsEntityReader
         var setName = NameOf(set);
         // Members are resolved without counting: a set shared by many objects is expanded once per
         // object, and its unresolved members are already counted where the set's own relations are read.
-        var members = _items.Relations[set].Where(r => SetMembers.Contains(r.Name)).SelectMany(r => Items(r, count: false));
+        var members = _items.Relations[set].Where(r => IfcRelationNames.SetMembers.Contains(r.Name)).SelectMany(r => Items(r, count: false));
         foreach (var member in members)
         {
             var name = NameOf(member);
-            var value = ValueAttributes
+            var value = IfcPropertyValues.ValueAttributes
                 .Select(v => _items.Attributes[member].FirstOrDefault(a => a.Name == v))
                 .FirstOrDefault(a => a != null);
             if (name == null || value == null || !seen.Add((setName ?? "", name, value.Value.GetRawText())))
@@ -181,7 +134,7 @@ internal sealed class FragmentsEntityReader
     }
 
     private string? NameOf(int item)
-        => _items.Attributes[item].FirstOrDefault(a => a.Name == NameAttribute)?.Value is { ValueKind: JsonValueKind.String } v
+        => _items.Attributes[item].FirstOrDefault(a => a.Name == IfcParameterNames.NameAttribute)?.Value is { ValueKind: JsonValueKind.String } v
             ? v.GetString()
             : null;
 
@@ -200,7 +153,7 @@ internal sealed class FragmentsEntityReader
             case JsonValueKind.False:
                 _bdb.AddParameter(entity, value.ValueKind == JsonValueKind.True ? 1 : 0, name, "", group);
                 break;
-            case JsonValueKind.Number when ifcType != null && IntegerTypes.Contains(ifcType) && value.TryGetInt32(out var n):
+            case JsonValueKind.Number when IfcPropertyValues.IsIntegerType(ifcType) && value.TryGetInt32(out var n):
                 _bdb.AddParameter(entity, n, name, "", group);
                 break;
             case JsonValueKind.Number:
@@ -211,6 +164,18 @@ internal sealed class FragmentsEntityReader
                 _bdb.AddParameter(entity, value.GetRawText(), name, "", group);
                 break;
         }
+    }
+
+    /// <summary>Flags hidden, as Ara3D.Ifc.Bos does, every instance whose entity is an item of a
+    /// hidden IFC class (<see cref="IfcClasses.Hidden"/>): spaces, storeys, grids, and the like.</summary>
+    public void MarkHidden(BimGeometry geometry)
+    {
+        var categoryOfEntity = new Dictionary<int, string?>();
+        for (var i = 0; i < _items.Count; i++)
+            categoryOfEntity[(int)_entityOfItem[i]] = _items.Categories[i];
+        for (var i = 0; i < geometry.InstanceEntityIndex.Length; i++)
+            geometry.InstanceFlags[i] = IfcClasses.InstanceFlags(
+                categoryOfEntity.GetValueOrDefault(geometry.InstanceEntityIndex[i]), geometry.InstanceFlags[i]);
     }
 
     private void CountAbsentTargets(FragmentsRelation rel)

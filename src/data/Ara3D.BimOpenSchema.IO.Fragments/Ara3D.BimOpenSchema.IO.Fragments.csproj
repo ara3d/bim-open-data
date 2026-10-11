@@ -20,6 +20,7 @@
     <ProjectReference Include="$(DepsRoot)bim-open-schema\src\Ara3D.BimOpenSchema\Ara3D.BimOpenSchema.csproj" />
     <ProjectReference Include="..\Ara3D.BimOpenSchema.ObjectModel\Ara3D.BimOpenSchema.ObjectModel.csproj" />
     <ProjectReference Include="..\Ara3D.BimOpenSchema.IO\Ara3D.BimOpenSchema.IO.csproj" />
+    <ProjectReference Include="..\Ara3D.Ifc.Conventions\Ara3D.Ifc.Conventions.csproj" />
   </ItemGroup>
 
 </Project>

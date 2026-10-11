@@ -1,4 +1,6 @@
+using Ara3D.BimOpenSchema.IO.Fragments.Schema;
 using Ara3D.Utils;
+using BimOpenData.TestSupport;
 
 namespace Ara3D.BimOpenSchema.IO.Fragments.Tests;
 
@@ -139,4 +141,61 @@ public class ReaderTests
             dir.Delete(true);
         }
     }
+
+    [Test]
+    public void InstancesOfAHiddenClass_AreFlaggedHidden_OthersAreNot()
+    {
+        var model = new TestModel
+        {
+            Items = { new(1, "IFCSPACE", "space-guid", []), new(2, "IFCWALL", "wall-guid", []) },
+            Shells = { new([new(0, 0, 0), new(1, 0, 0), new(0, 1, 0)], [[0, 1, 2]]) },
+            Representations = { (RepresentationClass.SHELL, 0) },
+            MeshesItems = { 0, 1 },
+            GlobalTransforms = { TestTransform.Identity, TestTransform.Identity },
+            Samples = { new TestSample(Item: 0, Representation: 0), new TestSample(Item: 1, Representation: 0) },
+        };
+        var d = Read(model);
+        var flagOf = Enumerable.Range(0, d.Geometry.InstanceFlags.Length)
+            .ToDictionary(i => d.Category(d.Geometry.InstanceEntityIndex[i]), i => d.Geometry.InstanceFlags[i]);
+        Assert.That(flagOf, Is.EquivalentTo(new Dictionary<string, byte> { ["IFCSPACE"] = 1, ["IFCWALL"] = 0 }));
+    }
+
+    /// <summary>Both readers take the hidden classes from Ara3D.Ifc.Conventions, so on the Duplex
+    /// they hide the instances of the same entities, its 21 spaces, one instance each.</summary>
+    [Test]
+    public void Duplex_HidesTheSameEntitiesAsIfcBos()
+    {
+        var frag = FragmentsToBos.Read(DuplexFixtureTests.FixturePath);
+        var ifc = ((FilePath)RepoPaths.Samples("public", "duplex.bos")).ReadBimDataFromParquetZip();
+        var fragHidden = HiddenEntities(frag);
+        var ifcHidden = HiddenEntities(ifc);
+        Assert.Multiple(() =>
+        {
+            Assert.That(fragHidden, Has.Count.EqualTo(HiddenEntityCountOnDuplex));
+            Assert.That(fragHidden, Is.EquivalentTo(ifcHidden));
+            Assert.That(HiddenInstanceCount(frag), Is.EqualTo(HiddenInstanceCount(ifc)));
+            Assert.That(VisibleEntities(frag).Intersect(fragHidden), Is.Empty, "an entity is hidden in every instance or in none");
+        });
+    }
+
+    private const int HiddenEntityCountOnDuplex = 21;
+
+    private static bool IsHidden(BimGeometry g, int instance)
+        => (g.InstanceFlags[instance] & (byte)BimGeometry.InstanceFlagEnum.IsHidden) != 0;
+
+    private static int HiddenInstanceCount(BimData d)
+        => Enumerable.Range(0, d.Geometry.InstanceFlags.Length).Count(i => IsHidden(d.Geometry, i));
+
+    /// <summary>(category, GlobalId) of each entity with a hidden instance.</summary>
+    private static HashSet<(string, string)> HiddenEntities(BimData d) => InstanceEntities(d, hidden: true);
+
+    private static HashSet<(string, string)> VisibleEntities(BimData d) => InstanceEntities(d, hidden: false);
+
+    private static HashSet<(string, string)> InstanceEntities(BimData d, bool hidden)
+        => Enumerable.Range(0, d.Geometry.InstanceEntityIndex.Length)
+            .Where(i => IsHidden(d.Geometry, i) == hidden)
+            .Select(i => d.Geometry.InstanceEntityIndex[i])
+            .Where(e => e >= 0)
+            .Select(e => (d.Category(e), d.GlobalId(e)))
+            .ToHashSet();
 }

@@ -1,3 +1,4 @@
+using Ara3D.Ifc.Conventions;
 using Ara3D.IfcLoader;
 using Ara3D.IO.StepParser;
 
@@ -6,8 +7,10 @@ namespace Ara3D.BimOpenSchema.IO;
 /// <summary>The project's declared length unit: the LENGTHUNIT of IfcProject.UnitsInContext.</summary>
 public readonly record struct IfcLengthUnit(string Name, double ToMetre)
 {
-    public const string NameParameter = "Ifc:LengthUnit";          // String, on the IFCPROJECT entity, group "IFCPROJECT"
-    public const string ScaleParameter = "Ifc:LengthUnitToMetre";  // Number, same entity and group
+    /// <summary>Kept for callers; see <see cref="IfcParameterNames.LengthUnit"/>.</summary>
+    public const string NameParameter = IfcParameterNames.LengthUnit;
+    /// <summary>Kept for callers; see <see cref="IfcParameterNames.LengthUnitToMetre"/>.</summary>
+    public const string ScaleParameter = IfcParameterNames.LengthUnitToMetre;
 
     private const int ProjectUnitsInContextIndex = 8;
     private const int NamedUnitTypeIndex = 1;
