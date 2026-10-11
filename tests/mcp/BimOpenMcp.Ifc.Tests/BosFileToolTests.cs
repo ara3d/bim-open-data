@@ -2,6 +2,7 @@ using System.IO.Compression;
 using System.Text.Json.Nodes;
 using Ara3D.BimOpenSchema.DuckDb;
 using Ara3D.BimOpenSchema.IO;
+using Ara3D.BimOpenSchema.IO.Fragments;
 using Ara3D.MCP;
 using Ara3D.Utils;
 using BimOpenData.TestSupport;
@@ -66,6 +67,9 @@ public sealed class BosFileToolTests
         Assert.That(File.Exists(data["databasePath"]!.GetValue<string>()), Is.True);
         Assert.That(data["entities"]!.GetValue<int>(), Is.GreaterThan(0));
         Assert.That(data["instances"]!.GetValue<int>(), Is.GreaterThan(0));
+        var saved = new FilePath(output).ReadBimDataFromParquetZip().Geometry;
+        Assert.That(saved.InstanceEntityIndex, Has.Length.EqualTo(data["instances"]!.GetValue<int>()));
+        Assert.That(saved.IndexBuffer, Has.Length.EqualTo(FragmentsToBos.Read(frag).Geometry.IndexBuffer.Length));
         var doors = _mcp.CallData("bos_sql", new JsonObject
         {
             ["bosPath"] = output,

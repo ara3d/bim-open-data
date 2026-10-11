@@ -147,6 +147,30 @@ public class DuplexFixtureTests
         });
     }
 
+    [Test]
+    public void Convert_SavesTheGeometryTables()
+    {
+        var bos = new FilePath(Path.Combine(Path.GetTempPath(), $"duplex-{Guid.NewGuid():N}.bos"));
+        try
+        {
+            FragmentsToBos.Convert(FixturePath, bos);
+            var saved = bos.ReadBimDataFromParquetZip();
+            Assert.Multiple(() =>
+            {
+                Assert.That(saved.Geometry.InstanceEntityIndex, Has.Length.EqualTo(_frag.Geometry.InstanceEntityIndex.Length).And.Length.GreaterThan(0));
+                Assert.That(saved.Geometry.IndexBuffer, Has.Length.EqualTo(_frag.Geometry.IndexBuffer.Length));
+                Assert.That(DrawnTriangles(saved), Is.EqualTo(DrawnTriangles(_frag)).And.GreaterThan(0));
+            });
+        }
+        finally
+        {
+            File.Delete(bos.FullPath);
+        }
+    }
+
+    private static long DrawnTriangles(BimData d)
+        => Enumerable.Range(0, d.Geometry.InstanceEntityIndex.Length).Sum(i => (long)d.Geometry.Triangles(i).Count());
+
     private static Dictionary<string, (Vector3 Min, Vector3 Max)> BoxesByGlobalId(BimData d)
         => d.Geometry.EntityBoxes().ToDictionary(kv => d.GlobalId(kv.Key), kv => kv.Value);
 
