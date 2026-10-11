@@ -277,7 +277,7 @@ public sealed class SweptSolidTests
             var curveId = file.EntityResolver.GetEntity(profileId).GetId(2);
             var points = CurveEvaluator.Evaluate2D(ctx, ctx.GetEntity(curveId), dropClosure: true);
             var cleaned = PolygonWithHoles.CleanRing(points);
-            var selfIntersect = PolygonTriangulator.HasSelfIntersection(cleaned);
+            var selfIntersect = PolygonWithHoles.HasSelfIntersection(cleaned);
             TestContext.WriteLine($"#{solidId} profile #{profileId} curve #{curveId}: {cleaned.Count} pts, selfIntersect={selfIntersect}");
         }
 
@@ -318,8 +318,8 @@ public sealed class SweptSolidTests
             var profile = ProfileBuilder.Build(ctx, ctx.GetEntity(profileId));
             TestContext.WriteLine(
                 $"#{solidId} profile #{profileId}: outer={profile.Outer.Count} hole={profile.Holes[0].Count} " +
-                $"outerSelf={PolygonTriangulator.HasSelfIntersection(profile.Outer)} " +
-                $"holeSelf={PolygonTriangulator.HasSelfIntersection(profile.Holes[0])}");
+                $"outerSelf={PolygonWithHoles.HasSelfIntersection(profile.Outer)} " +
+                $"holeSelf={PolygonWithHoles.HasSelfIntersection(profile.Holes[0])}");
             Assert.That(profile.Triangulate(), Is.Not.Empty);
             var mesh = GeometryDispatcher.TryBuild(ctx, ctx.GetEntity(solidId));
             Assert.That(mesh.HasValue, Is.True, $"#{solidId} should mesh");

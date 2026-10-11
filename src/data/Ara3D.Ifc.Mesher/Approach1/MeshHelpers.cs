@@ -158,9 +158,9 @@ public static class MeshHelpers
             foreach (var p in hole)
                 AddBottom(p);
 
-        // Cap triangulation can introduce vertices not on the profile rings (ear-clip Steiner
-        // points, resampled inner rings). Register them before duplicating the top ring so
-        // TopIndex(bottom) always has a matching top vertex.
+        // Cap triangulation can introduce vertices not on the profile rings (a resampled inner
+        // ring). Register them before duplicating the top ring so TopIndex(bottom) always has a
+        // matching top vertex.
         var capTris = profile.Triangulate();
         foreach (var tri in capTris)
         {
@@ -204,8 +204,8 @@ public static class MeshHelpers
         var hole = profile.Holes[0];
         if (hole.Count == profile.Outer.Count || hole.Count < 3 || profile.Outer.Count < 3)
             return profile;
-        if (PolygonTriangulator.HasSelfIntersection(profile.Outer) ||
-            PolygonTriangulator.HasSelfIntersection(hole))
+        if (PolygonWithHoles.HasSelfIntersection(profile.Outer) ||
+            PolygonWithHoles.HasSelfIntersection(hole))
             return profile;
 
         var resampled = PolygonWithHoles.ResampleClosedRing(hole, profile.Outer.Count);

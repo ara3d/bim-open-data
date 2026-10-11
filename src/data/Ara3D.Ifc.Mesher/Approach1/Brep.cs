@@ -309,9 +309,16 @@ public static class Brep
         => DedupeConsecutive3D(CurveEvaluator.Evaluate3D(ctx, curve).ToList());
 
     /// <summary>
-    /// Triangulates a projected face boundary. Thin 3- and 4-vertex rings bypass ear clipping,
-    /// which rejects near-degenerate convex corners (common on Institute helix shell facets).
+    /// Triangulates a projected face boundary. Thin 3- and 4-vertex rings (common on Institute
+    /// helix shell facets) are kept as one or two triangles, or dropped when their area is below
+    /// <see cref="Tolerance.Eps"/>; other rings go to earcut, and are dropped when its triangles'
+    /// area is more than <see cref="MaxFaceAreaDeviation"/> from the ring's.
     /// </summary>
+    /// <summary>The largest relative difference between a face ring's area and its triangles'
+    /// (<see cref="Earcut.Deviation(IReadOnlyList{Vector2}, IReadOnlyList{IReadOnlyList{Vector2}}, IReadOnlyList{Integer3})"/>)
+    /// for the face to be kept.</summary>
+    const double MaxFaceAreaDeviation = 0.01;
+
     static bool TryTriangulateFaceRing(
         IReadOnlyList<Vector2> outer2,
         IReadOnlyList<List<Vector2>> holes2,
@@ -327,13 +334,13 @@ public static class Brep
             if (outer2.Count >= 4)
                 ringArea += MathF.Abs(SignedArea2(outer2[0], outer2[2], outer2[3]));
 
-            // Fast path only for near-degenerate Institute-style facets; normal quads use ear-clip.
+            // Fast path only for near-degenerate Institute-style facets; normal quads use earcut.
             const float thinAreaThreshold = 1e-4f;
             if (ringArea < thinAreaThreshold)
             {
                 if (outer2.Count == 3)
                 {
-                    if (ringArea <= PolygonTriangulator.Eps)
+                    if (ringArea <= Tolerance.Eps)
                         return false;
                     tris = [new Triangle2D(outer2[0], outer2[1], outer2[2])];
                     return true;
@@ -347,17 +354,20 @@ public static class Brep
             }
         }
 
-        try
+        if (holes2.Count == 1 && PolygonWithHoles.TryTriangulateCongruentRing(outer2, holes2[0], out var ringTris))
         {
-            tris = holes2.Count == 1 && PolygonWithHoles.TryTriangulateCongruentRing(outer2, holes2[0], out var ringTris)
-                ? ringTris
-                : PolygonTriangulator.GetTriangles(outer2, holes2);
-            return tris.Count > 0;
+            tris = ringTris;
+            return true;
         }
-        catch
-        {
+
+        // A projected ring can double back on itself without crossing (a parameter-space ring that
+        // folds over); earcut's triangles then overlap and cover more than the face. Leave such a
+        // face out rather than emit area it does not have.
+        var indices = Earcut.Triangulate(outer2, holes2);
+        if (Earcut.Deviation(outer2, holes2, indices) > MaxFaceAreaDeviation)
             return false;
-        }
+        tris = PolygonWithHoles.ToTriangles(outer2, holes2, indices);
+        return tris.Count > 0;
     }
 
     static bool TryTriangulateConvexQuad(IReadOnlyList<Vector2> quad, out IReadOnlyList<Triangle2D> tris)
@@ -368,22 +378,22 @@ public static class Brep
 
         var area = MathF.Abs(
             SignedArea2(quad[0], quad[1], quad[2]) + SignedArea2(quad[0], quad[2], quad[3]));
-        if (area <= PolygonTriangulator.Eps)
+        if (area <= Tolerance.Eps)
             return false;
 
         var diag02 = quad[0].DistanceSquared(quad[2]);
         var diag13 = quad[1].DistanceSquared(quad[3]);
         if (diag02 <= diag13)
         {
-            if (SignedArea2(quad[0], quad[1], quad[2]) <= PolygonTriangulator.Eps
-                || SignedArea2(quad[0], quad[2], quad[3]) <= PolygonTriangulator.Eps)
+            if (SignedArea2(quad[0], quad[1], quad[2]) <= Tolerance.Eps
+                || SignedArea2(quad[0], quad[2], quad[3]) <= Tolerance.Eps)
                 return false;
             tris = [new Triangle2D(quad[0], quad[1], quad[2]), new Triangle2D(quad[0], quad[2], quad[3])];
         }
         else
         {
-            if (SignedArea2(quad[0], quad[1], quad[3]) <= PolygonTriangulator.Eps
-                || SignedArea2(quad[1], quad[2], quad[3]) <= PolygonTriangulator.Eps)
+            if (SignedArea2(quad[0], quad[1], quad[3]) <= Tolerance.Eps
+                || SignedArea2(quad[1], quad[2], quad[3]) <= Tolerance.Eps)
                 return false;
             tris = [new Triangle2D(quad[0], quad[1], quad[3]), new Triangle2D(quad[1], quad[2], quad[3])];
         }
@@ -418,7 +428,7 @@ public static class Brep
     }
 
     static float PlaneContainmentTolerance(MeshingContext ctx)
-        => MathF.Max(PolygonTriangulator.Eps, MathF.Abs((float)ctx.LengthScale) * 1e-4f);
+        => MathF.Max(Tolerance.Eps, MathF.Abs((float)ctx.LengthScale) * 1e-4f);
 
     static bool TryGetPlaneSurface(MeshingContext ctx, IfcEntity planeEntity, out FacePlane plane)
     {
@@ -459,7 +469,7 @@ public static class Brep
         if (points.Count < 2)
             return points.ToList();
 
-        var epsSq = PolygonTriangulator.Eps * PolygonTriangulator.Eps;
+        var epsSq = Tolerance.Eps * Tolerance.Eps;
         var cleaned = new List<Vector2> { points[0] };
         for (var i = 1; i < points.Count; i++)
         {

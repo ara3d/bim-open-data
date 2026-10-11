@@ -29,12 +29,12 @@ public static class Tessellated
             if (name == "IFCINDEXEDPOLYGONALFACEWITHVOIDS")
             {
                 ctx.Diagnostics.RecordSupported("IFCINDEXEDPOLYGONALFACEWITHVOIDS");
-                TriangulatePolygonFaceWithVoids(ctx, coords, face, faces);
+                TriangulatePolygonFaceWithVoids(coords, face, faces);
             }
             else if (name == "IFCINDEXEDPOLYGONALFACE")
             {
                 ctx.Diagnostics.RecordSupported("IFCINDEXEDPOLYGONALFACE");
-                TriangulatePolygonFace(ctx, coords, ReadPositiveIndices(face, IfcIndexedPolygonalFace.Instance.CoordIndex.Index), faces);
+                TriangulatePolygonFace(coords, ReadPositiveIndices(face, IfcIndexedPolygonalFace.Instance.CoordIndex.Index), faces);
             }
         }
         return new TriangleMesh3D(coords, faces);
@@ -105,53 +105,15 @@ public static class Tessellated
         return holes;
     }
 
-    static void TriangulatePolygonFace(MeshingContext ctx, IReadOnlyList<Point3D> coords, IReadOnlyList<int> indices, List<Integer3> faces)
-        => TriangulatePolygonIndexFace(coords, indices.ToList(), [], faces);
+    /// <summary>Triangulates one face of the set in 3D (<see cref="ShellMesher"/>), wound the way
+    /// its outer loop is; a degenerate face adds nothing.</summary>
+    static void TriangulatePolygonFace(IReadOnlyList<Point3D> coords, IReadOnlyList<int> indices, List<Integer3> faces)
+        => ShellMesher.TriangulateFace(coords, indices, [], faces);
 
-    static void TriangulatePolygonFaceWithVoids(MeshingContext ctx, IReadOnlyList<Point3D> coords, IfcEntity face, List<Integer3> faces)
+    static void TriangulatePolygonFaceWithVoids(IReadOnlyList<Point3D> coords, IfcEntity face, List<Integer3> faces)
     {
         var outer = ReadPositiveIndices(face, IfcIndexedPolygonalFaceWithVoids.Instance.CoordIndex.Index);
         var holes = ReadNestedPositiveIndices(face, IfcIndexedPolygonalFaceWithVoids.Instance.InnerCoordIndices.Index);
-        TriangulatePolygonIndexFace(coords, outer, holes, faces);
-    }
-
-    static void TriangulatePolygonIndexFace(
-        IReadOnlyList<Point3D> coords,
-        List<int> outerIndices,
-        List<List<int>> holeIndices,
-        List<Integer3> faces)
-    {
-        if (outerIndices.Count < 3)
-            return;
-        var outer2 = outerIndices.Select(i => new Vector2(coords[i].X.Value, coords[i].Y.Value)).ToList();
-        var holes2 = holeIndices.Select(h => h.Select(i => new Vector2(coords[i].X.Value, coords[i].Y.Value)).ToList()).ToList();
-        var tris = holes2.Count == 1 && PolygonWithHoles.TryTriangulateCongruentRing(outer2, holes2[0], out var ringTris)
-            ? ringTris
-            : PolygonTriangulator.GetTriangles(outer2, holes2);
-        var searchIndices = outerIndices.Concat(holeIndices.SelectMany(h => h)).Distinct().ToList();
-        foreach (var tri in tris)
-        {
-            var a = FindNearestIndex(coords, searchIndices, tri.A.Vector2);
-            var b = FindNearestIndex(coords, searchIndices, tri.B.Vector2);
-            var c = FindNearestIndex(coords, searchIndices, tri.C.Vector2);
-            faces.Add(new Integer3(a, b, c));
-        }
-    }
-
-    static int FindNearestIndex(IReadOnlyList<Point3D> coords, IReadOnlyList<int> indices, Vector2 target)
-    {
-        var best = indices[0];
-        var bestDist = float.MaxValue;
-        foreach (var idx in indices)
-        {
-            var p = new Vector2(coords[idx].X.Value, coords[idx].Y.Value);
-            var d = p.DistanceSquared(target);
-            if (d < bestDist)
-            {
-                bestDist = d;
-                best = idx;
-            }
-        }
-        return best;
+        ShellMesher.TriangulateFace(coords, outer, holes, faces);
     }
 }

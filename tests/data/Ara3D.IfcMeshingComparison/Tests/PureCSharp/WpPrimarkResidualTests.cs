@@ -177,7 +177,7 @@ public sealed class WpPrimarkResidualTests
                 {
                     var poly = ProfileBuilder.Build(ctx, profile);
                     var b = poly.Outer.GetBounds();
-                    var selfInt = PolygonTriangulator.HasSelfIntersection(poly.Outer);
+                    var selfInt = PolygonWithHoles.HasSelfIntersection(poly.Outer);
                     var (minEdge, nearDup, collinear) = RingStats(poly.Outer);
                     TestContext.WriteLine(
                         $"  profile #{pid} {profile.GetEntityName()}: outer={poly.Outer.Count} holes={poly.Holes.Count} " +
@@ -222,7 +222,7 @@ public sealed class WpPrimarkResidualTests
             if (edge < extent * 1e-4f)
                 nearDup++;
             // Relative cross: |(b-a)x(c-b)| normalized by extent^2.
-            var cross = MathF.Abs(PolygonTriangulator.Cross(a, b, c)) / (extent * extent);
+            var cross = MathF.Abs(PolygonOps.Cross(a, b, c)) / (extent * extent);
             if (cross < 1e-5f)
                 collinear++;
         }

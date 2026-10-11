@@ -1,5 +1,8 @@
 using Ara3D.BimOpenSchema.IO.Fragments.Schema;
 using Color = Ara3D.Geometry.Color;
+using Point3D = Ara3D.Geometry.Point3D;
+using ShellLoops = Ara3D.Geometry.ShellLoops;
+using ShellMesher = Ara3D.Geometry.ShellMesher;
 using TriangleMesh3D = Ara3D.Geometry.TriangleMesh3D;
 using SNMatrix = System.Numerics.Matrix4x4;
 using V3 = System.Numerics.Vector3;
@@ -90,7 +93,7 @@ internal sealed class FragmentsGeometryReader
         switch (rep.RepresentationClass)
         {
             case RepresentationClass.SHELL when rep.Id < _meshes.ShellsLength:
-                var (shellMesh, skipped) = ShellMesher.Triangulate(ShellLoops.From(_meshes.Shells((int)rep.Id)!.Value));
+                var (shellMesh, skipped) = ShellMesher.Triangulate(Loops(_meshes.Shells((int)rep.Id)!.Value));
                 if (skipped > 0)
                     Count("shell profiles left out: degenerate, or an index outside the shell's points", skipped);
                 triangles = shellMesh;
@@ -106,6 +109,50 @@ internal sealed class FragmentsGeometryReader
         _meshOfRepresentation.Add(representation, mesh);
         return mesh;
     }
+
+    /// <summary>The loops of a Fragments shell; a BIG shell keeps 32-bit indices in big_profiles
+    /// and big_holes instead of the 16-bit profiles and holes.</summary>
+    private static ShellLoops Loops(Shell shell)
+    {
+        var points = new Point3D[shell.PointsLength];
+        for (var i = 0; i < points.Length; i++)
+        {
+            var p = shell.Points(i)!.Value;
+            points[i] = new Point3D(p.X, p.Y, p.Z);
+        }
+
+        var profiles = new List<int[]>();
+        var holes = new List<(int, int[])>();
+        if (shell.Type == ShellType.BIG)
+        {
+            for (var j = 0; j < shell.BigProfilesLength; j++)
+                profiles.Add(Indices(shell.BigProfiles(j)!.Value.GetIndicesArray()));
+            for (var j = 0; j < shell.BigHolesLength; j++)
+            {
+                var h = shell.BigHoles(j)!.Value;
+                holes.Add((h.ProfileId, Indices(h.GetIndicesArray())));
+            }
+        }
+        else
+        {
+            for (var j = 0; j < shell.ProfilesLength; j++)
+                profiles.Add(Indices(shell.Profiles(j)!.Value.GetIndicesArray()));
+            for (var j = 0; j < shell.HolesLength; j++)
+            {
+                var h = shell.Holes(j)!.Value;
+                holes.Add((h.ProfileId, Indices(h.GetIndicesArray())));
+            }
+        }
+        return new ShellLoops(points, profiles, holes);
+    }
+
+    /// <summary>Point indices as ints; an index past int.MaxValue becomes negative, which
+    /// <see cref="ShellMesher"/> reports as outside the points.</summary>
+    private static int[] Indices(uint[]? indices)
+        => indices == null ? [] : Array.ConvertAll(indices, i => unchecked((int)i));
+
+    private static int[] Indices(ushort[]? indices)
+        => indices == null ? [] : Array.ConvertAll(indices, i => (int)i);
 
     private int MaterialOf(uint index)
     {

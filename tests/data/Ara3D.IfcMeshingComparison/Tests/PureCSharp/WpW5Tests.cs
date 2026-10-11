@@ -134,7 +134,7 @@ public sealed class WpW5Tests
         TestContext.WriteLine($"curve points ({curvePts.Count}):");
         foreach (var p in curvePts)
             TestContext.WriteLine($"  ({p.X:F4},{p.Y:F4})");
-        TestContext.WriteLine($"self-intersect={PolygonTriangulator.HasSelfIntersection(curvePts)}");
+        TestContext.WriteLine($"self-intersect={PolygonWithHoles.HasSelfIntersection(curvePts)}");
 
         try
         {

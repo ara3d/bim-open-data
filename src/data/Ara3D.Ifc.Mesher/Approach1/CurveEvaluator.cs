@@ -10,11 +10,11 @@ namespace Ara3D.Ifc.Mesher.Approach1;
 /// </summary>
 public static class CurveEvaluator
 {
-    static float DefaultJoinToleranceSquared => PolygonTriangulator.Eps * PolygonTriangulator.Eps;
+    static float DefaultJoinToleranceSquared => Tolerance.Eps * Tolerance.Eps;
 
     static float CompositeJoinToleranceSquared(MeshingContext ctx)
     {
-        var tol = Math.Max(PolygonTriangulator.Eps, MathF.Abs((float)ctx.LengthScale) * 0.05f);
+        var tol = Math.Max(Tolerance.Eps, MathF.Abs((float)ctx.LengthScale) * 0.05f);
         return tol * tol;
     }
 

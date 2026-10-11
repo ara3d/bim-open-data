@@ -42,7 +42,7 @@ public sealed class CurveTests
         var points = CurveEvaluator.Evaluate2D(model.Context, model.Entity(7), dropClosure: true);
         var cleaned = PolygonWithHoles.CleanRing(points);
 
-        Assert.That(PolygonTriangulator.HasSelfIntersection(cleaned), Is.False);
+        Assert.That(PolygonWithHoles.HasSelfIntersection(cleaned), Is.False);
     }
 
     [Test]
@@ -124,7 +124,7 @@ public sealed class CurveTests
         var points = CurveEvaluator.Evaluate2D(model.Context, model.Entity(39), dropClosure: true);
         var cleaned = PolygonWithHoles.CleanRing(points);
 
-        Assert.That(PolygonTriangulator.HasSelfIntersection(cleaned), Is.False,
+        Assert.That(PolygonWithHoles.HasSelfIntersection(cleaned), Is.False,
             () => $"Self-intersection in mirrored L-angle profile with {cleaned.Count} points");
     }
 
@@ -173,7 +173,7 @@ public sealed class CurveTests
         var points = CurveEvaluator.Evaluate2D(model.Context, model.Entity(39), dropClosure: true);
         var cleaned = PolygonWithHoles.CleanRing(points);
 
-        Assert.That(PolygonTriangulator.HasSelfIntersection(cleaned), Is.False,
+        Assert.That(PolygonWithHoles.HasSelfIntersection(cleaned), Is.False,
             () => $"Self-intersection in L-angle profile with {cleaned.Count} points");
         var profile = ProfileBuilder.Build(model.Context, model.Entity(40));
         Assert.That(profile.Triangulate(), Is.Not.Empty);
@@ -195,7 +195,7 @@ public sealed class CurveTests
             var curveId = profile.GetId(IfcArbitraryClosedProfileDef.Instance.OuterCurve.Index);
             var points = CurveEvaluator.Evaluate2D(ctx, ctx.GetEntity(curveId), dropClosure: true);
             var cleaned = PolygonWithHoles.CleanRing(points);
-            Assert.That(PolygonTriangulator.HasSelfIntersection(cleaned), Is.False,
+            Assert.That(PolygonWithHoles.HasSelfIntersection(cleaned), Is.False,
                 () => $"{label} #{profileId} curve #{curveId}: {cleaned.Count} pts, scale={ctx.LengthScale}");
         }
     }
