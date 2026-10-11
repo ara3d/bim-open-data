@@ -9,17 +9,10 @@ public sealed class IfcSessionCache : IDisposable
 {
     public const int DefaultCapacity = 3;
 
-    private readonly Dictionary<FilePath, IfcSession> _sessions = [];
-    private readonly List<FilePath> _order = [];
-    private readonly object _lock = new();
-    private readonly int _capacity;
+    private readonly SessionCache<IfcSession> _sessions;
 
     public IfcSessionCache(int capacity = DefaultCapacity)
-    {
-        if (capacity < 1)
-            throw new ArgumentOutOfRangeException(nameof(capacity));
-        _capacity = capacity;
-    }
+        => _sessions = new SessionCache<IfcSession>(capacity);
 
     /// <summary>Returns the open session for a file, loading it if needed. Tools call this rather
     /// than requiring an explicit open, so any tool works as the first call against a model.</summary>
@@ -32,76 +25,20 @@ public sealed class IfcSessionCache : IDisposable
         if (!File.Exists(full.FullPath))
             throw new FileNotFoundException($"IFC file not found: {full.FullPath}");
 
-        lock (_lock)
-        {
-            if (_sessions.TryGetValue(full, out var existing))
-            {
-                Touch(full);
-                return existing;
-            }
-
-            var session = new IfcSession(full);
-            _sessions[full] = session;
-            Touch(full);
-            EvictWhileOverCapacity();
-            return session;
-        }
+        return _sessions.Get(full, file => new IfcSession(file));
     }
 
     public bool IsOpen(string path)
-    {
-        lock (_lock)
-            return _sessions.ContainsKey(new FilePath(path));
-    }
+        => _sessions.IsOpen(new FilePath(path));
 
     public bool Close(string path)
-    {
-        lock (_lock)
-        {
-            var full = new FilePath(path);
-            if (!_sessions.Remove(full, out var session))
-                return false;
-            _order.Remove(full);
-            session.Dispose();
-            return true;
-        }
-    }
+        => _sessions.Close(new FilePath(path));
 
     public int CloseAll()
-    {
-        lock (_lock)
-        {
-            var count = _sessions.Count;
-            foreach (var session in _sessions.Values)
-                session.Dispose();
-            _sessions.Clear();
-            _order.Clear();
-            return count;
-        }
-    }
+        => _sessions.CloseAll();
 
     public IReadOnlyList<IfcSession> OpenSessions()
-    {
-        lock (_lock)
-            return _order.Select(path => _sessions[path]).ToList();
-    }
-
-    private void Touch(FilePath path)
-    {
-        _order.Remove(path);
-        _order.Add(path);
-    }
-
-    private void EvictWhileOverCapacity()
-    {
-        while (_order.Count > _capacity)
-        {
-            var oldest = _order[0];
-            _order.RemoveAt(0);
-            if (_sessions.Remove(oldest, out var session))
-                session.Dispose();
-        }
-    }
+        => _sessions.OpenSessions();
 
     public void Dispose()
         => CloseAll();
