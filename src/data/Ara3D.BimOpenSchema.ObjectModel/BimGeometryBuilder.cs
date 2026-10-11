@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Ara3D.Geometry;
@@ -47,20 +47,57 @@ public class BimGeometryBuilder
         => Matrices.Add(matrix);
 
     /// <summary>
+    /// Number of meshes the last <see cref="BuildModel"/> call left empty because a vertex was NaN or infinite.
+    /// The mesh keeps its slot (so every instance's mesh index stays valid and the instance tables are unchanged)
+    /// but has no vertices and no indices; readers already flag an empty mesh as bad. Convert the count into a
+    /// BOS diagnostic (BimDataBuilder.AddDiagnostic) after BuildModel.
+    /// </summary>
+    public int NonFiniteMeshCount { get; private set; }
+
+    /// <summary>
+    /// Number of coordinates the last <see cref="BuildModel"/> call saturated at int.MinValue or int.MaxValue
+    /// because they lay beyond about +/-214.7 km. Convert the count into a BOS diagnostic after BuildModel.
+    /// </summary>
+    public int ClampedCoordinateCount { get; private set; }
+
+    /// <summary>
     /// Converts a coordinate in metres to BOS vertex units (0.1 mm), rounding to the nearest unit with halves
-    /// away from zero. Truncating instead would pull every vertex toward the origin and shrink a 5 cm tube's
-    /// volume by about 0.26 %. The product is taken in double because a float cannot count single units above
-    /// 16,777,216 (1.68 km). A coordinate beyond the int range (about 214.7 km) saturates at int.MaxValue or
-    /// int.MinValue rather than wrapping.
+    /// away from zero. Truncating instead would pull every vertex toward the origin. The product is taken in
+    /// double because a float cannot count single units above 16,777,216 (1.68 km). A coordinate beyond the int
+    /// range (about 214.7 km) saturates at int.MaxValue or int.MinValue rather than wrapping; BuildModel counts
+    /// those. A NaN has no unit count and throws; BuildModel screens meshes for non-finite vertices first.
     /// </summary>
     public static int ToVertexUnits(float metres)
-        => (int)Math.Clamp(
-            Math.Round((double)metres * BimGeometry.VertexMultiplier, MidpointRounding.AwayFromZero),
-            int.MinValue,
-            int.MaxValue);
+        => ToVertexUnits(metres, out _);
+
+    static int ToVertexUnits(float metres, out bool clamped)
+    {
+        if (!float.IsFinite(metres))
+            throw new ArgumentOutOfRangeException(nameof(metres), metres, "A vertex coordinate must be finite.");
+        var units = Math.Round((double)metres * BimGeometry.VertexMultiplier, MidpointRounding.AwayFromZero);
+        clamped = units < int.MinValue || units > int.MaxValue;
+        return (int)Math.Clamp(units, int.MinValue, int.MaxValue);
+    }
+
+    static bool IsFinite(TriangleMesh3D mesh)
+    {
+        foreach (var p in mesh.Points)
+            if (!float.IsFinite(p.X) || !float.IsFinite(p.Y) || !float.IsFinite(p.Z))
+                return false;
+        return true;
+    }
 
     public BimGeometry BuildModel()
     {
+        NonFiniteMeshCount = 0;
+        ClampedCoordinateCount = 0;
+        int Convert(float metres)
+        {
+            var units = ToVertexUnits(metres, out var clamped);
+            if (clamped) ClampedCoordinateCount++;
+            return units;
+        }
+
         var r = new BimGeometry
         {
             InstanceEntityIndex = new int[Instances.Count],
@@ -93,11 +130,17 @@ public class BimGeometryBuilder
             var m = Meshes[i];
             r.MeshVertexOffset[i] = verticesX.Count;
             r.MeshIndexOffset[i] = indices.Count;
+            if (!IsFinite(m))
+            {
+                NonFiniteMeshCount++;
+                continue;
+            }
+
             foreach (var vert in m.Points)
             {
-                verticesX.Add(ToVertexUnits(vert.X));
-                verticesY.Add(ToVertexUnits(vert.Y));
-                verticesZ.Add(ToVertexUnits(vert.Z));
+                verticesX.Add(Convert(vert.X));
+                verticesY.Add(Convert(vert.Y));
+                verticesZ.Add(Convert(vert.Z));
             }
 
             foreach (var face in m.FaceIndices)

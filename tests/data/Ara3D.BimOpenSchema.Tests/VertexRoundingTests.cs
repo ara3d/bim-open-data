@@ -44,6 +44,43 @@ public sealed class VertexRoundingTests
     }
 
     [Test]
+    public void MeshWithNaNVertex_IsLeftEmptyAndCounted_WithoutDisturbingItsNeighbours()
+    {
+        var builder = new BimGeometryBuilder();
+        builder.AddMesh(Triangle(1f));
+        builder.AddMesh(Triangle(float.NaN));
+        builder.AddMesh(Triangle(float.PositiveInfinity));
+        builder.AddMesh(Triangle(2f));
+        for (var i = 0; i < 4; i++)
+            builder.AddInstance(i, 0, i, 0, 0);
+
+        var geometry = builder.BuildModel();
+
+        Assert.That(builder.NonFiniteMeshCount, Is.EqualTo(2));
+        Assert.That(geometry.MeshVertexOffset, Is.EqualTo(new[] { 0, 3, 3, 3 }));
+        Assert.That(geometry.MeshIndexOffset, Is.EqualTo(new[] { 0, 3, 3, 3 }));
+        Assert.That(geometry.VertexX, Is.EqualTo(new[] { 10_000, 10_000, 0, 20_000, 20_000, 0 }));
+        Assert.That(geometry.InstanceMeshIndex, Is.EqualTo(new[] { 0, 1, 2, 3 }));
+        Assert.That(geometry.IndexBuffer, Is.EqualTo(new[] { 0, 1, 2, 0, 1, 2 }));
+    }
+
+    [Test]
+    public void CoordinatesBeyondIntRange_AreCounted()
+    {
+        var builder = new BimGeometryBuilder();
+        builder.AddMesh(Triangle(300_000f));
+        builder.AddMesh(Triangle(1f));
+
+        builder.BuildModel();
+
+        // Triangle(v) has five nonzero coordinates: (v, v, v), (v, 0, 0), (0, v, 0).
+        Assert.That(builder.ClampedCoordinateCount, Is.EqualTo(5));
+        Assert.That(builder.NonFiniteMeshCount, Is.EqualTo(0));
+        builder.BuildModel();
+        Assert.That(builder.ClampedCoordinateCount, Is.EqualTo(5), "counts describe the last build, not a running total");
+    }
+
+    [Test]
     public void FiveCentimetreTube_KeepsVolumeWithinOneHundredthOfAPercent()
     {
         // Rounding error per vertex is random, so the volume error shrinks as 1/sqrt(segments):
