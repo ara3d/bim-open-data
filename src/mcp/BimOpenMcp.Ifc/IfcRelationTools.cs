@@ -28,9 +28,9 @@ public static class IfcRelationTools
                     .String("kind", "Optional relation kind filter, e.g. ContainedIn, MemberOf, Voids.")
                     .Paged()
                     .Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => Relations(
-                        args.Session(cache),
+                (args, _) => args.WithSession(cache,
+                    session => Relations(
+                        session,
                         args.GetRequiredInt("id"),
                         args.GetString("direction"),
                         args.GetString("kind"),
@@ -42,8 +42,8 @@ public static class IfcRelationTools
                 "Returns the spatial hierarchy — project, site, building, storey, space — with the "
                 + "number of elements contained directly in each node.",
                 IfcToolArgs.Model().Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => SpatialTree(args.Session(cache)),
+                (args, _) => args.WithSession(cache,
+                    session => SpatialTree(session),
                     ["ifc_spatial_contents", "ifc_element_containment"]))
             .Tool(
                 "ifc_spatial_contents",
@@ -52,8 +52,8 @@ public static class IfcRelationTools
                     .Integer("id", "STEP id of the spatial container.", required: true)
                     .Paged()
                     .Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => SpatialContents(args.Session(cache), args.GetRequiredInt("id"), args.Skip(), args.Take()),
+                (args, _) => args.WithSession(cache,
+                    session => SpatialContents(session, args.GetRequiredInt("id"), args.Skip(), args.Take()),
                     ["ifc_entity", "ifc_properties"]))
             .Tool(
                 "ifc_element_containment",
@@ -62,8 +62,8 @@ public static class IfcRelationTools
                 IfcToolArgs.Model()
                     .Integer("id", "STEP id of the element.", required: true)
                     .Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => Containment(args.Session(cache), args.GetRequiredInt("id"))));
+                (args, _) => args.WithSession(cache,
+                    session => Containment(session, args.GetRequiredInt("id"))));
 
     private static IfcPage<IfcRelationEdge> Relations(
         IfcSession session,

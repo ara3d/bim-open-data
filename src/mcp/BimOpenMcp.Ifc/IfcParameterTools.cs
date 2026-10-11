@@ -21,8 +21,8 @@ public static class IfcParameterTools
                     .String("type", "Optional IFC type to count against, e.g. IFCWALLSTANDARDCASE.")
                     .Paged()
                     .Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => Parameters(args, cache),
+                (args, _) => args.WithSession(cache,
+                    session => Parameters(args, session),
                     ["ifc_parameter_values", "ifc_find_by_parameter"]))
             .Tool(
                 "ifc_parameter_values",
@@ -35,8 +35,8 @@ public static class IfcParameterTools
                     .String("type", "Optional IFC type to restrict to.")
                     .Paged()
                     .Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => Values(args, cache),
+                (args, _) => args.WithSession(cache,
+                    session => Values(args, session),
                     ["ifc_find_by_parameter"]))
             .Tool(
                 "ifc_find_by_parameter",
@@ -52,8 +52,8 @@ public static class IfcParameterTools
                     .String("type", "Optional IFC type to restrict to.")
                     .Paged()
                     .Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => Find(args, cache),
+                (args, _) => args.WithSession(cache,
+                    session => Find(args, session),
                     ["ifc_parameter_table", "ifc_entity"]))
             .Tool(
                 "ifc_parameter_table",
@@ -68,13 +68,13 @@ public static class IfcParameterTools
                     .Ids()
                     .Paged()
                     .Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => Table(args, cache),
+                (args, _) => args.WithSession(cache,
+                    session => Table(args, session),
                     ["ifc_parameters"]));
 
-    private static object Parameters(McpToolArgs args, IfcSessionCache cache)
+    private static object Parameters(McpToolArgs args, IfcSession session)
     {
-        var index = args.Session(cache).Parameters;
+        var index = session.Parameters;
         var found = IfcParameterQueries.Catalogue(
             index,
             args.GetString("name"),
@@ -89,9 +89,8 @@ public static class IfcParameterTools
         };
     }
 
-    private static object Values(McpToolArgs args, IfcSessionCache cache)
+    private static object Values(McpToolArgs args, IfcSession session)
     {
-        var session = args.Session(cache);
         var name = args.GetRequiredString("name");
         var keys = Resolve(session.Parameters, name, args.GetString("propertySet"));
         var tally = IfcParameterQueries.Tally(session.Parameters, keys, args.GetString("type"));
@@ -104,9 +103,8 @@ public static class IfcParameterTools
         };
     }
 
-    private static object Find(McpToolArgs args, IfcSessionCache cache)
+    private static object Find(McpToolArgs args, IfcSession session)
     {
-        var session = args.Session(cache);
         var value = args.GetString("value");
         var op = IfcParameterQueries.ParseOp(args.GetString("op"), value != null);
         var keys = Resolve(session.Parameters, args.GetRequiredString("name"), args.GetString("propertySet"));
@@ -126,9 +124,8 @@ public static class IfcParameterTools
         };
     }
 
-    private static object Table(McpToolArgs args, IfcSessionCache cache)
+    private static object Table(McpToolArgs args, IfcSession session)
     {
-        var session = args.Session(cache);
         var (columns, rows) = IfcParameterTable.Build(
             session.Parameters,
             session.Resolver,

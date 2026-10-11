@@ -34,7 +34,7 @@ public static class IfcDuck
             throw new ArgumentOutOfRangeException(nameof(take), "take must be at least 1.");
 
         var inner = ReadOnlyQuery(sql);
-        using var conn = Connect(database);
+        using var conn = OpenReadOnly(database);
         var total = Scalar(conn, $"SELECT count(*) FROM ({inner}) AS _q");
         var rows = Read(conn, $"SELECT * FROM ({inner}) AS _q LIMIT {take} OFFSET {skip}");
         return new IfcQueryResult(total, skip, rows.Rows.Count, rows.Columns, rows.Rows);
@@ -49,7 +49,7 @@ public static class IfcDuck
         if (!string.IsNullOrEmpty(directory))
             Directory.CreateDirectory(directory);
 
-        using var conn = Connect(database);
+        using var conn = OpenReadOnly(database);
         var total = Scalar(conn, $"SELECT count(*) FROM ({inner}) AS _q");
         Execute(conn, $"COPY ({inner}) TO '{Escape(output.FullPath.Replace('\\', '/'))}' ({CopyOptions(output)})");
         return total;
@@ -57,7 +57,7 @@ public static class IfcDuck
 
     public static IReadOnlyList<IfcTableInfo> Tables(FilePath database, string? only = null)
     {
-        using var conn = Connect(database);
+        using var conn = OpenReadOnly(database);
         var columns = Read(
             conn,
             "SELECT table_name, column_name, data_type FROM information_schema.columns "
@@ -123,9 +123,12 @@ public static class IfcDuck
             _ => "FORMAT CSV, HEADER",
         };
 
-    private static DuckDBConnection Connect(FilePath database)
+    /// <summary>A read-only connection. A session's database lives in <see cref="DerivedFiles"/>,
+    /// where other servers may have it open; DuckDB lets any number of processes read a file but
+    /// lets one that writes lock out the rest. It also keeps a query from changing the database.</summary>
+    public static DuckDBConnection OpenReadOnly(FilePath database)
     {
-        var conn = new DuckDBConnection($"DataSource={database.FullPath}");
+        var conn = new DuckDBConnection($"DataSource={database.FullPath};ACCESS_MODE=READ_ONLY");
         conn.Open();
         return conn;
     }

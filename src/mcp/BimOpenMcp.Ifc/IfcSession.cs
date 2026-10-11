@@ -15,11 +15,14 @@ public sealed class IfcSession : IDisposable
     private IfcPropData? _properties;
     private IfcParameterIndex? _parameters;
     private readonly BosSessionCache _bosSessions;
+    private readonly object _conversionLock = new();
     private IfcBosArtifacts? _conversion;
+    private SessionLease<BosSession>? _bos;
     private IfcMeshingResult? _meshing;
 
     /// <summary>Opens the file. <paramref name="bosSessions"/> holds the session over its BOS
-    /// conversion once one is built; disposing this session closes that one.</summary>
+    /// conversion once one is built, and this session holds a lease on it, so the cache does not
+    /// evict it while this session is open; disposing this session closes it.</summary>
     public IfcSession(FilePath path, BosSessionCache bosSessions)
     {
         _bosSessions = bosSessions;
@@ -51,18 +54,30 @@ public sealed class IfcSession : IDisposable
     public IfcParameterIndex Parameters
         => _parameters ??= new IfcParameterIndex(this);
 
-    /// <summary>The BOS conversion, built on first use. Unlike the other indexes this one re-reads
-    /// the file from disk with geometry enabled, so it is by far the most expensive thing a session
-    /// can hold.</summary>
+    /// <summary>The BOS conversion, built on first use or found where an earlier server built it.
+    /// Unlike the other indexes this one re-reads the file from disk with geometry enabled, so it
+    /// is by far the most expensive thing a session can hold.</summary>
     public IfcBosArtifacts Conversion
-        => _conversion ??= new IfcBosArtifacts(Path);
+    {
+        get
+        {
+            lock (_conversionLock)
+                return _conversion ??= new IfcBosArtifacts(Path, _bosSessions.Files);
+        }
+    }
 
     /// <summary>The BOS session over <see cref="Conversion"/>: its tables, scene, and DuckDB
     /// database, held in the shared <see cref="BosSessionCache"/> under the conversion's bosPath,
-    /// so the bos_* tools given that path use it too. Converts on first use, and reads the
-    /// conversion's .bos again if the cache has evicted the session since.</summary>
+    /// so the bos_* tools given that path use it too. Converts on first use. The cache keeps it
+    /// open, whatever its capacity, until this session closes.</summary>
     public BosSession Bos
-        => _bosSessions.Get(Conversion.BosPath.FullPath);
+    {
+        get
+        {
+            lock (_conversionLock)
+                return (_bos ??= _bosSessions.Lease(Conversion.BosPath.FullPath)).Session;
+        }
+    }
 
     public bool BosIsBuilt
         => _conversion != null;
@@ -78,19 +93,31 @@ public sealed class IfcSession : IDisposable
     public bool MeshingIsBuilt
         => _meshing != null;
 
+    /// <summary>Converts the file again, replacing the stored conversion, and opens a new BOS
+    /// session over it.</summary>
     public BosSession RebuildBos()
     {
-        DropConversion();
-        return Bos;
+        lock (_conversionLock)
+        {
+            DropConversion();
+            _conversion = new IfcBosArtifacts(Path, _bosSessions.Files, rebuild: true);
+            return Bos;
+        }
     }
 
+    /// <summary>Lets go of the BOS session and closes it in the cache; a call still holding it
+    /// keeps it until that call ends.</summary>
     private void DropConversion()
     {
-        if (_conversion == null)
-            return;
-        _bosSessions.Close(_conversion.BosPath.FullPath);
-        _conversion.Dispose();
-        _conversion = null;
+        lock (_conversionLock)
+        {
+            if (_conversion == null)
+                return;
+            _bos?.Dispose();
+            _bos = null;
+            _bosSessions.Close(_conversion.BosPath.FullPath);
+            _conversion = null;
+        }
     }
 
     public void Dispose()

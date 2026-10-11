@@ -15,8 +15,8 @@ public static class IfcEntityTools
                 IfcToolArgs.Model()
                     .Integer("id", "STEP id of the entity, e.g. 4213 for #4213.", required: true)
                     .Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => Entity(args.Session(cache), args.GetRequiredInt("id")),
+                (args, _) => args.WithSession(cache,
+                    session => Entity(session, args.GetRequiredInt("id")),
                     ["ifc_properties", "ifc_relations"]))
             .Tool(
                 "ifc_entities_of_type",
@@ -26,8 +26,8 @@ public static class IfcEntityTools
                     .String("type", "IFC type name, e.g. IFCDOOR.", required: true)
                     .Paged()
                     .Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => EntitiesOfType(args.Session(cache), args.GetRequiredString("type"), args.Skip(), args.Take()),
+                (args, _) => args.WithSession(cache,
+                    session => EntitiesOfType(session, args.GetRequiredString("type"), args.Skip(), args.Take()),
                     ["ifc_entity", "ifc_properties"]))
             .Tool(
                 "ifc_attributes",
@@ -36,8 +36,8 @@ public static class IfcEntityTools
                 IfcToolArgs.Model()
                     .Integer("id", "STEP id of the entity.", required: true)
                     .Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => Attributes(args.Session(cache), args.GetRequiredInt("id"))));
+                (args, _) => args.WithSession(cache,
+                    session => Attributes(session, args.GetRequiredInt("id"))));
 
     private static object Entity(IfcSession session, int id)
     {

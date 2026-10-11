@@ -34,24 +34,24 @@ public static class IfcGeometryTools
                 + "to restrict to specific elements. This returns measurements, not raw vertices — use "
                 + "ifc_export_glb to get the geometry itself.",
                 IfcToolArgs.Model().Ids().Paged().Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => Mesh(args.Session(cache), args.GetIds(), args.Skip(), args.Take()),
+                (args, _) => args.WithSession(cache,
+                    session => Mesh(session, args.GetIds(), args.Skip(), args.Take()),
                     ["ifc_export_glb", "ifc_bounds", "ifc_volume"]))
             .Tool(
                 "ifc_bounds",
                 "Returns the axis-aligned bounding box of the whole model and, unless 'ids' narrows it, "
                 + "of each element. Every box is given as min, max, center and size.",
                 IfcToolArgs.Model().Ids().Paged().Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => Bounds(args.Session(cache), args.GetIds(), args.Skip(), args.Take())))
+                (args, _) => args.WithSession(cache,
+                    session => Bounds(session, args.GetIds(), args.Skip(), args.Take())))
             .Tool(
                 "ifc_volume",
                 "Returns signed volume and surface area computed from the meshed geometry: model totals "
                 + "plus a per-element breakdown. Signed volume is negative when a solid's faces wind "
                 + "inward, so its magnitude is the physical volume. Set 'ids' to restrict the breakdown.",
                 IfcToolArgs.Model().Ids().Paged().Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => Volume(args.Session(cache), args.GetIds(), args.Skip(), args.Take())))
+                (args, _) => args.WithSession(cache,
+                    session => Volume(session, args.GetIds(), args.Skip(), args.Take())))
             .Tool(
                 "ifc_export_glb",
                 "Writes a model's geometry to binary glTF (.glb), y-up in metres, returning the path, byte "
@@ -68,10 +68,10 @@ public static class IfcGeometryTools
                     .Ids()
                     .String("outputPath", "Path of the .glb file to write.", required: true)
                     .Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => Export(
+                (args, _) => args.WithBos(cache,
+                    bos => Export(
                         new FilePath(args.GetRequiredString("path")),
-                        args.BosSession(cache),
+                        bos,
                         args.GetIds(),
                         args.GetRequiredString("outputPath"))))
             .Tool(
@@ -80,8 +80,8 @@ public static class IfcGeometryTools
                 + "to see what geometry could not be built and why. Messages are paged; errors are "
                 + "returned whole.",
                 IfcToolArgs.Model().Paged().Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => Diagnostics(args.Session(cache), args.Skip(), args.Take())));
+                (args, _) => args.WithSession(cache,
+                    session => Diagnostics(session, args.Skip(), args.Take())));
 
     private static object Mesh(IfcSession session, IReadOnlyList<int>? ids, int skip, int take)
         => new

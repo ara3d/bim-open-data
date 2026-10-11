@@ -17,8 +17,8 @@ public static class IfcPropertyTools
                     .Integer("id", "STEP id of the element.", required: true)
                     .Paged()
                     .Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => Properties(args.Session(cache), args.GetRequiredInt("id"), false, args.Skip(), args.Take()),
+                (args, _) => args.WithSession(cache,
+                    session => Properties(session, args.GetRequiredInt("id"), false, args.Skip(), args.Take()),
                     ["ifc_quantities", "ifc_relations"]))
             .Tool(
                 "ifc_quantities",
@@ -27,16 +27,16 @@ public static class IfcPropertyTools
                     .Integer("id", "STEP id of the element.", required: true)
                     .Paged()
                     .Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => Properties(args.Session(cache), args.GetRequiredInt("id"), true, args.Skip(), args.Take())))
+                (args, _) => args.WithSession(cache,
+                    session => Properties(session, args.GetRequiredInt("id"), true, args.Skip(), args.Take())))
             .Tool(
                 "ifc_property_sets",
                 "Lists the names and ids of the property sets attached to an element, without their values.",
                 IfcToolArgs.Model()
                     .Integer("id", "STEP id of the element.", required: true)
                     .Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => PropertySets(args.Session(cache), args.GetRequiredInt("id")),
+                (args, _) => args.WithSession(cache,
+                    session => PropertySets(session, args.GetRequiredInt("id")),
                     ["ifc_properties"]));
 
     private static object Properties(IfcSession session, int id, bool quantities, int skip, int take)

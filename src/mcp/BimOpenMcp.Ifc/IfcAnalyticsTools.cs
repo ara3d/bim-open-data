@@ -21,14 +21,16 @@ public static class IfcAnalyticsTools
                 "ifc_to_bos",
                 "Converts a model to BIM Open Schema (a zip of Parquet tables) and builds the DuckDB "
                 + "database that ifc_sql and ifc_table query. Set 'outputPath' to also save the .bos "
-                + "file somewhere permanent. Set 'refresh' to true to redo a conversion after the "
-                + "IFC file has changed on disk. Expensive: it re-reads the whole file.",
+                + "file somewhere permanent. Expensive the first time: it re-reads the whole file. "
+                + "The conversion is kept, keyed by the file's path, size and write time, so a "
+                + "changed file is converted again and a restarted server reuses an unchanged one. "
+                + "Set 'refresh' to true to convert again anyway.",
                 IfcToolArgs.Model()
                     .String("outputPath", "Optional path to save a copy of the .bos file to.")
                     .Boolean("refresh", "Rebuild even if this model has already been converted. Default false.")
                     .Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => ToBos(args.Session(cache), args.GetString("outputPath"), args.GetBool("refresh") ?? false),
+                (args, _) => args.WithSession(cache,
+                    session => ToBos(session, args.GetString("outputPath"), args.GetBool("refresh") ?? false),
                     ["ifc_table", "ifc_sql"]))
             .Tool(
                 "ifc_table",
@@ -50,8 +52,8 @@ public static class IfcAnalyticsTools
                     .String("table", "Optional single table to describe, e.g. Entities.")
                     .Paged()
                     .Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => Tables(args.BosSession(cache), args.GetString("table"), args.Skip(), args.Take()),
+                (args, _) => args.WithBos(cache,
+                    bos => Tables(bos, args.GetString("table"), args.Skip(), args.Take()),
                     ["ifc_sql"]))
             .Tool(
                 "ifc_sql",
@@ -64,9 +66,9 @@ public static class IfcAnalyticsTools
                     .String("sql", "A single SELECT or WITH statement.", required: true)
                     .Paged()
                     .Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => IfcDuck.Query(
-                        args.BosSession(cache).DatabasePath,
+                (args, _) => args.WithBos(cache,
+                    bos => IfcDuck.Query(
+                        bos.DatabasePath,
                         args.GetRequiredString("sql"),
                         args.Skip(),
                         args.Take())))
@@ -80,15 +82,15 @@ public static class IfcAnalyticsTools
                     .String("sql", "A single SELECT or WITH statement.", required: true)
                     .String("outputPath", "Path of the file to write.", required: true)
                     .Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => Export(
-                        args.BosSession(cache),
+                (args, _) => args.WithBos(cache,
+                    bos => Export(
+                        bos,
                         args.GetRequiredString("sql"),
                         args.GetRequiredString("outputPath"))));
 
     private static object ToBos(IfcSession session, string? outputPath, bool refresh)
     {
-        var bos = refresh || !session.BosIsBuilt ? session.RebuildBos() : session.Bos;
+        var bos = refresh ? session.RebuildBos() : session.Bos;
         var saved = outputPath == null ? null : CopyTo(bos.BosPath, new FilePath(outputPath)).FullPath;
         return new
         {

@@ -9,6 +9,9 @@ var port = ParsePort(args);
 
 Console.OutputEncoding = new UTF8Encoding(false);
 
+// Conversions and databases an earlier run left behind are reused when current; the stale ones go.
+DerivedFiles.Default.Sweep(DerivedFiles.DefaultUnusedFor);
+
 using var cache = new IfcSessionCache();
 using var mcp = IfcMcpServer.Create(cache, useHttp ? McpTransport.Http : McpTransport.Stdio, port);
 

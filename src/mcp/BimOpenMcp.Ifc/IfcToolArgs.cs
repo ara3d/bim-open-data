@@ -2,20 +2,44 @@ using Ara3D.MCP;
 
 namespace BimOpenMcp.Ifc;
 
-/// <summary>The argument and schema fragments every IFC tool shares. Tools resolve their model
-/// through <see cref="Session"/>, which opens the file if it is not already open, so no tool
-/// depends on <c>ifc_open</c> having been called first.</summary>
+/// <summary>The argument and schema fragments every IFC tool shares. Tools run through
+/// <see cref="WithSession"/>, which opens the file if it is not already open, so no tool depends on
+/// <c>ifc_open</c> having been called first, and holds the session for the length of the call, so
+/// another call cannot dispose it mid-answer.</summary>
 internal static class IfcToolArgs
 {
     public const int DefaultTake = 100;
 
-    public static IfcSession Session(this McpToolArgs args, IfcSessionCache cache)
-        => cache.Get(args.GetRequiredString("path"));
+    /// <summary>Runs <paramref name="action"/> on the session of the IFC file at 'path', holding a
+    /// lease on it until the answer is built.</summary>
+    public static Task<string> WithSession(
+        this McpToolArgs args,
+        IfcSessionCache cache,
+        Func<IfcSession, object> action,
+        IReadOnlyList<string>? next = null)
+        => ToolRunner.RunAsync(
+            () =>
+            {
+                using var lease = cache.Lease(args.GetRequiredString("path"));
+                return action(lease.Session);
+            },
+            next);
 
-    /// <summary>The BOS session of the model at 'path', a .bos file or an IFC file's conversion:
-    /// what the tools that read only the converted model (SQL, tables, GLB) work on.</summary>
-    public static BosSession BosSession(this McpToolArgs args, IfcSessionCache cache)
-        => cache.GetBos(args.GetRequiredString("path"));
+    /// <summary>Runs <paramref name="action"/> on the BOS session of the model at 'path', a .bos
+    /// file or an IFC file's conversion: what the tools that read only the converted model (SQL,
+    /// tables, GLB) work on. Holds a lease on it until the answer is built.</summary>
+    public static Task<string> WithBos(
+        this McpToolArgs args,
+        IfcSessionCache cache,
+        Func<BosSession, object> action,
+        IReadOnlyList<string>? next = null)
+        => ToolRunner.RunAsync(
+            () =>
+            {
+                using var lease = cache.LeaseBos(args.GetRequiredString("path"));
+                return action(lease.Session);
+            },
+            next);
 
     public static int Skip(this McpToolArgs args)
         => args.GetInt("skip") ?? 0;

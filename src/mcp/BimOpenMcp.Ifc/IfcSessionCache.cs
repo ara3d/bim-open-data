@@ -13,34 +13,63 @@ public sealed class IfcSessionCache : IDisposable
 
     private readonly SessionCache<IfcSession> _sessions;
 
-    public IfcSessionCache(int capacity = DefaultCapacity, int bosCapacity = BosSessionCache.DefaultCapacity)
+    /// <summary>A cache whose sessions keep their conversions and databases in
+    /// <paramref name="files"/>, by default <see cref="DerivedFiles.Default"/>.</summary>
+    public IfcSessionCache(
+        int capacity = DefaultCapacity,
+        int bosCapacity = BosSessionCache.DefaultCapacity,
+        DerivedFiles? files = null)
     {
         _sessions = new SessionCache<IfcSession>(capacity);
-        BosSessions = new BosSessionCache(bosCapacity);
+        BosSessions = new BosSessionCache(bosCapacity, files);
     }
 
     public BosSessionCache BosSessions { get; }
 
     /// <summary>Returns the open session for a file, loading it if needed. Tools call this rather
     /// than requiring an explicit open, so any tool works as the first call against a model.
-    /// A .bos or .frag path fails with a message naming the tools that read it.</summary>
+    /// A .bos or .frag path fails with a message naming the tools that read it. Without a lease:
+    /// for a caller that runs one call at a time.</summary>
     public IfcSession Get(string path)
+        => _sessions.Get(Existing(path), Open);
+
+    /// <summary>As <see cref="Get"/>, with a lease that keeps the session open until it is
+    /// disposed.</summary>
+    public SessionLease<IfcSession> Lease(string path)
+        => _sessions.Lease(Existing(path), Open);
+
+    /// <summary>The BOS session the query tools read for <paramref name="path"/>: the model a .bos
+    /// file holds, or an IFC file's conversion, converting it on first use. For an IFC file the
+    /// lease holds the IFC session, which holds its conversion's session.</summary>
+    public SessionLease<BosSession> LeaseBos(string path)
+    {
+        if (IsBos(path))
+            return BosSessions.Lease(path);
+
+        var ifc = Lease(path);
+        try
+        {
+            return new SessionLease<BosSession>(ifc.Session.Bos, ifc.Dispose);
+        }
+        catch
+        {
+            ifc.Dispose();
+            throw;
+        }
+    }
+
+    private IfcSession Open(FilePath path)
+        => new(path, BosSessions);
+
+    private static FilePath Existing(string path)
     {
         if (string.IsNullOrWhiteSpace(path))
             throw new ArgumentException("An IFC file path is required.", nameof(path));
 
         var full = new FilePath(path);
         RejectNonIfc(full);
-        if (!File.Exists(full.FullPath))
-            throw new FileNotFoundException($"IFC file not found: {full.FullPath}");
-
-        return _sessions.Get(full, file => new IfcSession(file, BosSessions));
+        return File.Exists(full.FullPath) ? full : throw new FileNotFoundException($"IFC file not found: {full.FullPath}");
     }
-
-    /// <summary>The BOS session the query tools read for <paramref name="path"/>: the model a .bos
-    /// file holds, or an IFC file's conversion, converting it on first use.</summary>
-    public BosSession GetBos(string path)
-        => IsBos(path) ? BosSessions.Get(path) : Get(path).Bos;
 
     public static bool IsBos(string path)
         => Path.GetExtension(path).Equals(".bos", StringComparison.OrdinalIgnoreCase);

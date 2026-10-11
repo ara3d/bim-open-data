@@ -12,8 +12,8 @@ public static class IfcModelTools
                 "Opens an IFC file and reports its schema and size. Optional — every other tool "
                 + "opens the file on demand — but useful to pay the parse cost once up front.",
                 IfcToolArgs.Model().Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => Describe(args.Session(cache)),
+                (args, _) => args.WithSession(cache,
+                    session => Describe(session),
                     ["ifc_header", "ifc_type_counts", "ifc_spatial_tree"]))
             .Tool(
                 "ifc_close",
@@ -30,13 +30,13 @@ public static class IfcModelTools
                 "ifc_header",
                 "Returns the STEP header of an IFC file: description, originating file name, and schema.",
                 IfcToolArgs.Model().Build(),
-                (args, _) => ToolRunner.RunAsync(() => Header(args.Session(cache))))
+                (args, _) => args.WithSession(cache, session => Header(session)))
             .Tool(
                 "ifc_type_counts",
                 "Counts entities by IFC type, most common first. The fastest way to see what a model contains.",
                 IfcToolArgs.Model().Paged().Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => TypeCounts(args.Session(cache), args.Skip(), args.Take()),
+                (args, _) => args.WithSession(cache,
+                    session => TypeCounts(session, args.Skip(), args.Take()),
                     ["ifc_entities_of_type"]))
             .Tool(
                 "ifc_search",
@@ -47,9 +47,9 @@ public static class IfcModelTools
                     .String("type", "Optional IFC type filter, e.g. IFCWALL.")
                     .Paged()
                     .Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => Search(
-                        args.Session(cache),
+                (args, _) => args.WithSession(cache,
+                    session => Search(
+                        session,
                         args.GetRequiredString("text"),
                         args.GetString("type"),
                         args.Skip(),

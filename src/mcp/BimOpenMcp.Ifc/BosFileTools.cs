@@ -45,8 +45,8 @@ public static class BosFileTools
                     .String("table", "Optional single table to describe, e.g. Entities.")
                     .Paged()
                     .Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => IfcAnalyticsTools.Tables(Session(sessions, args), args.GetString("table"), args.Skip(), args.Take()),
+                (args, _) => WithSession(sessions, args,
+                    session => IfcAnalyticsTools.Tables(session, args.GetString("table"), args.Skip(), args.Take()),
                     ["bos_sql"]))
             .Tool(
                 "bos_sql",
@@ -59,9 +59,9 @@ public static class BosFileTools
                     .String("sql", "A single SELECT or WITH statement.", required: true)
                     .Paged()
                     .Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => IfcDuck.Query(
-                        Session(sessions, args).DatabasePath,
+                (args, _) => WithSession(sessions, args,
+                    session => IfcDuck.Query(
+                        session.DatabasePath,
                         args.GetRequiredString("sql"),
                         args.Skip(),
                         args.Take())))
@@ -75,8 +75,8 @@ public static class BosFileTools
                     .String("entityIndices", "Optional comma-separated entity indices (EntityText.EntityIndex, the row in the Entities table; not STEP ids), e.g. '1796,1802'. Omit for the whole model.")
                     .String("outputPath", "Path of the .glb file to write.", required: true)
                     .Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => ExportGlb(Session(sessions, args), args.GetIntList("entityIndices"), args.GetRequiredString("outputPath"))))
+                (args, _) => WithSession(sessions, args,
+                    session => ExportGlb(session, args.GetIntList("entityIndices"), args.GetRequiredString("outputPath"))))
             .Tool(
                 "bos_export_usd",
                 "Writes a BOS model as an OpenUSD text stage (.usda) that Omniverse, Blender, Houdini "
@@ -89,8 +89,8 @@ public static class BosFileTools
                 BosPath()
                     .String("outputPath", "Path of the .usda file to write.", required: true)
                     .Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => ExportUsd(Session(sessions, args), args.GetRequiredString("outputPath"))))
+                (args, _) => WithSession(sessions, args,
+                    session => ExportUsd(session, args.GetRequiredString("outputPath"))))
             .Tool(
                 "bos_export_bcf",
                 "Runs a read-only SQL query over a BOS model and writes its rows as a BCF 3.0 file "
@@ -105,9 +105,9 @@ public static class BosFileTools
                     .String("outputPath", "Path of the .bcf file to write.", required: true)
                     .String("guidSeed", "Optional; the same seed keeps topic GUIDs stable across reruns of one check. Default: the .bos file name, so two models' topics never share a GUID.")
                     .Build(),
-                (args, _) => ToolRunner.RunAsync(
-                    () => ExportBcf(
-                        Session(sessions, args),
+                (args, _) => WithSession(sessions, args,
+                    session => ExportBcf(
+                        session,
                         args.GetRequiredString("sql"),
                         args.GetRequiredString("outputPath"),
                         args.GetString("guidSeed"))));
@@ -115,8 +115,20 @@ public static class BosFileTools
     private static McpSchemaBuilder BosPath()
         => McpSchema.Object().String("bosPath", "Absolute path to the .bos file (from ifc_to_bos or frag_to_bos).", required: true);
 
-    private static BosSession Session(BosSessionCache sessions, McpToolArgs args)
-        => sessions.Get(args.GetRequiredString("bosPath"));
+    /// <summary>Runs <paramref name="action"/> on the session of the .bos file at bosPath, holding a
+    /// lease on it until the answer is built, so another call cannot dispose it mid-answer.</summary>
+    private static Task<string> WithSession(
+        BosSessionCache sessions,
+        McpToolArgs args,
+        Func<BosSession, object> action,
+        IReadOnlyList<string>? next = null)
+        => ToolRunner.RunAsync(
+            () =>
+            {
+                using var lease = sessions.Lease(args.GetRequiredString("bosPath"));
+                return action(lease.Session);
+            },
+            next);
 
     /// <summary>Reads the .frag, writes the .bos, and holds the model as a session, so the bos_*
     /// tools given the returned bosPath do not read it again. The database beside the .bos is a
@@ -129,7 +141,8 @@ public static class BosFileTools
         var bos = Output(outputPath ?? Path.ChangeExtension(input.FullPath, ".bos"));
         var data = FragmentsToBos.Read(input);
         data.WriteToParquetZip(bos);
-        var session = sessions.Put(new BosSession(bos, data));
+        using var lease = sessions.Put(new BosSession(bos, data, sessions.Files));
+        var session = lease.Session;
         var database = new FilePath(Path.ChangeExtension(bos.FullPath, ".duckdb"));
         CopyInPlace(session.DatabasePath, database);
         return new
@@ -169,7 +182,7 @@ public static class BosFileTools
     private static object ExportBcf(BosSession session, string sql, string outputPath, string? guidSeed)
     {
         IReadOnlyList<BcfIssue> issues;
-        using (var conn = BosDuckDb.Open(session.DatabasePath))
+        using (var conn = IfcDuck.OpenReadOnly(session.DatabasePath))
             issues = conn.Query(IfcDuck.ReadOnlyQuery(sql)).ToBcfIssues();
         var output = Output(outputPath);
         var options = new BcfOptions { GuidSeed = guidSeed ?? Path.GetFileNameWithoutExtension(session.BosPath.FullPath) };

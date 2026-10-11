@@ -97,7 +97,25 @@ deliberate: `BosScene` cannot tell an unread table from an empty one. On Schepen
 (`samples/public/schependomlaan.bos`) a repeated `bos_export_glb` takes 0.32 s instead of 0.78 s.
 
 **Lifetime.** Every `IfcEntity` points into the file's pinned buffer. Nothing derived from a session
-may outlive it, which is why tools serialize their answers before returning.
+may outlive it, which is why tools serialize their answers before returning. Each tool call holds a
+lease (`SessionLease`) on the session it reads for the length of the call: the cache never evicts a
+held session, and one closed or replaced while held is disposed when its last lease ends, so over
+HTTP a call on another model cannot dispose a session mid-answer. A cache can therefore hold more
+sessions than its capacity while calls are running. An IFC session holds a lease on its
+conversion's BOS session for as long as it is open, so the `bosPath` and `databasePath` that
+`ifc_to_bos` returned stay valid however many other `.bos` files are opened.
+
+**Derived files.** The conversions and the DuckDB databases live under one temp root,
+`%TEMP%/bimopenmcp` (`DerivedFiles`), in folders named by a content key: the source's path, size and
+write time, and the build of the converter and view code. A folder is built under a temporary name
+and moved into place whole, with a marker listing every file it was made from (for a database, the
+metric dictionary CSV too). A restarted server, or a second server on the same machine, finds the
+folder and reuses it; on FZK-Haus the test suite drops from about 70 s to 15 s once the conversions
+exist. Closing a session deletes nothing. At start the server sweeps the root: a folder whose inputs
+changed or vanished, one unused for seven days, or a half-built one older than an hour is deleted,
+unless another process holds it open. The query tools open the database read-only, since another
+server may be reading it. A metric dictionary that appears after the database was built is not seen
+until the `.bos` changes.
 
 **Parameters run the other way.** `ifc_properties` and friends answer "what does element N carry"
 and need an id in hand. Every question worth asking first runs the other way — which elements are
@@ -110,10 +128,10 @@ memory — and in particular it does not touch the BOS conversion, so parameter 
 `ifc_sql` remains the tool for arbitrary joins; these four cover the common shapes without SQL.
 
 **Analytics.** `IfcBosArtifacts` converts a model to a `.bos` (a zip of Brotli-compressed Parquet
-tables) in a temp folder owned by the IFC session; the session opens it as a `BosSession`, whose
-DuckDB database the SQL tools query. Closing the model or evicting it from the cache closes the BOS
-session and deletes both. The conversion is a second whole-file parse, so it happens once per
-session rather than once per query.
+tables) in `DerivedFiles`; the IFC session opens it as a `BosSession`, whose DuckDB database the SQL
+tools query. Closing the model or evicting it from the cache closes the BOS session and keeps both
+files for the next session. The conversion is a second whole-file parse, so it happens once per
+file rather than once per query.
 
 **Why the views matter.** BIM Open Schema interns every string and every enum: `Entities.Name` is an
 index into `Strings`, `Entities.Category` is an index into `Entities`, and `Parameters.Value` is a
