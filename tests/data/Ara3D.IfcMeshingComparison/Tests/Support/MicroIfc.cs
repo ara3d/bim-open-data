@@ -1,6 +1,6 @@
 using System.Text;
 using Ara3D.IfcLoader;
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IO.StepParser;
 using Ara3D.Memory;
 using BimOpenData.TestSupport;
@@ -28,7 +28,7 @@ public static class MicroIfc
         var path = Path.Combine(Path.GetTempPath(), $"micro-ifc-{Guid.NewGuid():N}.ifc");
         File.WriteAllText(path, WrapData(dataLines));
         var file = new IfcFile(new Ara3D.Utils.FilePath(path), includeGeometry: false);
-        return new MicroIfcModel(new MeshingContext(file));
+        return new MicroIfcModel(new MeshingContext(file.EntityResolver));
     }
 }
 

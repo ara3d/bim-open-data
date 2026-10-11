@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PlatformTarget>x64</PlatformTarget>
-    <Description>WIP library comparing two pure C# IFC meshing approaches.</Description>
+    <Description>Meshes IFC geometry from its STEP definitions in pure C#: swept solids, breps, tessellated sets, booleans, openings, and placements.</Description>
   </PropertyGroup>
 
   <ItemGroup>

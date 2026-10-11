@@ -1,7 +1,7 @@
 using Ara3D.IfcTypes;
 using Ara3D.IO.StepParser;
 
-namespace Ara3D.Ifc.Mesher.Approach1;
+namespace Ara3D.Ifc.Mesher;
 
 /// <summary>Resolves IFC length units to a scale factor (file units → meters).</summary>
 public static class Units

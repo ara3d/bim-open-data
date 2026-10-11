@@ -1,7 +1,7 @@
 using System.Text;
 using Ara3D.Geometry;
 using Ara3D.IfcLoader;
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcMeshingComparison.Harness;
 using Ara3D.Models;
 using Ara3D.Utils;
@@ -48,7 +48,7 @@ public static class OracleComparison
     {
         TestFiles.RequireExists(path);
         using var stepFile = new IfcFile(path, includeGeometry: false);
-        var (model, _) = ModelAssembler.BuildModel(stepFile);
+        var (model, _) = ModelAssembler.BuildModel(stepFile.EntityResolver);
         var mine = ComputeStats(model);
         var oracle = ComputeOracleStats(path);
         return (mine, oracle);

@@ -1,5 +1,5 @@
 using Ara3D.Geometry;
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcMeshingComparison.Harness;
 using Ara3D.IfcMeshingComparison.Tests.Support;
 

@@ -8,7 +8,7 @@ using BimOpenData.TestSupport;
 namespace BimOpenMcp.Ifc.Tests;
 
 /// <summary>Not part of the gate: compares, per element (STEP id), the two geometry sources
-/// ifc_export_glb could write from. One is the Approach1 mesher the session holds for ifc_mesh
+/// ifc_export_glb could write from. One is the pure C# mesher (Ara3D.Ifc.Mesher) the session holds for ifc_mesh
 /// (<see cref="IfcSession.Meshing"/>); the other is the IFC-to-BOS conversion
 /// (<see cref="IfcSession.Bos"/>, web-ifc geometry through Ara3D.Ifc.Bos), which ifc_export_glb
 /// writes from. Prints how long each took, a summary, and every element whose instance count,
@@ -36,33 +36,33 @@ public sealed class GlbSourceComparisonTests
         using var session = new IfcSession(new FilePath(path), bosSessions);
 
         var watch = Stopwatch.StartNew();
-        var approach1 = Measure(session.Model(), entity => entity);
-        var approach1Ms = watch.ElapsedMilliseconds;
+        var mesher = Measure(session.Model(), entity => entity);
+        var mesherMs = watch.ElapsedMilliseconds;
 
         watch.Restart();
         var data = session.Bos.Data;
         var bosMs = watch.ElapsedMilliseconds;
         var fromBos = Measure(data.Geometry.ToModel3D(), row => StepId(data, row));
 
-        var shared = approach1.Keys.Intersect(fromBos.Keys).ToList();
-        var gaps = shared.ToDictionary(id => id, id => Gap(approach1[id].Bounds, fromBos[id].Bounds));
+        var shared = mesher.Keys.Intersect(fromBos.Keys).ToList();
+        var gaps = shared.ToDictionary(id => id, id => Gap(mesher[id].Bounds, fromBos[id].Bounds));
         TestContext.Progress.WriteLine(
-            $"{Path.GetFileName(path)}: Approach1 {approach1Ms} ms, BOS conversion {bosMs} ms (converted and read back); " +
-            $"elements Approach1 {approach1.Count}, BOS {fromBos.Count}, both {shared.Count}; " +
-            $"same instance count {shared.Count(id => approach1[id].Instances == fromBos[id].Instances)}, " +
-            $"same triangle count {shared.Count(id => approach1[id].Triangles == fromBos[id].Triangles)}, " +
+            $"{Path.GetFileName(path)}: mesher {mesherMs} ms, BOS conversion {bosMs} ms (converted and read back); " +
+            $"elements mesher {mesher.Count}, BOS {fromBos.Count}, both {shared.Count}; " +
+            $"same instance count {shared.Count(id => mesher[id].Instances == fromBos[id].Instances)}, " +
+            $"same triangle count {shared.Count(id => mesher[id].Triangles == fromBos[id].Triangles)}, " +
             $"bounds within {BoundsTolerance} m {gaps.Values.Count(g => g <= BoundsTolerance)}; " +
-            $"triangles Approach1 {approach1.Values.Sum(e => e.Triangles)}, BOS {fromBos.Values.Sum(e => e.Triangles)}");
+            $"triangles mesher {mesher.Values.Sum(e => e.Triangles)}, BOS {fromBos.Values.Sum(e => e.Triangles)}");
 
-        foreach (var id in approach1.Keys.Union(fromBos.Keys).Order())
+        foreach (var id in mesher.Keys.Union(fromBos.Keys).Order())
         {
-            var a = approach1.GetValueOrDefault(id);
+            var a = mesher.GetValueOrDefault(id);
             var b = fromBos.GetValueOrDefault(id);
             var gap = gaps.GetValueOrDefault(id, double.NaN);
             if (a?.Instances == b?.Instances && a?.Triangles == b?.Triangles && gap <= BoundsTolerance)
                 continue;
             var type = id < 0 ? "no entity" : session.Resolver.GetEntity(id).GetEntityName();
-            var boxes = gap > BoundsTolerance ? $" Approach1 {a!.Bounds.Min}..{a.Bounds.Max}, BOS {b!.Bounds.Min}..{b.Bounds.Max}" : "";
+            var boxes = gap > BoundsTolerance ? $" mesher {a!.Bounds.Min}..{a.Bounds.Max}, BOS {b!.Bounds.Min}..{b.Bounds.Max}" : "";
             TestContext.Progress.WriteLine(
                 $"  #{id} {type}: instances {a?.Instances}/{b?.Instances}, hidden {a?.Hidden}/{b?.Hidden}, " +
                 $"triangles {a?.Triangles}/{b?.Triangles}, bounds gap {gap:F3} m{boxes}");

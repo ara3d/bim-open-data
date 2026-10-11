@@ -1,3 +1,4 @@
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcMeshingComparison.Harness;
 using Ara3D.IfcMeshingComparison.Meshers;
 using Ara3D.IfcMeshingComparison.Reporting;
@@ -11,7 +12,7 @@ public sealed class ComparisonTests
     static readonly IMeshingBackend[] Backends =
     [
         new WebIfcBackend(),
-        new Approach1Backend(),
+        new IfcMesherBackend(),
     ];
 
     [Test]
@@ -60,14 +61,14 @@ public sealed class ComparisonTests
         foreach (var file in files)
         {
             var webIfc = report.Results.First(r => r.IfcPath == file && r.BackendName == "WebIfcDll");
-            var approach1 = report.Results.First(r => r.IfcPath == file && r.BackendName == "Approach1");
-            Log(GeometryComparison.FormatComparison(file.GetFileName(), ModelStats.FromModel(approach1.Model!), ModelStats.FromModel(webIfc.Model!)));
+            var mesher = report.Results.First(r => r.IfcPath == file && r.BackendName == IfcMesher.Name);
+            Log(GeometryComparison.FormatComparison(file.GetFileName(), ModelStats.FromModel(mesher.Model!), ModelStats.FromModel(webIfc.Model!)));
         }
     }
 
     [Test]
     [Explicit("Compares pure C# meshing to stored WebIfc BFAST oracles on small IFC files")]
-    public void CompareApproach1ToWebIfcBfast_SmallFiles()
+    public void CompareMesherToWebIfcBfast_SmallFiles()
     {
         foreach (var ifcPath in TestFiles.QuickComparisonFiles())
         {

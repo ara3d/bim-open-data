@@ -1,3 +1,4 @@
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcMeshingComparison.Harness;
 using Ara3D.IfcMeshingComparison.Meshers;
 using Ara3D.IfcMeshingComparison.Reporting;
@@ -11,7 +12,7 @@ public sealed class BackendSmokeTests
     static readonly IMeshingBackend[] AllBackends =
     [
         new WebIfcBackend(),
-        new Approach1Backend(),
+        new IfcMesherBackend(),
     ];
 
     [Test]
@@ -20,7 +21,7 @@ public sealed class BackendSmokeTests
         Assert.Multiple(() =>
         {
             Assert.That(AllBackends, Has.Length.EqualTo(2));
-            Assert.That(AllBackends.Select(b => b.Name), Is.EquivalentTo(new[] { "WebIfcDll", "Approach1" }));
+            Assert.That(AllBackends.Select(b => b.Name), Is.EquivalentTo(new[] { "WebIfcDll", IfcMesher.Name }));
             Assert.That(AllBackends, Has.All.Matches<IMeshingBackend>(b => !string.IsNullOrWhiteSpace(b.Description)));
         });
     }

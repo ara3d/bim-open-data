@@ -2,7 +2,7 @@ using Ara3D.Geometry;
 using Ara3D.IfcLoader;
 using Ara3D.IfcTypes;
 
-namespace Ara3D.Ifc.Mesher.Approach1;
+namespace Ara3D.Ifc.Mesher;
 
 /// <summary>
 /// Boolean ops: DIFFERENCE via half-space plane clipping (dominant clipping case).

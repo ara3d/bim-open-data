@@ -1,5 +1,5 @@
 using Ara3D.Geometry;
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcMeshingComparison.Harness;
 using Ara3D.IfcMeshingComparison.Tests.Support;
 
@@ -158,7 +158,7 @@ public sealed class BrepTests
     {
         TestFiles.RequireExists(TestFiles.DentalClinic);
         using var file = TestFiles.LoadStep(TestFiles.DentalClinic);
-        var (model, diagnostics) = ModelAssembler.BuildModel(file);
+        var (model, diagnostics) = ModelAssembler.BuildModel(file.EntityResolver);
         Assert.That(model.Meshes.Count, Is.GreaterThan(0));
         Assert.That(diagnostics.EntityStatus.GetValueOrDefault("IFCCONNECTEDFACESET"),
             Is.EqualTo(GeometrySupportStatus.Supported));
@@ -170,7 +170,7 @@ public sealed class BrepTests
     {
         TestFiles.RequireExists(TestFiles.Duplex);
         using var file = TestFiles.LoadStep(TestFiles.Duplex);
-        var (model, _) = ModelAssembler.BuildModel(file);
+        var (model, _) = ModelAssembler.BuildModel(file.EntityResolver);
         Assert.That(model.Meshes.Count, Is.GreaterThan(0));
     }
 
@@ -180,7 +180,7 @@ public sealed class BrepTests
     {
         TestFiles.RequireExists(TestFiles.SteelPlates);
         using var file = TestFiles.LoadStep(TestFiles.SteelPlates);
-        var (model, _) = ModelAssembler.BuildModel(file);
+        var (model, _) = ModelAssembler.BuildModel(file.EntityResolver);
         Assert.That(model.Instances.Count, Is.GreaterThan(0));
         Assert.That(model.Meshes.Count, Is.GreaterThan(0));
     }

@@ -1,5 +1,5 @@
 using System.Reflection;
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcMeshingComparison.Tests.Support;
 
 namespace Ara3D.IfcMeshingComparison.Tests.PureCSharp;
@@ -9,9 +9,9 @@ namespace Ara3D.IfcMeshingComparison.Tests.PureCSharp;
 public sealed class CoverageGateTests
 {
     [Test]
-    public void Coverage_DispatcherArmsAreInBacklog()
+    public void Coverage_DispatcherArmsAreInCoverageTable()
     {
-        var known = GeometryCreationBacklog.KnownItems
+        var known = GeometryCoverage.KnownItems
             .Select(i => i.EntityName)
             .ToHashSet(StringComparer.Ordinal);
         var missing = GeometryDispatcher.DispatchedEntityNames
@@ -19,16 +19,16 @@ public sealed class CoverageGateTests
             .OrderBy(n => n, StringComparer.Ordinal)
             .ToList();
         Assert.That(missing, Is.Empty,
-            "Dispatcher arms missing from GeometryCreationBacklog.KnownItems: " + string.Join(", ", missing));
+            "Dispatcher arms missing from GeometryCoverage.KnownItems: " + string.Join(", ", missing));
     }
 
     [Test]
     public void Coverage_SupportedItemsHaveLinkedTestsOrExemption()
     {
         var covered = DiscoverGeometryCoverageEntities();
-        var exemptions = GeometryCreationBacklog.CoverageExemptions
+        var exemptions = GeometryCoverage.CoverageExemptions
             .ToHashSet(StringComparer.Ordinal);
-        var missing = GeometryCreationBacklog.KnownItems
+        var missing = GeometryCoverage.KnownItems
             .Where(i => i.Support == GeometryCreationSupport.Supported)
             .Where(i => !exemptions.Contains(i.EntityName))
             .Where(i => !covered.Contains(i.EntityName))
@@ -42,7 +42,7 @@ public sealed class CoverageGateTests
     [Test]
     public void Coverage_GeometryCoverageAttributesAreKnownEntities()
     {
-        var known = GeometryCreationBacklog.KnownItems
+        var known = GeometryCoverage.KnownItems
             .Select(i => i.EntityName)
             .ToHashSet(StringComparer.Ordinal);
         var unknown = DiscoverGeometryCoverageEntities()

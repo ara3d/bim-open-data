@@ -1,5 +1,5 @@
 using Ara3D.Geometry;
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcLoader;
 using Ara3D.IfcMeshingComparison.Harness;
 using Ara3D.IfcMeshingComparison.Tests.Support;
@@ -20,7 +20,7 @@ public sealed class WpW11Tests
     {
         TestFiles.RequireExists(DigitalHubIfc);
         using var file = new IfcFile(DigitalHubIfc, includeGeometry: false);
-        var (model, _) = ModelAssembler.BuildModel(file);
+        var (model, _) = ModelAssembler.BuildModel(file.EntityResolver);
         var oracle = ModelComparer.LoadOracle(DigitalHubIfc);
 
         var uniqueOracle = GroupByTopology(oracle.Meshes.ToList()).Count;

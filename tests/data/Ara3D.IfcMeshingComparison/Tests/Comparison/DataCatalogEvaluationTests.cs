@@ -63,7 +63,7 @@ public sealed class DataCatalogEvaluationTests
             TestContext.WriteLine(
                 $"  {item.EntityName}: priority={item.PriorityScore}, catalog={item.TotalCatalogCount}, " +
                 $"files={item.FilesAffected}, oracleOnly={item.OracleOnlyProductCount}, " +
-                $"triLoss={item.OracleOnlyTriangleLoss}, support={item.BacklogSupport}");
+                $"triLoss={item.OracleOnlyTriangleLoss}, support={item.CoverageSupport}");
         }
     }
 }

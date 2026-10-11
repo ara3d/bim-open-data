@@ -11,15 +11,15 @@ public sealed class ExportBfastFromMesherTests
     static FilePath BfastPath(FilePath ifcPath) => ifcPath.ChangeExtension(".bfast");
 
     [Test]
-    [Explicit("Meshes each project IFC via pure-C# Approach1 and writes a BFAST next to the input")]
+    [Explicit("Meshes each project IFC with the pure C# mesher and writes a BFAST next to the input")]
     [Category("Slow")]
-    public void ExportApproach1BfastAlongsideEachIfc()
+    public void ExportMesherBfastAlongsideEachIfc()
     {
         void Log(string message) => TestContext.WriteLine(message);
 
         TestDataManager.EnsureLocalIfcCopied(Log);
 
-        var backend = new Approach1Backend();
+        var backend = new IfcMesherBackend();
         var files = TestFiles.AllKnownFiles().ToList();
         if (files.Count == 0)
             Assert.Ignore("No IFC test files available");

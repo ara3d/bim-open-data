@@ -1,5 +1,5 @@
 using Ara3D.Geometry;
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcTypes;
 using Ara3D.IfcMeshingComparison.Harness;
 using Ara3D.IfcMeshingComparison.Tests.Support;
@@ -184,7 +184,7 @@ public sealed class CurveTests
     {
         TestFiles.RequireExists(TestFiles.Example);
         using var file = TestFiles.LoadStep(TestFiles.Example);
-        var ctx = new MeshingContext(file);
+        var ctx = new MeshingContext(file.EntityResolver);
 
         foreach (var (profileId, label) in new (int id, string name)[]
         {

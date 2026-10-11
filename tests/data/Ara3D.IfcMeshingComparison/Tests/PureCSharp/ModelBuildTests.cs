@@ -1,5 +1,5 @@
 using Ara3D.Geometry;
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcLoader;
 using Ara3D.IfcMeshingComparison.Harness;
 using Ara3D.IfcMeshingComparison.Tests.Support;
@@ -28,8 +28,7 @@ public sealed class ModelBuildTests
             #9=IFCWALL('g',$,'Wall',$,$,#8,#5,$);
             """);
 
-        Assert.That(model.Context.File, Is.Not.Null);
-        var (built, _) = ModelAssembler.BuildModel(model.Context.File!);
+        var (built, _) = ModelAssembler.BuildModel(model.Context.Resolver);
         Assert.That(built.Instances, Has.Count.EqualTo(1));
         Assert.That(built.Instances[0].EntityIndex, Is.EqualTo(9));
     }
@@ -84,7 +83,7 @@ public sealed class ModelBuildTests
     {
         TestFiles.RequireExists(TestFiles.IfcOpenHouse);
         using var file = new IfcFile(TestFiles.IfcOpenHouse, includeGeometry: false);
-        var (model, diagnostics) = ModelAssembler.BuildModel(file);
+        var (model, diagnostics) = ModelAssembler.BuildModel(file.EntityResolver);
 
         Assert.That(model.Instances, Has.Count.GreaterThan(10),
             () => $"Expected broad OpenHouse coverage; instances={model.Instances.Count}; " +
@@ -98,7 +97,7 @@ public sealed class ModelBuildTests
     {
         TestFiles.RequireExists(TestFiles.Small);
         using var file = TestFiles.LoadStep(TestFiles.Small);
-        var ctx = new MeshingContext(file);
+        var ctx = new MeshingContext(file.EntityResolver);
         var mesh = GeometryDispatcher.TryBuild(ctx, ctx.GetEntity(42));
         Assert.That(mesh, Is.Not.Null);
         Assert.That(mesh!.Value.FaceIndices.Count, Is.GreaterThan(0));
@@ -110,7 +109,7 @@ public sealed class ModelBuildTests
     {
         TestFiles.RequireExists(TestFiles.DentalClinic);
         using var file = TestFiles.LoadStep(TestFiles.DentalClinic);
-        var (model, diagnostics) = ModelAssembler.BuildModel(file);
+        var (model, diagnostics) = ModelAssembler.BuildModel(file.EntityResolver);
         Assert.That(model.Meshes.Count, Is.GreaterThan(0));
         var triangleCount = model.Meshes.Sum(m => m.FaceIndices.Count);
         Assert.That(triangleCount, Is.GreaterThan(0));
@@ -125,7 +124,7 @@ public sealed class ModelBuildTests
     {
         TestFiles.RequireExists(TestFiles.IfcOpenHouse);
         using var file = TestFiles.LoadStep(TestFiles.IfcOpenHouse);
-        var (model, diagnostics) = ModelAssembler.BuildModel(file);
+        var (model, diagnostics) = ModelAssembler.BuildModel(file.EntityResolver);
         Assert.That(model.Instances.Count, Is.GreaterThan(0));
         Assert.That(model.Meshes.Count, Is.GreaterThan(0));
         TestContext.WriteLine($"Instances: {model.Instances.Count}, Meshes: {model.Meshes.Count}");
@@ -232,7 +231,7 @@ public sealed class ModelBuildTests
             TestContext.WriteLine($"  #{id} {file.EntityResolver.GetEntity(id).GetEntityName()}: {geom}");
         }
 
-        var (_, diag) = ModelAssembler.BuildModel(file);
+        var (_, diag) = ModelAssembler.BuildModel(file.EntityResolver);
         TestContext.WriteLine("--- unsupported ---");
         foreach (var kv in diag.EntityStatus.Where(kv => kv.Value == GeometrySupportStatus.Unsupported)
                      .OrderByDescending(kv => diag.EntityCounts.GetValueOrDefault(kv.Key)).Take(12))
@@ -360,8 +359,7 @@ public sealed class ModelBuildTests
             #46=IFCPROJECT('p',$,'P',$,$,$,$,(#5));
             """);
 
-        Assert.That(model.Context.File, Is.Not.Null);
-        var (built, _) = ModelAssembler.BuildModel(model.Context.File!);
+        var (built, _) = ModelAssembler.BuildModel(model.Context.Resolver);
         Assert.That(built.Instances, Has.Count.EqualTo(1));
         Assert.That(built.Meshes.Sum(m => m.FaceIndices.Count), Is.GreaterThan(0));
     }
@@ -374,7 +372,7 @@ public sealed class ModelBuildTests
         TestFiles.RequireExists(ifcPath);
 
         using var file = new IfcFile(ifcPath, includeGeometry: false);
-        var (model, _) = ModelAssembler.BuildModel(file);
+        var (model, _) = ModelAssembler.BuildModel(file.EntityResolver);
         var oracle = ModelComparer.LoadOracle(ifcPath);
 
         var candIds = model.Instances.Select(i => i.EntityIndex).ToHashSet();

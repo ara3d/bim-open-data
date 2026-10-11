@@ -9,14 +9,14 @@ using SharpGLTF.Schema2;
 namespace BimOpenMcp.Ifc;
 
 /// <summary>Geometry tools: mesh statistics, bounds, volume, GLB export, and a look at what failed to
-/// mesh. The measurements come from the Approach1 mesher, a pure-C# reader of STEP geometry
+/// mesh. The measurements come from Ara3D.Ifc.Mesher, a pure-C# reader of STEP geometry
 /// definitions. It needs no native tessellator and no geometry-enabled reopen, so those tools run
 /// against the same <see cref="IfcSession"/> the data tools opened with <c>includeGeometry: false</c>;
 /// the meshed model is built once per session and reused. A model whose mesher failed is reported
 /// through <c>ifc_meshing_diagnostics</c> rather than crashing the other tools.
 /// The GLB export instead writes the session's BIM Open Schema conversion (web-ifc geometry, the
 /// model the SQL tools read) from the cached <see cref="BosSession.Scene"/> through
-/// <see cref="BosGlb"/>: on the AC20-FZK-Haus sample Approach1 leaves the four roof-clipped upper
+/// <see cref="BosGlb"/>: on the AC20-FZK-Haus sample the mesher leaves the four roof-clipped upper
 /// walls unclipped, up to 2.8 m too tall, where the conversion clips them
 /// (GlbSourceComparisonTests prints the per-element comparison).</summary>
 public static class IfcGeometryTools
@@ -59,7 +59,7 @@ public static class IfcGeometryTools
                 + "stepId, globalId and entityIndex (its row in the session's BOS tables, as ifc_sql "
                 + "sees them) in the node's extras so a viewer pick finds the element. The geometry is "
                 + "the model's BIM Open Schema conversion (web-ifc), built once per session; it can "
-                + "differ from ifc_mesh, which uses the Approach1 mesher. Without 'ids', hidden "
+                + "differ from ifc_mesh, which uses Ara3D.Ifc.Mesher. Without 'ids', hidden "
                 + "instances (spaces, zones, grids, annotations) are left out; 'ids' writes the named "
                 + "elements, hidden or not, lists those that draw nothing in unmatchedIds, and fails when "
                 + "none draws. 'path' may name a .bos file; its ids are then the Entities table's "

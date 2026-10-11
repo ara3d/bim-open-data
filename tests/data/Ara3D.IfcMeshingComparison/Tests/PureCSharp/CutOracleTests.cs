@@ -1,5 +1,5 @@
 using Ara3D.Geometry;
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcLoader;
 using Ara3D.IfcMeshingComparison.Harness;
 using Ara3D.IfcMeshingComparison.Harness.GeometryOracles;
@@ -196,7 +196,7 @@ public sealed class CutOracleTests
             #17=IFCRELVOIDSELEMENT('void-guid',$,$,$,#9,#16);
             """);
 
-        var (built, _) = ModelAssembler.BuildModel(model.Context.File!);
+        var (built, _) = ModelAssembler.BuildModel(model.Context.Resolver);
         var wall = built.Meshes[built.Instances[0].MeshIndex];
         MeshTestAssert.MeshValid(wall);
 
@@ -212,7 +212,7 @@ public sealed class CutOracleTests
     {
         var path = TestFiles.ResolveOrIgnore("steelplates.ifc");
         using var file = new IfcFile(path, includeGeometry: false);
-        var ctx = new MeshingContext(file);
+        var ctx = new MeshingContext(file.EntityResolver);
         foreach (var id in new[] { 1193, 633, 1385 })
         {
             var entity = ctx.GetEntityOrDefault(id);

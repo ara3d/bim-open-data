@@ -1,7 +1,7 @@
 using Ara3D.Geometry;
 using Ara3D.IfcTypes;
 using Ara3D.IfcTypes.Ifc4;
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcLoader;
 using Ara3D.IfcMeshingComparison.Tests.Support;
 using Ara3D.Utils;
@@ -698,7 +698,7 @@ public sealed class GoldenMeshTests
             #15=IFCMEMBER('g',$,'M',$,$,#14,#13,$);
             """);
 
-        var (built, _) = ModelAssembler.BuildModel(model.Context.File!);
+        var (built, _) = ModelAssembler.BuildModel(model.Context.Resolver);
         Assert.That(built.Instances, Has.Count.EqualTo(2));
         Assert.That(built.Instances.Select(i => i.EntityIndex).Distinct(), Is.EqualTo(new[] { 15 }));
     }
@@ -732,7 +732,7 @@ public sealed class GoldenMeshTests
             #23=IFCMEMBER('g',$,'M',$,$,#22,#19,$);
             """);
 
-        var (built, _) = ModelAssembler.BuildModel(model.Context.File!);
+        var (built, _) = ModelAssembler.BuildModel(model.Context.Resolver);
         Assert.That(built.Instances, Has.Count.EqualTo(2));
         Assert.That(built.Instances.Select(i => i.EntityIndex).Distinct(), Is.EqualTo(new[] { 23 }));
     }
@@ -762,7 +762,7 @@ public sealed class GoldenMeshTests
             #17=IFCRELVOIDSELEMENT('void-guid',$,$,$,#9,#16);
             """);
 
-        var (built, diagnostics) = ModelAssembler.BuildModel(model.Context.File!);
+        var (built, diagnostics) = ModelAssembler.BuildModel(model.Context.Resolver);
 
         Assert.That(built.Instances, Has.Count.EqualTo(1), "Host wall stays a single instance");
         var wall = built.Meshes[built.Instances[0].MeshIndex];
@@ -811,7 +811,7 @@ public sealed class GoldenMeshTests
             #17=IFCRELVOIDSELEMENT('void-guid',$,$,$,#10,#16);
             """);
 
-        var (built, diagnostics) = ModelAssembler.BuildModel(model.Context.File!);
+        var (built, diagnostics) = ModelAssembler.BuildModel(model.Context.Resolver);
 
         Assert.That(built.Instances.Select(i => i.EntityIndex).OrderBy(x => x),
             Is.EqualTo(new[] { 9, 10 }), "Both the slab and the aggregated roof are emitted");
@@ -1219,7 +1219,7 @@ public sealed class GoldenMeshTests
             Assert.Ignore($"Missing IFC test file: {ifcPath}");
 
         using var file = new IfcFile(ifcPath, includeGeometry: false);
-        var ctx = new MeshingContext(file);
+        var ctx = new MeshingContext(file.EntityResolver);
         var brep = ctx.GetEntity(135371);
         var mesh = Brep.BuildAdvancedBrep(ctx, brep);
 
@@ -1653,7 +1653,7 @@ public sealed class GoldenMeshTests
     }
 
     [Test]
-    public void BacklogScannerListsEncounteredGeometryCreationItems()
+    public void CoverageScannerListsEncounteredGeometryCreationItems()
     {
         using var temp = new TemporaryIfcFile("""
             #1=IFCRECTANGLEPROFILEDEF(.AREA.,'BoxProfile',$,2.,2.);
@@ -1662,7 +1662,7 @@ public sealed class GoldenMeshTests
             #4=IFCBOOLEANRESULT(.UNION.,#3,#3);
             """);
 
-        var encountered = GeometryCreationBacklog.Scan(temp.Path);
+        var encountered = GeometryCoverage.Scan(temp.Path);
 
         Assert.Multiple(() =>
         {
@@ -1674,7 +1674,7 @@ public sealed class GoldenMeshTests
 
     [Test]
     [Explicit("Exploratory scanner for building the geometry creation backlog from local IFC corpora.")]
-    public void ScanExternalIfcSamplesForGeometryCreationBacklog()
+    public void ScanExternalIfcSamplesForGeometryCoverage()
     {
         var files = new[]
         {
@@ -1682,7 +1682,7 @@ public sealed class GoldenMeshTests
             new FilePath(@"C:\Users\cdigg\git\3d-format-shootout\data\git-repo-copies\speckle\ifcs\steelplates.ifc"),
         };
 
-        var encountered = GeometryCreationBacklog.Scan(files);
+        var encountered = GeometryCoverage.Scan(files);
 
         TestContext.WriteLine("Encountered IFC geometry creation items:");
         foreach (var item in encountered)

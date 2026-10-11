@@ -1,5 +1,5 @@
 using Ara3D.Geometry;
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcLoader;
 using Ara3D.IfcMeshingComparison.Harness;
 using Ara3D.IfcMeshingComparison.Tests.Support;
@@ -54,7 +54,7 @@ public sealed class WpSchependomlaanWindowTests
         }
 
         using var file = new IfcFile(ifcPath, includeGeometry: false);
-        var ctx = new MeshingContext(file);
+        var ctx = new MeshingContext(file.EntityResolver);
         var entity = ctx.GetEntity(entityId);
         var placement = MeshHelpers.ResolveRequired(ctx, entity, IfcProduct.Instance.ObjectPlacement);
         var productFrame = Placements.ReadLocalPlacement(ctx, placement);

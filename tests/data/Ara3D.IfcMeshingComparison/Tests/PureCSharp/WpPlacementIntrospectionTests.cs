@@ -1,4 +1,4 @@
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcLoader;
 using Ara3D.IfcMeshingComparison.Harness;
 using Ara3D.IfcMeshingComparison.Tests.Support;
@@ -100,7 +100,7 @@ public sealed class WpPlacementIntrospectionTests
         }
 
         using var file = new IfcFile(ifcPath, includeGeometry: false);
-        var ctx = new MeshingContext(file);
+        var ctx = new MeshingContext(file.EntityResolver);
         var audit = PlacementIntrospection.AuditDeterminants(ctx);
         TestContext.WriteLine(
             $"DETERMINANT AUDIT: operators={audit.OperatorCount} mirrored={audit.MirroredOperatorCount} " +

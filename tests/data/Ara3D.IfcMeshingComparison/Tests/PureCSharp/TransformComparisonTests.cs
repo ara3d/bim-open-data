@@ -57,7 +57,7 @@ public sealed class TransformComparisonTests
         var ifcPath = TestFiles.LocalIfcDir.RelativeFile("schependomlaan.ifc");
         TestFiles.RequireExists(ifcPath);
 
-        var backend = new Approach1Backend();
+        var backend = new IfcMesherBackend();
         var result = backend.Build(ifcPath);
         Assert.That(result.Success, Is.True, string.Join("; ", result.Errors));
         var model = result.Model!;

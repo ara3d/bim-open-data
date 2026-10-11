@@ -1,5 +1,5 @@
 using Ara3D.Geometry;
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcLoader;
 using Ara3D.IfcMeshingComparison.Harness;
 using Ara3D.IfcMeshingComparison.Meshers;
@@ -66,7 +66,7 @@ public sealed class MeshIndexDiagnosticTests
             }
 
             using var file = new IfcFile(ifcPath, includeGeometry: false);
-            var (model, _) = ModelAssembler.BuildModel(file);
+            var (model, _) = ModelAssembler.BuildModel(file.EntityResolver);
             var bad = CountInvalidMeshes(model, out var samples);
             var status = bad == 0 ? "PASS" : "FAIL";
             results.Add($"{fileName}: {status} badMeshes={bad} meshes={model.Meshes.Count}");
@@ -89,7 +89,7 @@ public sealed class MeshIndexDiagnosticTests
     [Category("Slow")]
     public void CrashCatalog_ExportsBfastWithoutIndexErrors()
     {
-        var backend = new Approach1Backend();
+        var backend = new IfcMesherBackend();
         var results = new List<string>();
         foreach (var fileName in CrashCatalogExportFiles)
         {
@@ -149,7 +149,7 @@ public sealed class MeshIndexDiagnosticTests
         var ifcPath = TestFiles.Example;
         TestFiles.RequireExists(ifcPath);
         using var file = new IfcFile(ifcPath, includeGeometry: false);
-        var (model, _) = ModelAssembler.BuildModel(file);
+        var (model, _) = ModelAssembler.BuildModel(file.EntityResolver);
 
         for (var mi = 0; mi < model.Meshes.Count; mi++)
         {
@@ -168,7 +168,7 @@ public sealed class MeshIndexDiagnosticTests
         var ifcPath = TestFiles.Example;
         TestFiles.RequireExists(ifcPath);
 
-        var backend = new Approach1Backend();
+        var backend = new IfcMesherBackend();
         var result = backend.Build(ifcPath);
         Assert.That(result.Success, Is.True, string.Join("; ", result.Errors));
 
@@ -194,7 +194,7 @@ public sealed class MeshIndexDiagnosticTests
         var ifcPath = TestFiles.Example;
         TestFiles.RequireExists(ifcPath);
         using var file = new IfcFile(ifcPath, includeGeometry: false);
-        var (model, _) = ModelAssembler.BuildModel(file);
+        var (model, _) = ModelAssembler.BuildModel(file.EntityResolver);
 
         var instByMesh = model.Instances
             .GroupBy(i => i.MeshIndex)
@@ -242,7 +242,7 @@ public sealed class MeshIndexDiagnosticTests
         var ifcPath = TestFiles.Example;
         TestFiles.RequireExists(ifcPath);
         using var file = new IfcFile(ifcPath, includeGeometry: false);
-        var ctx = new MeshingContext(file);
+        var ctx = new MeshingContext(file.EntityResolver);
 
         void Check(string label, TriangleMesh3D mesh)
         {

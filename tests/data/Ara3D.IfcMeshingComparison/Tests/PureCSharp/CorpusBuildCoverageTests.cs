@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcLoader;
 using Ara3D.IfcMeshingComparison.Harness;
 using Ara3D.Utils;
@@ -11,12 +11,12 @@ public sealed class CorpusBuildCoverageTests
 {
     [Test]
     [Category("Slow")]
-    public void Corpus_QuickFiles_NoUnsupportedForSupportedBacklogTypes()
+    public void Corpus_QuickFiles_NoUnsupportedForSupportedCoverageTypes()
     {
         var rows = ScanFiles(TestFiles.QuickComparisonFiles().ToList());
         WriteReport(rows, "geometry_coverage_quick.json");
 
-        var supported = GeometryCreationBacklog.KnownItems
+        var supported = GeometryCoverage.KnownItems
             .Where(i => i.Support == GeometryCreationSupport.Supported)
             .Select(i => i.EntityName)
             .ToHashSet(StringComparer.Ordinal);
@@ -53,7 +53,7 @@ public sealed class CorpusBuildCoverageTests
             }
             TestFiles.RequireExists(path);
             using var file = new IfcFile(path, includeGeometry: false);
-            var (model, diagnostics) = ModelAssembler.BuildModel(file);
+            var (model, diagnostics) = ModelAssembler.BuildModel(file.EntityResolver);
             TestContext.WriteLine($"{path.GetFileName()}: meshes={model.Meshes.Count} instances={model.Instances.Count}");
 
             foreach (var (entity, status) in diagnostics.EntityStatus)

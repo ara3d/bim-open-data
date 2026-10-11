@@ -1,5 +1,5 @@
 using Ara3D.Geometry;
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcLoader;
 using Ara3D.IfcMeshingComparison.Harness;
 using Ara3D.IfcMeshingComparison.Tests.Support;
@@ -30,7 +30,7 @@ public sealed class WpW5Tests
         TestContext.WriteLine($"Oracle map: {map.OracleInstanceCount} instances, {map.OracleMeshCount} meshes");
 
         using var stepFile = new IfcFile(ifcPath, includeGeometry: false);
-        var (model, diagnostics) = ModelAssembler.BuildModel(stepFile);
+        var (model, diagnostics) = ModelAssembler.BuildModel(stepFile.EntityResolver);
         TestContext.WriteLine(
             $"Candidate: {model.Instances.Count} instances, {model.Meshes.Count} meshes, " +
             $"{model.Meshes.Sum(m => m.FaceIndices.Count)} tris");
@@ -76,7 +76,7 @@ public sealed class WpW5Tests
     {
         TestFiles.RequireExists(PrimarkIfc);
         using var file = new IfcFile(PrimarkIfc, includeGeometry: false);
-        var ctx = new MeshingContext(file);
+        var ctx = new MeshingContext(file.EntityResolver);
         const int accessoryId = 92859;
         var accessory = ctx.GetEntity(accessoryId);
         Assert.That(accessory.GetEntityName(), Is.EqualTo("IFCDISCRETEACCESSORY"));
@@ -96,7 +96,7 @@ public sealed class WpW5Tests
     {
         TestFiles.RequireExists(PrimarkIfc);
         using var file = new IfcFile(PrimarkIfc, includeGeometry: false);
-        var ctx = new MeshingContext(file);
+        var ctx = new MeshingContext(file.EntityResolver);
         const int accessoryId = 40020;
         var mesh = ModelAssembler.BuildEntityMesh(ctx, ctx.GetEntity(accessoryId));
         Assert.That(mesh, Is.Not.Null);

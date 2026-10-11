@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcLoader;
 using Ara3D.IfcMeshingComparison.Harness;
 using Ara3D.Models;
@@ -45,7 +45,7 @@ public sealed record EntityWorkPriority(
     int FilesAffected,
     int OracleOnlyProductCount,
     long OracleOnlyTriangleLoss,
-    GeometryCreationSupport BacklogSupport,
+    GeometryCreationSupport CoverageSupport,
     string Notes,
     int PriorityScore);
 
@@ -110,7 +110,7 @@ public static class CatalogEvaluationReport
         {
             var sw = System.Diagnostics.Stopwatch.StartNew();
             using var stepFile = new IfcFile(ifcPath, includeGeometry: false);
-            var (candidate, diagnostics) = ModelAssembler.BuildModel(stepFile);
+            var (candidate, diagnostics) = ModelAssembler.BuildModel(stepFile.EntityResolver);
             sw.Stop();
             candidateStats = new BuildStats(
                 candidate.Instances.Count,
@@ -248,7 +248,7 @@ public static class CatalogEvaluationReport
         foreach (var entity in step.EntityResolver.GetEntities())
         {
             var name = entity.GetEntityName();
-            if (!GeometryCreationBacklog.IsLikelyGeometryCreationEntity(name))
+            if (!GeometryCoverage.IsLikelyGeometryCreationEntity(name))
                 continue;
             counts[name] = counts.GetValueOrDefault(name) + 1;
         }
@@ -289,7 +289,7 @@ public static class CatalogEvaluationReport
 
     static List<EntityWorkPriority> RankWorkPriorities(IReadOnlyList<CatalogFileEvaluation> files)
     {
-        var backlog = GeometryCreationBacklog.KnownItems.ToDictionary(i => i.EntityName);
+        var backlog = GeometryCoverage.KnownItems.ToDictionary(i => i.EntityName);
         var agg = new Dictionary<string, (int catalog, int files, int oracleOnly, long triLoss, int unsupported)>(
             StringComparer.Ordinal);
 
@@ -332,7 +332,7 @@ public static class CatalogEvaluationReport
                     notes,
                     priorityScore);
             })
-            .Where(p => p.BacklogSupport != GeometryCreationSupport.Supported || p.OracleOnlyProductCount > 0 || p.TotalCatalogCount > 0)
+            .Where(p => p.CoverageSupport != GeometryCreationSupport.Supported || p.OracleOnlyProductCount > 0 || p.TotalCatalogCount > 0)
             .OrderByDescending(p => p.PriorityScore)
             .ThenByDescending(p => p.TotalCatalogCount)
             .Take(40)
@@ -393,7 +393,7 @@ public static class CatalogEvaluationReport
         {
             sb.AppendLine(
                 $"| {item.EntityName} | {item.TotalCatalogCount} | {item.FilesAffected} | " +
-                $"{item.BacklogSupport} | {item.PriorityScore} | {item.Notes} |");
+                $"{item.CoverageSupport} | {item.PriorityScore} | {item.Notes} |");
         }
         sb.AppendLine();
 

@@ -1,4 +1,4 @@
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcLoader;
 using Ara3D.IfcMeshingComparison.Harness;
 using Ara3D.Utils;
@@ -51,7 +51,7 @@ public sealed class ScorecardTests
         TestContext.WriteLine($"Oracle map: {map.OracleInstanceCount} instances, {map.OracleMeshCount} meshes");
 
         using var stepFile = new IfcFile(ifcPath, includeGeometry: false);
-        var (model, diagnostics) = ModelAssembler.BuildModel(stepFile);
+        var (model, diagnostics) = ModelAssembler.BuildModel(stepFile.EntityResolver);
         TestContext.WriteLine(
             $"Candidate: {model.Instances.Count} instances, {model.Meshes.Count} meshes, " +
             $"{model.Meshes.Sum(m => m.FaceIndices.Count)} tris");
@@ -142,7 +142,7 @@ public sealed class ScorecardTests
         TestContext.WriteLine($"Oracle map: {map.OracleInstanceCount} instances, {map.OracleMeshCount} meshes");
 
         using var stepFile = new IfcFile(ifcPath, includeGeometry: false);
-        var (model, diagnostics) = ModelAssembler.BuildModel(stepFile);
+        var (model, diagnostics) = ModelAssembler.BuildModel(stepFile.EntityResolver);
         TestContext.WriteLine(
             $"Candidate: {model.Instances.Count} instances, {model.Meshes.Count} meshes, " +
             $"{model.Meshes.Sum(m => m.FaceIndices.Count)} tris");

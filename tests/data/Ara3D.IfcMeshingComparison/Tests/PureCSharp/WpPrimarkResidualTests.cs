@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 using Ara3D.Geometry;
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcLoader;
 using Ara3D.IfcMeshingComparison.Harness;
 using Ara3D.IfcMeshingComparison.Tests.Support;
@@ -23,8 +23,8 @@ public sealed class WpPrimarkResidualTests
         TestFiles.RequireExists(PrimarkIfc);
         var map = OracleEntityMap.Build(PrimarkIfc);
         using var stepFile = new IfcFile(PrimarkIfc, includeGeometry: false);
-        var ctx = new MeshingContext(stepFile);
-        var (model, _) = ModelAssembler.BuildModel(stepFile);
+        var ctx = new MeshingContext(stepFile.EntityResolver);
+        var (model, _) = ModelAssembler.BuildModel(stepFile.EntityResolver);
         var candidateEntities = model.Instances
             .Where(i => i.EntityIndex >= 0)
             .Select(i => i.EntityIndex)
@@ -79,7 +79,7 @@ public sealed class WpPrimarkResidualTests
         // #40020 already gated in WpW5; pick another clipping residual if present.
         TestFiles.RequireExists(PrimarkIfc);
         using var file = new IfcFile(PrimarkIfc, includeGeometry: false);
-        var ctx = new MeshingContext(file);
+        var ctx = new MeshingContext(file.EntityResolver);
         foreach (var id in new[] { 40020, 92859 })
         {
             var entity = ctx.GetEntityOrDefault(id);
@@ -106,8 +106,8 @@ public sealed class WpPrimarkResidualTests
         TestFiles.RequireExists(PrimarkIfc);
         var map = OracleEntityMap.Build(PrimarkIfc);
         using var stepFile = new IfcFile(PrimarkIfc, includeGeometry: false);
-        var ctx = new MeshingContext(stepFile);
-        var (model, _) = ModelAssembler.BuildModel(stepFile);
+        var ctx = new MeshingContext(stepFile.EntityResolver);
+        var (model, _) = ModelAssembler.BuildModel(stepFile.EntityResolver);
         var candidateEntities = model.Instances
             .Where(i => i.EntityIndex >= 0)
             .Select(i => i.EntityIndex)
@@ -164,7 +164,7 @@ public sealed class WpPrimarkResidualTests
     {
         TestFiles.RequireExists(PrimarkIfc);
         using var stepFile = new IfcFile(PrimarkIfc, includeGeometry: false);
-        var ctx = new MeshingContext(stepFile);
+        var ctx = new MeshingContext(stepFile.EntityResolver);
         foreach (var accId in new[] { 79939, 56249 })
         {
             var profileIds = new List<int>();
@@ -247,7 +247,7 @@ public sealed class WpPrimarkResidualTests
         if (token.IsId)
             CollectProfileEntities(ctx, token.AsId(), profileIds, visited, depth + 1);
         else if (token.IsList)
-            foreach (var child in token.AsList(ctx.File!.Document))
+            foreach (var child in token.AsList(ctx.Resolver.Document))
                 CollectProfileFromToken(ctx, child, profileIds, visited, depth);
     }
 
@@ -284,7 +284,7 @@ public sealed class WpPrimarkResidualTests
         if (token.IsId)
             CollectTypes(ctx, token.AsId(), profiles, curves, visited, depth + 1);
         else if (token.IsList)
-            foreach (var child in token.AsList(ctx.File!.Document))
+            foreach (var child in token.AsList(ctx.Resolver.Document))
                 CollectFromToken(ctx, child, profiles, curves, visited, depth);
     }
 

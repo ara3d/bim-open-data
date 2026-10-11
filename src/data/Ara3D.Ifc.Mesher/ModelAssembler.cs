@@ -3,14 +3,14 @@ using Ara3D.IfcLoader;
 using Ara3D.IfcTypes;
 using Ara3D.Models;
 
-namespace Ara3D.Ifc.Mesher.Approach1;
+namespace Ara3D.Ifc.Mesher;
 
 /// <summary>Traverses IFC products and assembles a <see cref="Model3D"/> with per-part instancing.</summary>
 public static class ModelAssembler
 {
-    public static (Model3D Model, MeshingDiagnostics Diagnostics) BuildModel(IfcFile file)
+    public static (Model3D Model, MeshingDiagnostics Diagnostics) BuildModel(IfcEntityResolver resolver)
     {
-        var ctx = new MeshingContext(file);
+        var ctx = new MeshingContext(resolver);
         var builder = new Model3DBuilder();
         var meshBuckets = new Dictionary<long, List<int>>();
 

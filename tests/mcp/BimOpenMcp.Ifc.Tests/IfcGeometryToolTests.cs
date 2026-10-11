@@ -1,3 +1,4 @@
+using Ara3D.Ifc.Mesher;
 using System.Text.Json.Nodes;
 using Ara3D.MCP;
 using SharpGLTF.Schema2;
@@ -198,7 +199,7 @@ public sealed class IfcGeometryToolTests
     {
         var data = CallData("ifc_meshing_diagnostics", new JsonObject { ["path"] = _path, ["take"] = 10 });
 
-        Assert.That(data["mesherName"]!.GetValue<string>(), Is.EqualTo("Approach1"));
+        Assert.That(data["mesherName"]!.GetValue<string>(), Is.EqualTo(IfcMesher.Name));
         Assert.That(data["success"]!.GetValue<bool>(), Is.True);
         Assert.That(data["instanceCount"]!.GetValue<int>(), Is.GreaterThan(0));
         Assert.That(data["errors"]!.AsArray(), Is.Empty);

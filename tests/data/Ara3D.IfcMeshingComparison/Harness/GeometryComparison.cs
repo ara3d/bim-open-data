@@ -1,7 +1,7 @@
 using System.Text;
 using Ara3D.Geometry;
 using Ara3D.IfcLoader;
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcMeshingComparison.Meshers;
 using Ara3D.Models;
 using Ara3D.Utils;
@@ -19,7 +19,7 @@ public static class GeometryComparison
             Assert.Ignore($"Missing BFAST oracle: {bfastOraclePath}. Run GenerateWebIfcBfastOracles first.");
 
         using var stepFile = new IfcFile(ifcPath, includeGeometry: false);
-        var (model, _) = ModelAssembler.BuildModel(stepFile);
+        var (model, _) = ModelAssembler.BuildModel(stepFile.EntityResolver);
         return (ModelStats.FromModel(model), LoadBfastOracleStats(bfastOraclePath));
     }
 

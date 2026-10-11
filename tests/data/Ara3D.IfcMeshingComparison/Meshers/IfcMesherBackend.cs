@@ -1,16 +1,16 @@
 using System.Diagnostics;
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcLoader;
 using Ara3D.Utils;
 
 namespace Ara3D.IfcMeshingComparison.Meshers;
 
-/// <summary>Pure C# meshing via <see cref="ModelAssembler"/> (Approach1 modular pipeline).</summary>
-public sealed class Approach1Backend : IMeshingBackend
+/// <summary>The pure C# mesher, <see cref="ModelAssembler"/>, over a file opened without web-ifc geometry.</summary>
+public sealed class IfcMesherBackend : IMeshingBackend
 {
-    public string Name => "Approach1";
+    public string Name => IfcMesher.Name;
     public string Description =>
-        "Modular pure C# meshing: IfcFile(includeGeometry:false) + ModelAssembler (Ara3D.Ifc.Mesher.Approach1).";
+        "Pure C# meshing: IfcFile(includeGeometry:false) + ModelAssembler (Ara3D.Ifc.Mesher).";
 
     public MeshingResult Build(FilePath ifcPath)
     {
@@ -18,7 +18,7 @@ public sealed class Approach1Backend : IMeshingBackend
         try
         {
             using var file = new IfcFile(ifcPath, includeGeometry: false);
-            var (model, diagnostics) = ModelAssembler.BuildModel(file);
+            var (model, diagnostics) = ModelAssembler.BuildModel(file.EntityResolver);
             sw.Stop();
             return MeshingResult.FromModel(Name, ifcPath, sw.ElapsedMilliseconds, model, diagnostics);
         }

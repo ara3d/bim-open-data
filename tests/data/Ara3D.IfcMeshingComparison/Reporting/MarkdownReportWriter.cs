@@ -1,5 +1,5 @@
 using System.Text;
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcMeshingComparison.Harness;
 using Ara3D.Utils;
 
@@ -39,7 +39,7 @@ public static class MarkdownReportWriter
         sb.AppendLine();
         sb.AppendLine(
             "Note: `Tests/Native/IfcMeshingTests` exercises the same native web-ifc path as **WebIfcDll**. " +
-            "**Approach1** is the pure C# modular mesher under evaluation.");
+            "**Ara3D.Ifc.Mesher** is the pure C# mesher under evaluation.");
         sb.AppendLine();
 
         sb.AppendLine("## Per-File Results");

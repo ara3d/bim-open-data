@@ -1,4 +1,4 @@
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcLoader;
 using Ara3D.IfcMeshingComparison.Harness;
 
@@ -16,7 +16,7 @@ public sealed class ExampleGapDiagnostic
 
         var map = OracleEntityMap.Build(ifcPath);
         using var stepFile = new IfcFile(ifcPath, includeGeometry: false);
-        var (model, diagnostics) = ModelAssembler.BuildModel(stepFile);
+        var (model, diagnostics) = ModelAssembler.BuildModel(stepFile.EntityResolver);
 
         var triCount = model.Meshes.Sum(m => m.FaceIndices.Count);
         TestContext.WriteLine($"Candidate: {model.Instances.Count} instances, {model.Meshes.Count} meshes, {triCount} tris");

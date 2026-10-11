@@ -3,7 +3,7 @@ using Ara3D.IfcLoader;
 using Ara3D.IfcTypes;
 using Ara3D.IO.StepParser;
 
-namespace Ara3D.Ifc.Mesher.Approach1;
+namespace Ara3D.Ifc.Mesher;
 
 public static class MeshHelpers
 {

@@ -3,7 +3,7 @@ using Ara3D.IfcLoader;
 using Ara3D.IfcTypes;
 using Ara3D.Models;
 
-namespace Ara3D.Ifc.Mesher.Approach1;
+namespace Ara3D.Ifc.Mesher;
 
 /// <summary>One tessellated mesh part with local transform, owning IFC product express id, and material.</summary>
 public readonly record struct CollectedPart(TriangleMesh3D Mesh, Matrix4x4 Transform, int EntityIndex, Material Material)

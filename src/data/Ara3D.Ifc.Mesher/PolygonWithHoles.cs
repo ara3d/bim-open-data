@@ -1,6 +1,6 @@
 using Ara3D.Geometry;
 
-namespace Ara3D.Ifc.Mesher.Approach1;
+namespace Ara3D.Ifc.Mesher;
 
 /// <summary>2D profile boundary with optional holes; outer CCW, holes CW after normalization.</summary>
 public sealed class PolygonWithHoles

@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Ara3D.Geometry;
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcLoader;
 using Ara3D.IfcMeshingComparison.Harness.GeometryOracles;
 using Ara3D.Models;
@@ -27,7 +27,7 @@ public static class CorrectnessScorecard
     public static FileCorrectnessMetrics Evaluate(FilePath ifcPath)
     {
         using var file = new IfcFile(ifcPath, includeGeometry: false);
-        var (model, diagnostics) = ModelAssembler.BuildModel(file);
+        var (model, diagnostics) = ModelAssembler.BuildModel(file.EntityResolver);
         return Evaluate(model, diagnostics, ifcPath.GetFileName());
     }
 
@@ -99,7 +99,7 @@ public static class CorrectnessScorecard
 
     static float CoverageRate(MeshingDiagnostics diagnostics)
     {
-        var supported = GeometryCreationBacklog.KnownItems
+        var supported = GeometryCoverage.KnownItems
             .Where(i => i.Support is GeometryCreationSupport.Supported or GeometryCreationSupport.Partial)
             .Select(i => i.EntityName)
             .ToHashSet(StringComparer.Ordinal);

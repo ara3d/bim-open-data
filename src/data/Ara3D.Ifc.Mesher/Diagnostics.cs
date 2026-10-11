@@ -1,4 +1,4 @@
-namespace Ara3D.Ifc.Mesher.Approach1;
+namespace Ara3D.Ifc.Mesher;
 
 public enum GeometrySupportStatus
 {

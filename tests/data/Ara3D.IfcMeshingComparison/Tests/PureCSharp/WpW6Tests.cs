@@ -1,5 +1,5 @@
 using Ara3D.Geometry;
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcLoader;
 using Ara3D.IfcMeshingComparison.Harness;
 using Ara3D.IfcMeshingComparison.Tests.Support;
@@ -37,7 +37,7 @@ public sealed class WpW6Tests
             #16=IFCMEMBER('b',$,'B',$,$,#15,#12,$);
             """);
 
-        var (built, _) = ModelAssembler.BuildModel(model.Context.File!);
+        var (built, _) = ModelAssembler.BuildModel(model.Context.Resolver);
 
         Assert.That(built.Instances, Has.Count.EqualTo(2));
         Assert.That(built.Meshes, Has.Count.EqualTo(2),
@@ -63,7 +63,7 @@ public sealed class WpW6Tests
             #13=IFCMEMBER('b',$,'B',$,$,#12,#5,$);
             """);
 
-        var (built, _) = ModelAssembler.BuildModel(model.Context.File!);
+        var (built, _) = ModelAssembler.BuildModel(model.Context.Resolver);
 
         Assert.That(built.Instances, Has.Count.EqualTo(2));
         Assert.That(built.Meshes, Has.Count.EqualTo(1),
@@ -79,7 +79,7 @@ public sealed class WpW6Tests
         TestFiles.RequireExists(ifcPath);
 
         using var file = new IfcFile(ifcPath, includeGeometry: false);
-        var (model, _) = ModelAssembler.BuildModel(file);
+        var (model, _) = ModelAssembler.BuildModel(file.EntityResolver);
         var oracle = ModelComparer.LoadOracle(ifcPath);
         var uniqueOracleGroups = GroupByTopology(oracle.Meshes.ToList());
 
@@ -136,7 +136,7 @@ public sealed class WpW6Tests
         TestFiles.RequireExists(ifcPath);
 
         using var file = new IfcFile(ifcPath, includeGeometry: false);
-        var (model, _) = ModelAssembler.BuildModel(file);
+        var (model, _) = ModelAssembler.BuildModel(file.EntityResolver);
         var oracle = ModelComparer.LoadOracle(ifcPath);
 
         TestContext.WriteLine(

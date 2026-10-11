@@ -1,5 +1,5 @@
 using Ara3D.Geometry;
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcLoader;
 using Ara3D.IfcMeshingComparison.Harness;
 using Ara3D.IfcMeshingComparison.Tests.Support;
@@ -60,7 +60,7 @@ public sealed class SweptSolidTests
     {
         TestFiles.RequireExists(TestFiles.DentalClinic);
         using var file = TestFiles.LoadStep(TestFiles.DentalClinic);
-        var ctx = new MeshingContext(file);
+        var ctx = new MeshingContext(file.EntityResolver);
 
         var total = 0;
         var built = 0;
@@ -96,7 +96,7 @@ public sealed class SweptSolidTests
     {
         TestFiles.RequireExists(TestFiles.DentalClinic);
         using var file = TestFiles.LoadStep(TestFiles.DentalClinic);
-        var ctx = new MeshingContext(file);
+        var ctx = new MeshingContext(file.EntityResolver);
         var mesh = GeometryDispatcher.TryBuild(ctx, ctx.GetEntity(161277));
         Assert.That(mesh, Is.Not.Null, "Trimmed-arc open profile ribbon should mesh");
         Assert.That(mesh!.Value.FaceIndices.Count, Is.GreaterThan(2));
@@ -109,7 +109,7 @@ public sealed class SweptSolidTests
     {
         TestFiles.RequireExists(TestFiles.DentalClinic);
         using var file = TestFiles.LoadStep(TestFiles.DentalClinic);
-        var ctx = new MeshingContext(file);
+        var ctx = new MeshingContext(file.EntityResolver);
         var mesh = GeometryDispatcher.TryBuild(ctx, ctx.GetEntity(159483));
         Assert.That(mesh, Is.Not.Null);
         Assert.That(mesh!.Value.FaceIndices.Count, Is.GreaterThan(0));
@@ -123,7 +123,7 @@ public sealed class SweptSolidTests
     {
         TestFiles.RequireExists(TestFiles.OfficeA);
         using var file = TestFiles.LoadStep(TestFiles.OfficeA);
-        var ctx = new MeshingContext(file);
+        var ctx = new MeshingContext(file.EntityResolver);
 
         var total = 0;
         var built = 0;
@@ -147,7 +147,7 @@ public sealed class SweptSolidTests
     {
         TestFiles.RequireExists(TestFiles.Duplex);
         using var file = TestFiles.LoadStep(TestFiles.Duplex);
-        var ctx = new MeshingContext(file);
+        var ctx = new MeshingContext(file.EntityResolver);
 
         var total = 0;
         var built = 0;
@@ -219,7 +219,7 @@ public sealed class SweptSolidTests
     {
         TestFiles.RequireExists(TestFiles.OfficeA);
         using var file = TestFiles.LoadStep(TestFiles.OfficeA);
-        var ctx = new MeshingContext(file);
+        var ctx = new MeshingContext(file.EntityResolver);
         var mesh = GeometryDispatcher.TryBuild(ctx, ctx.GetEntity(45220));
         Assert.That(mesh, Is.Not.Null);
         Assert.That(mesh!.Value.FaceIndices.Count, Is.GreaterThan(0));
@@ -267,7 +267,7 @@ public sealed class SweptSolidTests
     {
         TestFiles.RequireExists(TestFiles.Example);
         using var file = TestFiles.LoadStep(TestFiles.Example);
-        var ctx = new MeshingContext(file);
+        var ctx = new MeshingContext(file.EntityResolver);
 
         foreach (var (solidId, profileId) in new (int solid, int profile)[]
         {
@@ -308,7 +308,7 @@ public sealed class SweptSolidTests
     {
         TestFiles.RequireExists(TestFiles.Example);
         using var file = TestFiles.LoadStep(TestFiles.Example);
-        var ctx = new MeshingContext(file);
+        var ctx = new MeshingContext(file.EntityResolver);
 
         foreach (var (solidId, profileId) in new (int solid, int profile)[]
         {

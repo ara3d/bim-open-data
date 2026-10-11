@@ -1,5 +1,5 @@
 using Ara3D.Geometry;
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcLoader;
 using Ara3D.IfcMeshingComparison.Harness;
 using Ara3D.IfcMeshingComparison.Tests.Support;
@@ -30,8 +30,7 @@ public sealed class InstanceColorTests
             #9=IFCWALL('g',$,'Wall',$,$,#8,#5,$);
             """);
 
-        Assert.That(model.Context.File, Is.Not.Null);
-        var (built, _) = ModelAssembler.BuildModel(model.Context.File!);
+        var (built, _) = ModelAssembler.BuildModel(model.Context.Resolver);
         Assert.That(built.Instances, Has.Count.EqualTo(1));
 
         var color = built.Instances[0].Color;
@@ -60,8 +59,7 @@ public sealed class InstanceColorTests
             #9=IFCWALL('g',$,'Wall',$,$,#8,#5,$);
             """);
 
-        Assert.That(model.Context.File, Is.Not.Null);
-        var (built, _) = ModelAssembler.BuildModel(model.Context.File!);
+        var (built, _) = ModelAssembler.BuildModel(model.Context.Resolver);
         Assert.That(built.Instances, Has.Count.EqualTo(1));
 
         var color = built.Instances[0].Color;
@@ -86,8 +84,7 @@ public sealed class InstanceColorTests
             #9=IFCWALL('g',$,'Wall',$,$,#8,#5,$);
             """);
 
-        Assert.That(model.Context.File, Is.Not.Null);
-        var (built, _) = ModelAssembler.BuildModel(model.Context.File!);
+        var (built, _) = ModelAssembler.BuildModel(model.Context.Resolver);
         Assert.That(built.Instances, Has.Count.EqualTo(1));
 
         var expected = Material.Default.Color;
@@ -119,8 +116,7 @@ public sealed class InstanceColorTests
             #9=IFCWALL('g',$,'Wall',$,$,#8,#5,$);
             """);
 
-        Assert.That(model.Context.File, Is.Not.Null);
-        var (built, _) = ModelAssembler.BuildModel(model.Context.File!);
+        var (built, _) = ModelAssembler.BuildModel(model.Context.Resolver);
         Assert.That(built.Instances, Has.Count.EqualTo(1));
 
         var color = built.Instances[0].Color;
@@ -135,7 +131,7 @@ public sealed class InstanceColorTests
     {
         TestFiles.RequireExists(TestFiles.Example);
         using var file = new IfcFile(TestFiles.Example, includeGeometry: false);
-        var (built, _) = ModelAssembler.BuildModel(file);
+        var (built, _) = ModelAssembler.BuildModel(file.EntityResolver);
 
         Assert.That(built.Instances, Has.Count.GreaterThan(0));
         var defaultPacked = new InstanceStruct(-1, Matrix4x4.Identity, 0, Material.Default).PackedColor;

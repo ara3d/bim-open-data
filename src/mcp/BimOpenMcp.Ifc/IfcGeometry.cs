@@ -36,7 +36,7 @@ public readonly record struct IfcElementGeometry(
     double SurfaceArea,
     IfcBox Bounds);
 
-/// <summary>Measures the meshes a session produced. The Approach1 mesher already ran by the time any
+/// <summary>Measures the meshes a session produced. The mesher already ran by the time any
 /// of this is called (via <see cref="IfcSession.Meshing"/>), so the work here is only transform,
 /// grouping and accumulation over an in-memory <see cref="Model3D"/>.</summary>
 public static class IfcGeometry

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Ara3D.Geometry;
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcLoader;
 using Ara3D.IfcMeshingComparison.Meshers;
 using Ara3D.IfcMeshingComparison.Tests.Support;
@@ -164,7 +164,7 @@ public static class ModelComparer
     {
         TestFiles.RequireExists(ifcPath);
         using var stepFile = new IfcFile(ifcPath, includeGeometry: false);
-        var (model, _) = ModelAssembler.BuildModel(stepFile);
+        var (model, _) = ModelAssembler.BuildModel(stepFile.EntityResolver);
         return model;
     }
 

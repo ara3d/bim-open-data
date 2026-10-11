@@ -1,5 +1,5 @@
 using Ara3D.Geometry;
-using Ara3D.Ifc.Mesher.Approach1;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcLoader;
 using Ara3D.IfcMeshingComparison.Harness;
 using Ara3D.IfcMeshingComparison.Harness.GeometryOracles;
@@ -34,7 +34,7 @@ public sealed class WpEntityShapeVolumeTests
     {
         TestFiles.RequireExists(TestFiles.Example);
         using var file = new IfcFile(TestFiles.Example, includeGeometry: false);
-        var ctx = new MeshingContext(file);
+        var ctx = new MeshingContext(file.EntityResolver);
         var mesh = ModelAssembler.BuildEntityMesh(ctx, ctx.GetEntity(12799));
         Assert.That(mesh, Is.Not.Null);
         var vol = Math.Abs(MeshHelpers.SignedVolume(mesh!.Value));
@@ -79,7 +79,7 @@ public sealed class WpEntityShapeVolumeTests
     {
         TestFiles.RequireExists(TestFiles.SteelPlates);
         using var file = new IfcFile(TestFiles.SteelPlates, includeGeometry: false);
-        var ctx = new MeshingContext(file);
+        var ctx = new MeshingContext(file.EntityResolver);
         foreach (var id in new[] { 1193, 633, 1385 })
         {
             var entity = ctx.GetEntityOrDefault(id);

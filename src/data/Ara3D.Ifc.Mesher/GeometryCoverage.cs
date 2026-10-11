@@ -2,7 +2,7 @@ using Ara3D.IfcLoader;
 using Ara3D.IO.StepParser;
 using Ara3D.Utils;
 
-namespace Ara3D.Ifc.Mesher.Approach1;
+namespace Ara3D.Ifc.Mesher;
 
 public enum GeometryCreationSupport
 {
@@ -20,11 +20,10 @@ public sealed record GeometryCreationItem(
 
 public sealed record EncounteredGeometryItem(string EntityName, int Count, GeometryCreationSupport Support, string Notes);
 
-/// <summary>
-/// Curated registry of geometry-bearing IFC entities and corpus scanning.
-/// Ported from the former Approach2 scratch mesher backlog.
-/// </summary>
-public static class GeometryCreationBacklog
+/// <summary>Which geometry-bearing IFC entities the mesher handles, and how well, with the micro
+/// fixture that proves each one; <see cref="Scan"/> counts the entities a set of files uses against it.
+/// The coverage gate and the capability report read this table.</summary>
+public static class GeometryCoverage
 {
     public static IReadOnlyList<GeometryCreationItem> KnownItems { get; } =
     [
