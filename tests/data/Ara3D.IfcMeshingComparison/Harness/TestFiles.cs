@@ -31,6 +31,13 @@ public static class TestFiles
     /// here so a run can be compared with the last one in git.</summary>
     public static readonly DirectoryPath BenchDir = new(Path.Combine(RepoPaths.Root, "bench", "ifc-mesher"));
 
+    /// <summary>Mesh dumps of the external meshers over the quick files, committed so the comparison
+    /// runs without those tools installed; one folder per mesher name.</summary>
+    public static readonly DirectoryPath CommittedDumpsDir = BenchDir.RelativeFolder("dumps");
+
+    /// <summary>Mesh dumps of the external meshers over any other model; git-ignored.</summary>
+    public static readonly DirectoryPath DumpsDir = ArtifactsDir.RelativeFolder("dumps");
+
     public static FilePath Example => ResolveIfc("example.ifc");
     public static FilePath IfcOpenHouse => ResolveIfc("IfcOpenHouse_IFC4.ifc");
     public static FilePath SampleEntities => ResolveIfc("Sample_entities.ifc");
