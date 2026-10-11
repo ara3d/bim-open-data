@@ -35,7 +35,8 @@ Everything the harness writes goes under `artifacts/ifc-mesher/`, which git igno
 ## Running it
 
 ```powershell
-dotnet test tests/data/Ara3D.IfcMeshingComparison -c Release                              # the gate: fast tests, no models needed
+dotnet test tests/data/Ara3D.Ifc.Mesher.Tests -c Release                                  # the fast tests, no models needed
+dotnet test tests/data/Ara3D.IfcMeshingComparison -c Release                              # this project; every test ignores itself without its model
 $env:ARA3D_IFC_TEST_DIRS = 'C:\models'; dotnet test tests/data/Ara3D.IfcMeshingComparison -c Release   # with a corpus
 dotnet test tests/data/Ara3D.IfcMeshingComparison -c Release --filter "Category=IfcMesherParity"       # the parity gates
 dotnet test tests/data/Ara3D.IfcMeshingComparison -c Release --filter "FullyQualifiedName~ScoreQuickComparisonFiles"  # rewrite bench/ifc-mesher/scorecard.json
