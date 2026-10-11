@@ -1,0 +1,1211 @@
+{
+  "generatedUtc": "2026-10-11T20:07:40.9443267Z",
+  "files": [
+    {
+      "fileName": "IfcOpenHouse_IFC4.ifc",
+      "meshers": [
+        {
+          "mesher": "Ara3D.Ifc.Mesher",
+          "version": "in process",
+          "available": true,
+          "meshes": 19,
+          "instances": 38,
+          "triangles": 1175,
+          "boundsMin": [
+            -10,
+            -10,
+            -8.13
+          ],
+          "boundsMax": [
+            10,
+            10,
+            5.7800007
+          ],
+          "elapsedMs": 731
+        },
+        {
+          "mesher": "WebIfcDll",
+          "version": "in process",
+          "available": true,
+          "meshes": 19,
+          "instances": 38,
+          "triangles": 1098,
+          "boundsMin": [
+            -10,
+            -10,
+            -8.13
+          ],
+          "boundsMax": [
+            10,
+            10,
+            5.7800016
+          ],
+          "elapsedMs": 40
+        },
+        {
+          "mesher": "WebIfc",
+          "version": "0.0.78",
+          "available": true,
+          "meshes": 18,
+          "instances": 38,
+          "triangles": 1098,
+          "boundsMin": [
+            -10,
+            -10,
+            -8.13
+          ],
+          "boundsMax": [
+            10,
+            10,
+            5.7800016
+          ],
+          "elapsedMs": 53
+        },
+        {
+          "mesher": "IfcLite",
+          "version": "4.15.0",
+          "available": true,
+          "meshes": 39,
+          "instances": 39,
+          "triangles": 1172,
+          "boundsMin": [
+            -10,
+            -10,
+            -8.13
+          ],
+          "boundsMax": [
+            10,
+            10,
+            5.7800007
+          ],
+          "elapsedMs": 23
+        },
+        {
+          "mesher": "IfcOpenShell",
+          "version": "0.8.5",
+          "available": true,
+          "meshes": 39,
+          "instances": 39,
+          "triangles": 1146,
+          "boundsMin": [
+            -10,
+            -10,
+            -8.13
+          ],
+          "boundsMax": [
+            10,
+            10,
+            5.7800007
+          ],
+          "elapsedMs": 224
+        }
+      ],
+      "pairs": [
+        {
+          "candidate": "Ara3D.Ifc.Mesher",
+          "oracle": "WebIfcDll",
+          "parity": 0.9633104479209224,
+          "metrics": {
+            "meshCount": 1,
+            "instanceCount": 1,
+            "entityInstances": 1,
+            "entityBoundingBox": 1,
+            "entityShape": 0.977713732004051,
+            "meshBoundingBox": 1,
+            "meshShape": 0.9554331284955189,
+            "mergedMesh": 0.7333870207035779
+          }
+        },
+        {
+          "candidate": "Ara3D.Ifc.Mesher",
+          "oracle": "WebIfc",
+          "parity": 0.9603566478640837,
+          "metrics": {
+            "meshCount": 0.9473684210526315,
+            "instanceCount": 1,
+            "entityInstances": 1,
+            "entityBoundingBox": 1,
+            "entityShape": 0.9773329308349692,
+            "meshBoundingBox": 0.9894736842105264,
+            "meshShape": 0.9584260782182573,
+            "mergedMesh": 0.7333870207035779
+          }
+        },
+        {
+          "candidate": "Ara3D.Ifc.Mesher",
+          "oracle": "IfcLite",
+          "parity": 0.9238953703824863,
+          "metrics": {
+            "meshCount": 0.48717948717948717,
+            "instanceCount": 0.9743589743589743,
+            "entityInstances": 0.938003663003663,
+            "entityBoundingBox": 0.9692307692307691,
+            "entityShape": 0.9898481175037019,
+            "meshBoundingBox": 0.8974358974358975,
+            "meshShape": 0.8202722467463259,
+            "mergedMesh": 0.9293633611214798
+          }
+        },
+        {
+          "candidate": "Ara3D.Ifc.Mesher",
+          "oracle": "IfcOpenShell",
+          "parity": 0.9217219118749781,
+          "metrics": {
+            "meshCount": 0.48717948717948717,
+            "instanceCount": 0.9743589743589743,
+            "entityInstances": 0.938003663003663,
+            "entityBoundingBox": 0.9692307692307691,
+            "entityShape": 0.9892348764175872,
+            "meshBoundingBox": 0.8974358974358975,
+            "meshShape": 0.81095542284118,
+            "mergedMesh": 0.9184787026668326
+          }
+        },
+        {
+          "candidate": "WebIfcDll",
+          "oracle": "Ara3D.Ifc.Mesher",
+          "parity": 0.9633104479209224,
+          "metrics": {
+            "meshCount": 1,
+            "instanceCount": 1,
+            "entityInstances": 1,
+            "entityBoundingBox": 1,
+            "entityShape": 0.977713732004051,
+            "meshBoundingBox": 1,
+            "meshShape": 0.9554331284955189,
+            "mergedMesh": 0.7333870207035779
+          }
+        },
+        {
+          "candidate": "WebIfcDll",
+          "oracle": "WebIfc",
+          "parity": 0.9955622673034588,
+          "metrics": {
+            "meshCount": 0.9473684210526315,
+            "instanceCount": 1,
+            "entityInstances": 1,
+            "entityBoundingBox": 1,
+            "entityShape": 0.9990911747088603,
+            "meshBoundingBox": 0.9894736842105264,
+            "meshShape": 0.9894736836308577,
+            "mergedMesh": 1
+          }
+        },
+        {
+          "candidate": "WebIfcDll",
+          "oracle": "IfcLite",
+          "parity": 0.9008862920972315,
+          "metrics": {
+            "meshCount": 0.48717948717948717,
+            "instanceCount": 0.9743589743589743,
+            "entityInstances": 0.938003663003663,
+            "entityBoundingBox": 0.9692307692307691,
+            "entityShape": 0.9874910049408813,
+            "meshBoundingBox": 0.8474358974358974,
+            "meshShape": 0.8347947951877235,
+            "mergedMesh": 0.715642811234587
+          }
+        },
+        {
+          "candidate": "WebIfcDll",
+          "oracle": "IfcOpenShell",
+          "parity": 0.9045125022025846,
+          "metrics": {
+            "meshCount": 0.48717948717948717,
+            "instanceCount": 0.9743589743589743,
+            "entityInstances": 0.938003663003663,
+            "entityBoundingBox": 0.9692307692307691,
+            "entityShape": 0.9880085184920677,
+            "meshBoundingBox": 0.8474358974358974,
+            "meshShape": 0.8636103300940579,
+            "mergedMesh": 0.7217955935038184
+          }
+        },
+        {
+          "candidate": "WebIfc",
+          "oracle": "Ara3D.Ifc.Mesher",
+          "parity": 0.9603566478640837,
+          "metrics": {
+            "meshCount": 0.9473684210526315,
+            "instanceCount": 1,
+            "entityInstances": 1,
+            "entityBoundingBox": 1,
+            "entityShape": 0.9773329308349693,
+            "meshBoundingBox": 0.9894736842105264,
+            "meshShape": 0.9584260782182573,
+            "mergedMesh": 0.7333870207035779
+          }
+        },
+        {
+          "candidate": "WebIfc",
+          "oracle": "WebIfcDll",
+          "parity": 0.9955622673034586,
+          "metrics": {
+            "meshCount": 0.9473684210526315,
+            "instanceCount": 1,
+            "entityInstances": 1,
+            "entityBoundingBox": 1,
+            "entityShape": 0.9990911747088603,
+            "meshBoundingBox": 0.9894736842105264,
+            "meshShape": 0.9894736836308575,
+            "mergedMesh": 1
+          }
+        },
+        {
+          "candidate": "WebIfc",
+          "oracle": "IfcLite",
+          "parity": 0.8993892871328152,
+          "metrics": {
+            "meshCount": 0.46153846153846156,
+            "instanceCount": 0.9743589743589743,
+            "entityInstances": 0.938003663003663,
+            "entityBoundingBox": 0.9692307692307691,
+            "entityShape": 0.9870257947340487,
+            "meshBoundingBox": 0.838974358974359,
+            "meshShape": 0.8380390531119242,
+            "mergedMesh": 0.715642811234587
+          }
+        },
+        {
+          "candidate": "WebIfc",
+          "oracle": "IfcOpenShell",
+          "parity": 0.9019693089311114,
+          "metrics": {
+            "meshCount": 0.46153846153846156,
+            "instanceCount": 0.9743589743589743,
+            "entityInstances": 0.938003663003663,
+            "entityBoundingBox": 0.9692307692307691,
+            "entityShape": 0.9876095519694965,
+            "meshBoundingBox": 0.838974358974359,
+            "meshShape": 0.8562270957370357,
+            "mergedMesh": 0.7217955935038184
+          }
+        },
+        {
+          "candidate": "IfcLite",
+          "oracle": "Ara3D.Ifc.Mesher",
+          "parity": 0.9238953703824863,
+          "metrics": {
+            "meshCount": 0.48717948717948717,
+            "instanceCount": 0.9743589743589743,
+            "entityInstances": 0.938003663003663,
+            "entityBoundingBox": 0.9692307692307691,
+            "entityShape": 0.9898481175037019,
+            "meshBoundingBox": 0.8974358974358975,
+            "meshShape": 0.8202722467463259,
+            "mergedMesh": 0.9293633611214798
+          }
+        },
+        {
+          "candidate": "IfcLite",
+          "oracle": "WebIfcDll",
+          "parity": 0.9008862920972315,
+          "metrics": {
+            "meshCount": 0.48717948717948717,
+            "instanceCount": 0.9743589743589743,
+            "entityInstances": 0.938003663003663,
+            "entityBoundingBox": 0.9692307692307691,
+            "entityShape": 0.9874910049408813,
+            "meshBoundingBox": 0.8474358974358974,
+            "meshShape": 0.8347947951877235,
+            "mergedMesh": 0.715642811234587
+          }
+        },
+        {
+          "candidate": "IfcLite",
+          "oracle": "WebIfc",
+          "parity": 0.8993892871328152,
+          "metrics": {
+            "meshCount": 0.46153846153846156,
+            "instanceCount": 0.9743589743589743,
+            "entityInstances": 0.938003663003663,
+            "entityBoundingBox": 0.9692307692307691,
+            "entityShape": 0.987025794734049,
+            "meshBoundingBox": 0.838974358974359,
+            "meshShape": 0.8380390531119242,
+            "mergedMesh": 0.715642811234587
+          }
+        },
+        {
+          "candidate": "IfcLite",
+          "oracle": "IfcOpenShell",
+          "parity": 0.997404604881284,
+          "metrics": {
+            "meshCount": 1,
+            "instanceCount": 1,
+            "entityInstances": 1,
+            "entityBoundingBox": 1,
+            "entityShape": 0.9990803212093411,
+            "meshBoundingBox": 1,
+            "meshShape": 0.988177882392405,
+            "mergedMesh": 0.9881673633970824
+          }
+        },
+        {
+          "candidate": "IfcOpenShell",
+          "oracle": "Ara3D.Ifc.Mesher",
+          "parity": 0.9217219118749781,
+          "metrics": {
+            "meshCount": 0.48717948717948717,
+            "instanceCount": 0.9743589743589743,
+            "entityInstances": 0.938003663003663,
+            "entityBoundingBox": 0.9692307692307691,
+            "entityShape": 0.9892348764175872,
+            "meshBoundingBox": 0.8974358974358975,
+            "meshShape": 0.81095542284118,
+            "mergedMesh": 0.9184787026668326
+          }
+        },
+        {
+          "candidate": "IfcOpenShell",
+          "oracle": "WebIfcDll",
+          "parity": 0.9045125022025846,
+          "metrics": {
+            "meshCount": 0.48717948717948717,
+            "instanceCount": 0.9743589743589743,
+            "entityInstances": 0.938003663003663,
+            "entityBoundingBox": 0.9692307692307691,
+            "entityShape": 0.9880085184920677,
+            "meshBoundingBox": 0.8474358974358974,
+            "meshShape": 0.863610330094058,
+            "mergedMesh": 0.7217955935038184
+          }
+        },
+        {
+          "candidate": "IfcOpenShell",
+          "oracle": "WebIfc",
+          "parity": 0.9019693089311114,
+          "metrics": {
+            "meshCount": 0.46153846153846156,
+            "instanceCount": 0.9743589743589743,
+            "entityInstances": 0.938003663003663,
+            "entityBoundingBox": 0.9692307692307691,
+            "entityShape": 0.9876095519694965,
+            "meshBoundingBox": 0.838974358974359,
+            "meshShape": 0.8562270957370358,
+            "mergedMesh": 0.7217955935038184
+          }
+        },
+        {
+          "candidate": "IfcOpenShell",
+          "oracle": "IfcLite",
+          "parity": 0.997404604881284,
+          "metrics": {
+            "meshCount": 1,
+            "instanceCount": 1,
+            "entityInstances": 1,
+            "entityBoundingBox": 1,
+            "entityShape": 0.9990803212093411,
+            "meshBoundingBox": 1,
+            "meshShape": 0.988177882392405,
+            "mergedMesh": 0.9881673633970824
+          }
+        }
+      ]
+    },
+    {
+      "fileName": "example.ifc",
+      "meshers": [
+        {
+          "mesher": "Ara3D.Ifc.Mesher",
+          "version": "in process",
+          "available": true,
+          "meshes": 99,
+          "instances": 120,
+          "triangles": 12494,
+          "boundsMin": [
+            -40.954685,
+            94.82239,
+            -0.5588
+          ],
+          "boundsMax": [
+            -15.653925,
+            104.56434,
+            5.3582
+          ],
+          "elapsedMs": 131
+        },
+        {
+          "mesher": "WebIfcDll",
+          "version": "in process",
+          "available": true,
+          "meshes": 99,
+          "instances": 120,
+          "triangles": 15046,
+          "boundsMin": [
+            -40.954685,
+            94.82238,
+            -0.5588
+          ],
+          "boundsMax": [
+            -15.653921,
+            104.56434,
+            5.3582
+          ],
+          "elapsedMs": 37
+        },
+        {
+          "mesher": "WebIfc",
+          "version": "0.0.78",
+          "available": true,
+          "meshes": 98,
+          "instances": 119,
+          "triangles": 14660,
+          "boundsMin": [
+            -40.954685,
+            94.82238,
+            -0.5588
+          ],
+          "boundsMax": [
+            -15.653921,
+            104.56434,
+            5.3582
+          ],
+          "elapsedMs": 67
+        },
+        {
+          "mesher": "IfcLite",
+          "version": "4.15.0",
+          "available": true,
+          "meshes": 116,
+          "instances": 116,
+          "triangles": 12016,
+          "boundsMin": [
+            -40.954685,
+            94.82239,
+            -0.55880004
+          ],
+          "boundsMax": [
+            -15.653921,
+            104.56434,
+            5.3582
+          ],
+          "elapsedMs": 15
+        },
+        {
+          "mesher": "IfcOpenShell",
+          "version": "0.8.5",
+          "available": true,
+          "meshes": 116,
+          "instances": 116,
+          "triangles": 10508,
+          "boundsMin": [
+            -40.954685,
+            94.82239,
+            -0.5588
+          ],
+          "boundsMax": [
+            -15.653925,
+            104.56434,
+            5.3582
+          ],
+          "elapsedMs": 167
+        }
+      ],
+      "pairs": [
+        {
+          "candidate": "Ara3D.Ifc.Mesher",
+          "oracle": "WebIfcDll",
+          "parity": 0.9384014439931718,
+          "metrics": {
+            "meshCount": 1,
+            "instanceCount": 1,
+            "entityInstances": 1,
+            "entityBoundingBox": 0.9939655172413793,
+            "entityShape": 0.9268801804995852,
+            "meshBoundingBox": 0.9919191919191921,
+            "meshShape": 0.9004893929238549,
+            "mergedMesh": 0.6794167239372358
+          }
+        },
+        {
+          "candidate": "Ara3D.Ifc.Mesher",
+          "oracle": "WebIfc",
+          "parity": 0.9367847915145133,
+          "metrics": {
+            "meshCount": 0.98989898989899,
+            "instanceCount": 0.9916666666666667,
+            "entityInstances": 0.9956896551724138,
+            "entityBoundingBox": 0.9913268365817092,
+            "entityShape": 0.927871298229974,
+            "meshBoundingBox": 0.9898165326736756,
+            "meshShape": 0.9018145743172278,
+            "mergedMesh": 0.6884725963354533
+          }
+        },
+        {
+          "candidate": "Ara3D.Ifc.Mesher",
+          "oracle": "IfcLite",
+          "parity": 0.9496665653242401,
+          "metrics": {
+            "meshCount": 0.853448275862069,
+            "instanceCount": 0.9666666666666667,
+            "entityInstances": 0.992816091954023,
+            "entityBoundingBox": 0.9939655172413793,
+            "entityShape": 0.9232124970131178,
+            "meshBoundingBox": 0.9454264972776769,
+            "meshShape": 0.8842838582998591,
+            "mergedMesh": 0.9747407520467707
+          }
+        },
+        {
+          "candidate": "Ara3D.Ifc.Mesher",
+          "oracle": "IfcOpenShell",
+          "parity": 0.9426940484626921,
+          "metrics": {
+            "meshCount": 0.853448275862069,
+            "instanceCount": 0.9666666666666667,
+            "entityInstances": 0.992816091954023,
+            "entityBoundingBox": 0.9939655172413793,
+            "entityShape": 0.9302115879842461,
+            "meshBoundingBox": 0.9454264972776769,
+            "meshShape": 0.8760532971819743,
+            "mergedMesh": 0.8957484171213551
+          }
+        },
+        {
+          "candidate": "WebIfcDll",
+          "oracle": "Ara3D.Ifc.Mesher",
+          "parity": 0.9384014439931718,
+          "metrics": {
+            "meshCount": 1,
+            "instanceCount": 1,
+            "entityInstances": 1,
+            "entityBoundingBox": 0.9939655172413793,
+            "entityShape": 0.9268801804995853,
+            "meshBoundingBox": 0.9919191919191921,
+            "meshShape": 0.9004893929238549,
+            "mergedMesh": 0.6794167239372358
+          }
+        },
+        {
+          "candidate": "WebIfcDll",
+          "oracle": "WebIfc",
+          "parity": 0.9879947481706466,
+          "metrics": {
+            "meshCount": 0.98989898989899,
+            "instanceCount": 0.9916666666666667,
+            "entityInstances": 0.9956896551724138,
+            "entityBoundingBox": 0.9974137931034482,
+            "entityShape": 0.9710871109304563,
+            "meshBoundingBox": 0.9979797979797981,
+            "meshShape": 0.9979797407791493,
+            "mergedMesh": 0.9831553972479883
+          }
+        },
+        {
+          "candidate": "WebIfcDll",
+          "oracle": "IfcLite",
+          "parity": 0.9285345856672985,
+          "metrics": {
+            "meshCount": 0.853448275862069,
+            "instanceCount": 0.9666666666666667,
+            "entityInstances": 0.992816091954023,
+            "entityBoundingBox": 1,
+            "entityShape": 0.9577152684159977,
+            "meshBoundingBox": 0.953847549909256,
+            "meshShape": 0.8819582926392113,
+            "mergedMesh": 0.6662273421770829
+          }
+        },
+        {
+          "candidate": "WebIfcDll",
+          "oracle": "IfcOpenShell",
+          "parity": 0.9231505667439255,
+          "metrics": {
+            "meshCount": 0.853448275862069,
+            "instanceCount": 0.9666666666666667,
+            "entityInstances": 0.992816091954023,
+            "entityBoundingBox": 1,
+            "entityShape": 0.9564843139807956,
+            "meshBoundingBox": 0.953847549909256,
+            "meshShape": 0.8726608666909561,
+            "mergedMesh": 0.6247619649796127
+          }
+        },
+        {
+          "candidate": "WebIfc",
+          "oracle": "Ara3D.Ifc.Mesher",
+          "parity": 0.9367847915145133,
+          "metrics": {
+            "meshCount": 0.98989898989899,
+            "instanceCount": 0.9916666666666667,
+            "entityInstances": 0.9956896551724138,
+            "entityBoundingBox": 0.9913268365817092,
+            "entityShape": 0.927871298229974,
+            "meshBoundingBox": 0.9898165326736756,
+            "meshShape": 0.9018145743172278,
+            "mergedMesh": 0.6884725963354533
+          }
+        },
+        {
+          "candidate": "WebIfc",
+          "oracle": "WebIfcDll",
+          "parity": 0.9879947481706466,
+          "metrics": {
+            "meshCount": 0.98989898989899,
+            "instanceCount": 0.9916666666666667,
+            "entityInstances": 0.9956896551724138,
+            "entityBoundingBox": 0.9974137931034482,
+            "entityShape": 0.9710871109304567,
+            "meshBoundingBox": 0.9979797979797981,
+            "meshShape": 0.9979797407791495,
+            "mergedMesh": 0.9831553972479883
+          }
+        },
+        {
+          "candidate": "WebIfc",
+          "oracle": "IfcLite",
+          "parity": 0.929908847396637,
+          "metrics": {
+            "meshCount": 0.8448275862068966,
+            "instanceCount": 0.9747899159663865,
+            "entityInstances": 0.9884432783608196,
+            "entityBoundingBox": 0.9974137931034482,
+            "entityShape": 0.961455606281643,
+            "meshBoundingBox": 0.9519442406456347,
+            "meshShape": 0.8811550055992681,
+            "mergedMesh": 0.6749380580907486
+          }
+        },
+        {
+          "candidate": "WebIfc",
+          "oracle": "IfcOpenShell",
+          "parity": 0.9252525480383813,
+          "metrics": {
+            "meshCount": 0.8448275862068966,
+            "instanceCount": 0.9747899159663865,
+            "entityInstances": 0.9884432783608196,
+            "entityBoundingBox": 0.9974137931034482,
+            "entityShape": 0.962990695041979,
+            "meshBoundingBox": 0.9519442406456347,
+            "meshShape": 0.8733048807300853,
+            "mergedMesh": 0.6323874674765336
+          }
+        },
+        {
+          "candidate": "IfcLite",
+          "oracle": "Ara3D.Ifc.Mesher",
+          "parity": 0.9496665653242401,
+          "metrics": {
+            "meshCount": 0.853448275862069,
+            "instanceCount": 0.9666666666666667,
+            "entityInstances": 0.992816091954023,
+            "entityBoundingBox": 0.9939655172413793,
+            "entityShape": 0.9232124970131178,
+            "meshBoundingBox": 0.9454264972776769,
+            "meshShape": 0.8842838582998591,
+            "mergedMesh": 0.9747407520467707
+          }
+        },
+        {
+          "candidate": "IfcLite",
+          "oracle": "WebIfcDll",
+          "parity": 0.9285345856672985,
+          "metrics": {
+            "meshCount": 0.853448275862069,
+            "instanceCount": 0.9666666666666667,
+            "entityInstances": 0.992816091954023,
+            "entityBoundingBox": 1,
+            "entityShape": 0.9577152684159979,
+            "meshBoundingBox": 0.953847549909256,
+            "meshShape": 0.8819582926392113,
+            "mergedMesh": 0.6662273421770829
+          }
+        },
+        {
+          "candidate": "IfcLite",
+          "oracle": "WebIfc",
+          "parity": 0.9299088473966369,
+          "metrics": {
+            "meshCount": 0.8448275862068966,
+            "instanceCount": 0.9747899159663865,
+            "entityInstances": 0.9884432783608196,
+            "entityBoundingBox": 0.9974137931034482,
+            "entityShape": 0.9614556062816426,
+            "meshBoundingBox": 0.9519442406456347,
+            "meshShape": 0.8811550055992681,
+            "mergedMesh": 0.6749380580907486
+          }
+        },
+        {
+          "candidate": "IfcLite",
+          "oracle": "IfcOpenShell",
+          "parity": 0.9762667611353744,
+          "metrics": {
+            "meshCount": 1,
+            "instanceCount": 1,
+            "entityInstances": 1,
+            "entityBoundingBox": 1,
+            "entityShape": 0.9633305475975606,
+            "meshBoundingBox": 1,
+            "meshShape": 0.9364449723235553,
+            "mergedMesh": 0.917896270036286
+          }
+        },
+        {
+          "candidate": "IfcOpenShell",
+          "oracle": "Ara3D.Ifc.Mesher",
+          "parity": 0.9426940484626921,
+          "metrics": {
+            "meshCount": 0.853448275862069,
+            "instanceCount": 0.9666666666666667,
+            "entityInstances": 0.992816091954023,
+            "entityBoundingBox": 0.9939655172413793,
+            "entityShape": 0.930211587984246,
+            "meshBoundingBox": 0.9454264972776769,
+            "meshShape": 0.8760532971819746,
+            "mergedMesh": 0.8957484171213551
+          }
+        },
+        {
+          "candidate": "IfcOpenShell",
+          "oracle": "WebIfcDll",
+          "parity": 0.9231505667439255,
+          "metrics": {
+            "meshCount": 0.853448275862069,
+            "instanceCount": 0.9666666666666667,
+            "entityInstances": 0.992816091954023,
+            "entityBoundingBox": 1,
+            "entityShape": 0.9564843139807959,
+            "meshBoundingBox": 0.953847549909256,
+            "meshShape": 0.8726608666909561,
+            "mergedMesh": 0.6247619649796127
+          }
+        },
+        {
+          "candidate": "IfcOpenShell",
+          "oracle": "WebIfc",
+          "parity": 0.9252525480383813,
+          "metrics": {
+            "meshCount": 0.8448275862068966,
+            "instanceCount": 0.9747899159663865,
+            "entityInstances": 0.9884432783608196,
+            "entityBoundingBox": 0.9974137931034482,
+            "entityShape": 0.9629906950419788,
+            "meshBoundingBox": 0.9519442406456347,
+            "meshShape": 0.8733048807300855,
+            "mergedMesh": 0.6323874674765336
+          }
+        },
+        {
+          "candidate": "IfcOpenShell",
+          "oracle": "IfcLite",
+          "parity": 0.9762667611353744,
+          "metrics": {
+            "meshCount": 1,
+            "instanceCount": 1,
+            "entityInstances": 1,
+            "entityBoundingBox": 1,
+            "entityShape": 0.9633305475975606,
+            "meshBoundingBox": 1,
+            "meshShape": 0.9364449723235553,
+            "mergedMesh": 0.917896270036286
+          }
+        }
+      ]
+    },
+    {
+      "fileName": "steelplates.ifc",
+      "meshers": [
+        {
+          "mesher": "Ara3D.Ifc.Mesher",
+          "version": "in process",
+          "available": true,
+          "meshes": 14,
+          "instances": 14,
+          "triangles": 716,
+          "boundsMin": [
+            4.393692,
+            6.6883564,
+            -0.6096
+          ],
+          "boundsMax": [
+            6.0312676,
+            7.747444,
+            0.91440004
+          ],
+          "elapsedMs": 12
+        },
+        {
+          "mesher": "WebIfcDll",
+          "version": "in process",
+          "available": true,
+          "meshes": 14,
+          "instances": 14,
+          "triangles": 1428,
+          "boundsMin": [
+            4.393692,
+            6.6883564,
+            -0.6096
+          ],
+          "boundsMax": [
+            6.031267,
+            7.747444,
+            0.91440004
+          ],
+          "elapsedMs": 26
+        },
+        {
+          "mesher": "WebIfc",
+          "version": "0.0.78",
+          "available": true,
+          "meshes": 14,
+          "instances": 14,
+          "triangles": 1428,
+          "boundsMin": [
+            4.393692,
+            6.6883564,
+            -0.6096
+          ],
+          "boundsMax": [
+            6.031267,
+            7.747444,
+            0.91440004
+          ],
+          "elapsedMs": 68
+        },
+        {
+          "mesher": "IfcLite",
+          "version": "4.15.0",
+          "available": true,
+          "meshes": 16,
+          "instances": 16,
+          "triangles": 2528,
+          "boundsMin": [
+            4.393692,
+            6.6883564,
+            -0.6096
+          ],
+          "boundsMax": [
+            6.0312676,
+            7.74995,
+            0.91440004
+          ],
+          "elapsedMs": 22
+        },
+        {
+          "mesher": "IfcOpenShell",
+          "version": "0.8.5",
+          "available": true,
+          "meshes": 16,
+          "instances": 16,
+          "triangles": 1340,
+          "boundsMin": [
+            4.393692,
+            6.6883564,
+            -0.6096
+          ],
+          "boundsMax": [
+            6.0312676,
+            7.74995,
+            0.91440004
+          ],
+          "elapsedMs": 164
+        }
+      ],
+      "pairs": [
+        {
+          "candidate": "Ara3D.Ifc.Mesher",
+          "oracle": "WebIfcDll",
+          "parity": 0.9184610249203935,
+          "metrics": {
+            "meshCount": 1,
+            "instanceCount": 1,
+            "entityInstances": 1,
+            "entityBoundingBox": 1,
+            "entityShape": 0.9622184273342935,
+            "meshBoundingBox": 1,
+            "meshShape": 0.7271503821225516,
+            "mergedMesh": 0.5519137987456505
+          }
+        },
+        {
+          "candidate": "Ara3D.Ifc.Mesher",
+          "oracle": "WebIfc",
+          "parity": 0.9184887261685848,
+          "metrics": {
+            "meshCount": 1,
+            "instanceCount": 1,
+            "entityInstances": 1,
+            "entityBoundingBox": 1,
+            "entityShape": 0.9623292322723043,
+            "meshBoundingBox": 1,
+            "meshShape": 0.7271503822594367,
+            "mergedMesh": 0.5519137987456505
+          }
+        },
+        {
+          "candidate": "Ara3D.Ifc.Mesher",
+          "oracle": "IfcLite",
+          "parity": 0.8821739062353827,
+          "metrics": {
+            "meshCount": 0.875,
+            "instanceCount": 0.875,
+            "entityInstances": 0.9375,
+            "entityBoundingBox": 0.9624999999999999,
+            "entityShape": 0.9642703683096043,
+            "meshBoundingBox": 0.9750000000000001,
+            "meshShape": 0.7472137144005506,
+            "mergedMesh": 0.5763494271792661
+          }
+        },
+        {
+          "candidate": "Ara3D.Ifc.Mesher",
+          "oracle": "IfcOpenShell",
+          "parity": 0.9043359673663525,
+          "metrics": {
+            "meshCount": 0.875,
+            "instanceCount": 0.875,
+            "entityInstances": 0.9375,
+            "entityBoundingBox": 0.9624999999999999,
+            "entityShape": 0.9634551125262651,
+            "meshBoundingBox": 0.9750000000000001,
+            "meshShape": 0.760707473040388,
+            "mergedMesh": 0.7865144193074741
+          }
+        },
+        {
+          "candidate": "WebIfcDll",
+          "oracle": "Ara3D.Ifc.Mesher",
+          "parity": 0.9184610249203936,
+          "metrics": {
+            "meshCount": 1,
+            "instanceCount": 1,
+            "entityInstances": 1,
+            "entityBoundingBox": 1,
+            "entityShape": 0.9622184273342936,
+            "meshBoundingBox": 1,
+            "meshShape": 0.7271503821225516,
+            "mergedMesh": 0.5519137987456505
+          }
+        },
+        {
+          "candidate": "WebIfcDll",
+          "oracle": "WebIfc",
+          "parity": 0.9968945232681761,
+          "metrics": {
+            "meshCount": 1,
+            "instanceCount": 1,
+            "entityInstances": 1,
+            "entityBoundingBox": 1,
+            "entityShape": 0.9899132831801707,
+            "meshBoundingBox": 1,
+            "meshShape": 0.9941620247313339,
+            "mergedMesh": 1
+          }
+        },
+        {
+          "candidate": "WebIfcDll",
+          "oracle": "IfcLite",
+          "parity": 0.8997837560068125,
+          "metrics": {
+            "meshCount": 0.875,
+            "instanceCount": 0.875,
+            "entityInstances": 0.9375,
+            "entityBoundingBox": 0.9624999999999999,
+            "entityShape": 0.9824199244850839,
+            "meshBoundingBox": 0.9750000000000001,
+            "meshShape": 0.8172649197256628,
+            "mergedMesh": 0.6370228291297525
+          }
+        },
+        {
+          "candidate": "WebIfcDll",
+          "oracle": "IfcOpenShell",
+          "parity": 0.9093194824640813,
+          "metrics": {
+            "meshCount": 0.875,
+            "instanceCount": 0.875,
+            "entityInstances": 0.9375,
+            "entityBoundingBox": 0.9624999999999999,
+            "entityShape": 0.9826108470843977,
+            "meshBoundingBox": 0.9750000000000001,
+            "meshShape": 0.8406988960399757,
+            "mergedMesh": 0.7084688108898436
+          }
+        },
+        {
+          "candidate": "WebIfc",
+          "oracle": "Ara3D.Ifc.Mesher",
+          "parity": 0.9184887261685848,
+          "metrics": {
+            "meshCount": 1,
+            "instanceCount": 1,
+            "entityInstances": 1,
+            "entityBoundingBox": 1,
+            "entityShape": 0.9623292322723043,
+            "meshBoundingBox": 1,
+            "meshShape": 0.7271503822594367,
+            "mergedMesh": 0.5519137987456505
+          }
+        },
+        {
+          "candidate": "WebIfc",
+          "oracle": "WebIfcDll",
+          "parity": 0.9968945232681761,
+          "metrics": {
+            "meshCount": 1,
+            "instanceCount": 1,
+            "entityInstances": 1,
+            "entityBoundingBox": 1,
+            "entityShape": 0.9899132831801707,
+            "meshBoundingBox": 1,
+            "meshShape": 0.9941620247313339,
+            "mergedMesh": 1
+          }
+        },
+        {
+          "candidate": "WebIfc",
+          "oracle": "IfcLite",
+          "parity": 0.9024981768902687,
+          "metrics": {
+            "meshCount": 0.875,
+            "instanceCount": 0.875,
+            "entityInstances": 0.9375,
+            "entityBoundingBox": 0.9624999999999999,
+            "entityShape": 0.9909511818826724,
+            "meshBoundingBox": 0.9750000000000001,
+            "meshShape": 0.8230809850662548,
+            "mergedMesh": 0.6370228291297525
+          }
+        },
+        {
+          "candidate": "WebIfc",
+          "oracle": "IfcOpenShell",
+          "parity": 0.9120762296915796,
+          "metrics": {
+            "meshCount": 0.875,
+            "instanceCount": 0.875,
+            "entityInstances": 0.9375,
+            "entityBoundingBox": 0.9624999999999999,
+            "entityShape": 0.9913083695855637,
+            "meshBoundingBox": 0.9750000000000001,
+            "meshShape": 0.8465225620620436,
+            "mergedMesh": 0.7084688108898436
+          }
+        },
+        {
+          "candidate": "IfcLite",
+          "oracle": "Ara3D.Ifc.Mesher",
+          "parity": 0.8821739062353827,
+          "metrics": {
+            "meshCount": 0.875,
+            "instanceCount": 0.875,
+            "entityInstances": 0.9375,
+            "entityBoundingBox": 0.9624999999999999,
+            "entityShape": 0.9642703683096043,
+            "meshBoundingBox": 0.9750000000000001,
+            "meshShape": 0.7472137144005506,
+            "mergedMesh": 0.5763494271792661
+          }
+        },
+        {
+          "candidate": "IfcLite",
+          "oracle": "WebIfcDll",
+          "parity": 0.8997837560068125,
+          "metrics": {
+            "meshCount": 0.875,
+            "instanceCount": 0.875,
+            "entityInstances": 0.9375,
+            "entityBoundingBox": 0.9624999999999999,
+            "entityShape": 0.9824199244850839,
+            "meshBoundingBox": 0.9750000000000001,
+            "meshShape": 0.8172649197256628,
+            "mergedMesh": 0.6370228291297525
+          }
+        },
+        {
+          "candidate": "IfcLite",
+          "oracle": "WebIfc",
+          "parity": 0.9024981768902687,
+          "metrics": {
+            "meshCount": 0.875,
+            "instanceCount": 0.875,
+            "entityInstances": 0.9375,
+            "entityBoundingBox": 0.9624999999999999,
+            "entityShape": 0.9909511818826724,
+            "meshBoundingBox": 0.9750000000000001,
+            "meshShape": 0.8230809850662548,
+            "mergedMesh": 0.6370228291297525
+          }
+        },
+        {
+          "candidate": "IfcLite",
+          "oracle": "IfcOpenShell",
+          "parity": 0.964133173085035,
+          "metrics": {
+            "meshCount": 1,
+            "instanceCount": 1,
+            "entityInstances": 1,
+            "entityBoundingBox": 1,
+            "entityShape": 0.9989934864134934,
+            "meshBoundingBox": 1,
+            "meshShape": 0.9537443584306773,
+            "mergedMesh": 0.6901036563859387
+          }
+        },
+        {
+          "candidate": "IfcOpenShell",
+          "oracle": "Ara3D.Ifc.Mesher",
+          "parity": 0.9043359673663525,
+          "metrics": {
+            "meshCount": 0.875,
+            "instanceCount": 0.875,
+            "entityInstances": 0.9375,
+            "entityBoundingBox": 0.9624999999999999,
+            "entityShape": 0.9634551125262651,
+            "meshBoundingBox": 0.9750000000000001,
+            "meshShape": 0.760707473040388,
+            "mergedMesh": 0.7865144193074741
+          }
+        },
+        {
+          "candidate": "IfcOpenShell",
+          "oracle": "WebIfcDll",
+          "parity": 0.9093194824640813,
+          "metrics": {
+            "meshCount": 0.875,
+            "instanceCount": 0.875,
+            "entityInstances": 0.9375,
+            "entityBoundingBox": 0.9624999999999999,
+            "entityShape": 0.9826108470843977,
+            "meshBoundingBox": 0.9750000000000001,
+            "meshShape": 0.8406988960399756,
+            "mergedMesh": 0.7084688108898436
+          }
+        },
+        {
+          "candidate": "IfcOpenShell",
+          "oracle": "WebIfc",
+          "parity": 0.9120762296915796,
+          "metrics": {
+            "meshCount": 0.875,
+            "instanceCount": 0.875,
+            "entityInstances": 0.9375,
+            "entityBoundingBox": 0.9624999999999999,
+            "entityShape": 0.9913083695855637,
+            "meshBoundingBox": 0.9750000000000001,
+            "meshShape": 0.8465225620620436,
+            "mergedMesh": 0.7084688108898436
+          }
+        },
+        {
+          "candidate": "IfcOpenShell",
+          "oracle": "IfcLite",
+          "parity": 0.964133173085035,
+          "metrics": {
+            "meshCount": 1,
+            "instanceCount": 1,
+            "entityInstances": 1,
+            "entityBoundingBox": 1,
+            "entityShape": 0.9989934864134934,
+            "meshBoundingBox": 1,
+            "meshShape": 0.9537443584306773,
+            "mergedMesh": 0.6901036563859387
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -20,6 +20,18 @@ const version = JSON.parse(readFileSync(join(here, '..', 'node_modules', 'web-if
 
 const NAME = 'WebIfc';
 
+// web-ifc bakes a Y-up rotation for three.js into every placement: its (x, y, z) is IFC's (x, z, -y).
+// Post-multiplying the placement by the inverse rotation puts the instance back in IFC's Z-up frame,
+// where the other meshers' dumps are.
+const toIfcFrame = [1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1];
+function toZUp(m) {
+  const out = new Array(16).fill(0);
+  for (let r = 0; r < 4; r++)
+    for (let c = 0; c < 4; c++)
+      for (let k = 0; k < 4; k++) out[r * 4 + c] += m[r * 4 + k] * toIfcFrame[k * 4 + c];
+  return out;
+}
+
 async function mesh(ifcPath, outPath) {
   const source = sourceOf(ifcPath);
   const api = new WebIFC.IfcAPI();
@@ -55,7 +67,7 @@ async function mesh(ifcPath, outPath) {
         meshIndexByGeometry.set(pg.geometryExpressID, meshIndex);
       }
       if (meshIndex < 0) continue;
-      instances.push({ entity: flatMesh.expressID, mesh: meshIndex, matrix: Array.from(pg.flatTransformation) });
+      instances.push({ entity: flatMesh.expressID, mesh: meshIndex, matrix: toZUp(pg.flatTransformation) });
     }
   });
   const elapsedMs = performance.now() - started;

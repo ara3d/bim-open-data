@@ -32,6 +32,36 @@ The first test rewrites `scorecard.json` here; the web-ifc tessellations it need
 
 `scorecard.json` carries the run's timestamp, so a rerun that changes no score still changes the file; commit it only when a score moved.
 
+## Five meshers
+
+Besides the two meshers that run in process (`Ara3D.Ifc.Mesher`, and `WebIfcDll`, the C# wrapper around the older web-ifc build in `Ara3D.IfcLoader`), the bench compares three that run elsewhere and leave a mesh dump behind:
+
+| Name | Tool | Adapter |
+|---|---|---|
+| `WebIfc` | web-ifc 0.0.78 from npm, the engine under ThatOpen components | `meshers/webifc/mesh.mjs` |
+| `IfcLite` | IFClite's exact-CSG geometry, `ifclite-geom` 4.15.0 from PyPI | `meshers/ifclite/mesh.py` |
+| `IfcOpenShell` | IfcOpenShell 0.8.5, its `ifcopenshell.geom` iterator | `meshers/ifcopenshell/mesh.py` |
+
+A mesh dump (`.meshdump`) is one file per mesher per model: a JSON header (tool, version, the model's SHA-256, time taken) and the meshes and placed instances with their IFC express ids; `tests/data/Ara3D.IfcMeshingComparison/Harness/MeshDump.cs` documents the layout and reads it, `meshers/meshdump.mjs` and `meshers/meshdump.py` write it. The dumps for the three quick files are committed under `dumps/<mesher>/` (1.2 MB), so `MesherMatrixTests.QuickFiles_EveryPairScores_Within30Seconds` runs in the default test run on a machine with none of the tools installed, in about 7 seconds. Dumps for other models go under the git-ignored `artifacts/ifc-mesher/dumps/`.
+
+To rerun the external meshers, once:
+
+```powershell
+cd bench/ifc-mesher/meshers
+npm install                          # web-ifc 0.0.78
+pip install -r requirements.txt      # ifcopenshell 0.8.5, ifclite-geom 4.15.0, numpy
+```
+
+then, with `ARA3D_IFC_TEST_DIRS` pointing at the model folder:
+
+```powershell
+node bench/ifc-mesher/meshers/run.mjs                              # the quick files, into dumps/
+node bench/ifc-mesher/meshers/run.mjs --out artifacts duplex.ifc   # another model, into artifacts/
+node bench/ifc-mesher/meshers/run.mjs --only WebIfc --force        # one mesher, even if current
+```
+
+`run.mjs` leaves a dump alone when its header already has the model's hash and the tool's version, so a rerun after a tool update rewrites only that tool's dumps. A mesher whose tool is missing is reported and skipped. After the dumps change, run `MesherMatrixTests.WriteMeshersJson` (Explicit) to rewrite `meshers.json`, and add a dated section to `RESULTS.md`.
+
 ## Where the tests are
 
 `tests/data/Ara3D.IfcMeshingComparison/Tests/Comparison/ScorecardTests.cs` writes the scorecard; `Harness/ModelComparer.cs` holds the metrics. The per-model gates with tighter thresholds (the AISC sculpture at 0.92, the Institute models at 0.85 with a triangle ratio floor) are under `Tests/Corpus/` and run by name.

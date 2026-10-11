@@ -19,8 +19,8 @@ Tests/
   Corpus/        the mesher over model files, one fixture per model or entity family (CorpusBrepTests, SchependomlaanPlacementTests, PrimarkParityTests, ...)
   Comparison/    backend smoke tests, the parity scorecard, mis-tag and surface-distance metrics, and the per-model comparison runs
   Support/       OracleComparison and the shared DigitalHub comparison
-Harness/         TestFiles (where models are and outputs go), the web-ifc BFAST oracle, ModelComparer and its metrics
-Meshers/         IMeshingBackend and the two backends
+Harness/         TestFiles (where models are and outputs go), the web-ifc BFAST oracle, ModelComparer and its metrics, MeshDump (the file other meshers leave behind), MesherMatrix (every mesher against every other)
+Meshers/         IMeshingBackend, the two in-process backends, DumpBackend for meshers read from dumps, and MesherCatalog naming all five
 Reporting/       Markdown and JSON reports of a comparison run
 ```
 
