@@ -70,7 +70,7 @@ These are the 27 projects in `src/data`, grouped by what they do. Most target `n
 | `Ara3D.Ifc.Bos` | IFC to BOS conversion |
 | `Ara3D.Ifc.Conventions` | Portable (net8.0) IFC rules shared by the IFC and Fragments readers: hidden classes, parameter and relation names, material sets |
 | `Ara3D.Ifc.DuckDb` | One call from an IFC file to a queryable DuckDB database: convert to BOS, load the tables, create the text views |
-| `Ara3D.Ids` | Evaluates buildingSMART IDS 1.0 specifications over BOS tables in DuckDB, as a verdict table |
+| `Ara3D.Ids` | Evaluates buildingSMART IDS 1.0 specifications over BOS entities and parameters (a `.bos` document or the `EntityText` and `ParameterText` tables), as a verdict table with the `IssueColumns` names; entity, property and attribute facets, parity with ifctester on the Duplex |
 
 ### Applications and servers
 
