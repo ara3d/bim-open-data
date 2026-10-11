@@ -65,7 +65,7 @@ Client config:
 | `frag_to_bos` | Converts a That Open Fragments 2 file (`.frag`) to BOS, with a DuckDB database beside it, and keeps the model open for the `bos_*` tools. |
 | `bos_table` | `ifc_table` with the path argument named `bosPath`. |
 | `bos_sql` | `ifc_sql` with the path argument named `bosPath`. |
-| `bos_export_glb` | Writes a `.bos` model's geometry as GLB, entity index and GlobalId in each node's extras. |
+| `bos_export_glb` | Writes a `.bos` model's geometry as GLB, entity index and GlobalId in each node's extras; hidden instances only when named in `entityIndices`. |
 | `bos_export_usd` | Writes a `.bos` model as an OpenUSD `.usda` stage with element data as `bim:` attributes. |
 | `bos_export_bcf` | Writes the rows of a SQL query over a `.bos` model as BCF 3.0 topics, one per `Title`. |
 

@@ -5,6 +5,7 @@ using Ara3D.BimOpenSchema.IO;
 using Ara3D.BimOpenSchema.IO.Fragments;
 using Ara3D.MCP;
 using Ara3D.Utils;
+using SharpGLTF.Schema2;
 using BimOpenData.TestSupport;
 
 namespace BimOpenMcp.Ifc.Tests;
@@ -175,6 +176,25 @@ public sealed class BosFileToolTests
     }
 
     [Test]
+    public void ExportGlb_WritesHiddenElementsOnlyWhenNamed()
+    {
+        var spaces = EntityIndices("IFCSPACE");
+        var whole = _mcp.CallData("bos_export_glb", new JsonObject { ["bosPath"] = _bos, ["outputPath"] = Path.Combine(_scratch, "whole.glb") });
+        var named = _mcp.CallData("bos_export_glb", new JsonObject
+        {
+            ["bosPath"] = _bos,
+            ["outputPath"] = Path.Combine(_scratch, "spaces.glb"),
+            ["entityIndices"] = string.Join(',', spaces),
+        });
+
+        var written = ModelRoot.Load(whole["outputPath"]!.GetValue<string>()).LogicalNodes
+            .Select(node => (int?)node.Extras?["entityIndex"]);
+        Assert.That(written, Has.None.AnyOf(spaces.Cast<object>().ToArray()), "a whole-model export leaves the spaces out");
+        Assert.That(named["summary"]!["nodes"]!.GetValue<int>(), Is.GreaterThan(0), "named spaces are written although hidden");
+        Assert.That(named["summary"]!["unmatchedEntityIndices"]!.GetValue<int>(), Is.LessThan(spaces.Count));
+    }
+
+    [Test]
     public void ExportGlb_FailsWhenNoGivenIndexDrawsAnything()
     {
         var output = Path.Combine(_scratch, "none.glb");
@@ -221,9 +241,12 @@ public sealed class BosFileToolTests
 
     /// <summary>Entity indices of the Duplex doors, from the same EntityText view the tools query.</summary>
     private IEnumerable<int> DoorEntityIndices()
+        => EntityIndices("IFCDOOR");
+
+    private List<int> EntityIndices(string category)
     {
         using var conn = ParquetUtils.ReadBimDataFromParquetZip(new FilePath(_bos)).ToDuckDb();
-        var table = conn.Query("SELECT EntityIndex FROM EntityText WHERE Category = 'IFCDOOR'");
+        var table = conn.Query($"SELECT EntityIndex FROM EntityText WHERE Category = '{category}'");
         return Enumerable.Range(0, table.Rows.Count).Select(row => System.Convert.ToInt32(table[0, row])).ToList();
     }
 }

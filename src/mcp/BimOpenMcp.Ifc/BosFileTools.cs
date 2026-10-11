@@ -69,8 +69,10 @@ public static class BosFileTools
                 "bos_export_glb",
                 "Writes a BOS model's geometry to binary glTF (.glb), y-up in metres, one node per "
                 + "instance with its entity index and GlobalId in the node's extras so a viewer pick "
-                + "finds the element. Hidden instances are left out. Set 'entityIndices' to export only "
-                + "some elements; fails when none of them draws anything.",
+                + "finds the element. Set 'entityIndices' to export only some elements; fails when none "
+                + "of them draws anything. Without 'entityIndices', hidden instances (spaces, zones, "
+                + "grids, annotations) are left out; an element named in 'entityIndices' is written "
+                + "hidden or not, as ifc_export_glb does with 'ids'.",
                 BosPath()
                     .String("entityIndices", "Optional comma-separated entity indices (EntityText.EntityIndex, the row in the Entities table; not STEP ids), e.g. '1796,1802'. Omit for the whole model.")
                     .String("outputPath", "Path of the .glb file to write.", required: true)
@@ -159,15 +161,15 @@ public static class BosFileTools
     private static object ExportGlb(BosSession session, IReadOnlyList<int>? entityIndices, string outputPath)
     {
         var output = Output(outputPath);
-        var options = new GlbExportOptions { EntityIndices = entityIndices };
+        var options = new GlbExportOptions { EntityIndices = entityIndices, IncludeHidden = entityIndices != null };
         var summary = session.Scene.WriteGlb(output.FullPath, options);
         var requested = entityIndices?.Distinct().Count() ?? 0;
         if (requested > 0 && summary.UnmatchedEntityIndices == requested)
         {
             File.Delete(output.FullPath);
             throw new ArgumentException(
-                $"None of the {requested} entity indices draws anything: each is out of range, has no geometry, "
-                + "or only hidden instances. entityIndices are EntityText.EntityIndex values, not STEP ids.");
+                $"None of the {requested} entity indices draws anything: each is out of range or has no geometry. "
+                + "entityIndices are EntityText.EntityIndex values, not STEP ids.");
         }
         return new { bosPath = session.BosPath.FullPath, outputPath = output.FullPath, summary };
     }
