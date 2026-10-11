@@ -22,7 +22,6 @@
     <ProjectReference Include="..\..\data\Ara3D.BimOpenSchema.IO.Usd\Ara3D.BimOpenSchema.IO.Usd.csproj" />
     <ProjectReference Include="..\..\data\Ara3D.Ifc.Mesher\Ara3D.Ifc.Mesher.csproj" />
     <PackageReference Include="Ara3D.Models" Version="$(Ara3DSdkVersion)" />
-    <PackageReference Include="Ara3D.IO.GltfExporter" Version="$(Ara3DSdkVersion)" />
   </ItemGroup>
 
 </Project>

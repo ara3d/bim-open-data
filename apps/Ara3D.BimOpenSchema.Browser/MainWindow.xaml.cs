@@ -1,7 +1,7 @@
 ﻿using Ara3D.BimOpenSchema;
 using Ara3D.BimOpenSchema.IO;
 using Ara3D.DataTable;
-using Ara3D.IO.GltfExporter;
+using Ara3D.BimOpenSchema.IO.Gltf;
 using Ara3D.Models;
 using Ara3D.Utils;
 using System.IO;
@@ -272,12 +272,14 @@ namespace Ara3D.BimOpenSchema.Browser
             }
         }
 
+        /// <summary>Writes the group's entities to a .glb, with each node's entity index and GlobalId
+        /// in its extras; a group with nothing to draw writes no file.</summary>
         public void SaveGltf(IEnumerable<EntityModel> entities, FilePath fp)
         {
-            var entityIndices = entities.Select(em => (int)em.Index).ToHashSet();
-            var newModel = Model3D.RenderModelData.ToModel3D().FilterAndRemoveUnusedMeshes(i => entityIndices.Contains(i.EntityIndex));
-            if (newModel.Instances.Count > 0 && newModel.Meshes.Count > 0)
-                newModel.WriteGlb(fp);
+            var options = new GlbExportOptions { EntityIndices = entities.Select(em => (int)em.Index).ToHashSet() };
+            var (model, summary) = Data.ToGltf(options);
+            if (summary.Nodes > 0)
+                model.SaveGLB(fp);
         }
 
         private async void ExportParquet_Click(object sender, RoutedEventArgs e)

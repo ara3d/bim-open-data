@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using Ara3D.MCP;
+using SharpGLTF.Schema2;
 
 namespace BimOpenMcp.Ifc.Tests;
 
@@ -132,25 +133,64 @@ public sealed class IfcGeometryToolTests
     }
 
     [Test]
-    public void ExportGlb_IdsFilterWritesFewerInstances()
+    public void ExportGlb_NodesCarryTheStepIdAndGlobalIdOfTheirElement()
     {
-        var all = CallData("ifc_export_glb", new JsonObject
-        {
-            ["path"] = _path,
-            ["outputPath"] = Path.Combine(_scratch, "all.glb"),
-        });
-        var id = CallData("ifc_mesh", new JsonObject { ["path"] = _path, ["take"] = 1 })
-            ["elements"]!["items"]!.AsArray()[0]!["id"]!.GetValue<int>();
+        var (_, nodes) = ExportGlb("extras.glb");
+        var resolver = _cache.Get(_path).Resolver;
 
-        var one = CallData("ifc_export_glb", new JsonObject
+        Assert.That(nodes, Is.Not.Empty);
+        foreach (var node in nodes)
         {
-            ["path"] = _path,
-            ["ids"] = id.ToString(),
-            ["outputPath"] = Path.Combine(_scratch, "one.glb"),
-        });
+            var stepId = (int?)node.Extras?["stepId"];
+            Assert.That(stepId, Is.Not.Null, $"node '{node.Name}' has no stepId in its extras");
+            var entity = resolver.GetEntity(stepId!.Value);
+            Assert.That((string?)node.Extras!["globalId"], Is.EqualTo(entity.GetIfcRootGlobalId()),
+                $"node for #{stepId} carries another element's GlobalId");
+            Assert.That((int?)node.Extras["entityIndex"], Is.Not.Null);
+        }
+    }
+
+    [Test]
+    public void ExportGlb_IdsFilterWritesOnlyThoseElements()
+    {
+        var (all, _) = ExportGlb("all.glb");
+        var id = FirstMeshedId();
+
+        var (one, nodes) = ExportGlb("one.glb", id.ToString());
 
         Assert.That(one["instanceCount"]!.GetValue<int>(), Is.LessThan(all["instanceCount"]!.GetValue<int>()));
-        Assert.That(one["instanceCount"]!.GetValue<int>(), Is.GreaterThan(0));
+        Assert.That(nodes.Select(n => (int)n.Extras!["stepId"]!), Is.Not.Empty.And.All.EqualTo(id));
+        Assert.That(one["unmatchedIds"]!.AsArray(), Is.Empty);
+    }
+
+    [Test]
+    public void ExportGlb_WritesHiddenElementsOnlyWhenNamed()
+    {
+        var space = _cache.Get(_path).File.EntityResolver.GetEntities().First(e => e.GetEntityName() == "IFCSPACE").Id;
+
+        var (_, all) = ExportGlb("no-spaces.glb");
+        var (_, named) = ExportGlb("space.glb", space.ToString());
+
+        Assert.That(all.Select(n => (int)n.Extras!["stepId"]!), Has.None.EqualTo(space), "a space is hidden in a whole-model export");
+        Assert.That(named.Select(n => (int)n.Extras!["stepId"]!), Is.Not.Empty.And.All.EqualTo(space));
+    }
+
+    [Test]
+    public void ExportGlb_ListsIdsThatDrawNothingAndFailsWhenNoneDraws()
+    {
+        const int missing = 999_999_999;
+        var (some, _) = ExportGlb("some.glb", $"{FirstMeshedId()},{missing}");
+        Assert.That(some["unmatchedIds"]!.AsArray().Select(n => n!.GetValue<int>()), Is.EqualTo(new[] { missing }));
+
+        var none = Call("ifc_export_glb", new JsonObject
+        {
+            ["path"] = _path,
+            ["ids"] = missing.ToString(),
+            ["outputPath"] = Path.Combine(_scratch, "none.glb"),
+        });
+        Assert.That(none["ok"]!.GetValue<bool>(), Is.False);
+        Assert.That(none["type"]!.GetValue<string>(), Is.EqualTo("ArgumentException"));
+        Assert.That(File.Exists(Path.Combine(_scratch, "none.glb")), Is.False);
     }
 
     [Test]
@@ -170,6 +210,20 @@ public sealed class IfcGeometryToolTests
         var failure = Call("ifc_mesh", new JsonObject { ["path"] = _path, ["ids"] = "173,notanumber" });
         Assert.That(failure["ok"]!.GetValue<bool>(), Is.False);
         Assert.That(failure["type"]!.GetValue<string>(), Is.EqualTo("ArgumentException"));
+    }
+
+    private int FirstMeshedId()
+        => CallData("ifc_mesh", new JsonObject { ["path"] = _path, ["take"] = 1 })
+            ["elements"]!["items"]!.AsArray()[0]!["id"]!.GetValue<int>();
+
+    /// <summary>Calls ifc_export_glb and reads back the file it wrote.</summary>
+    private (JsonNode Data, IReadOnlyList<Node> Nodes) ExportGlb(string fileName, string? ids = null)
+    {
+        var arguments = new JsonObject { ["path"] = _path, ["outputPath"] = Path.Combine(_scratch, fileName) };
+        if (ids != null)
+            arguments["ids"] = ids;
+        var data = CallData("ifc_export_glb", arguments);
+        return (data, ModelRoot.Load(data["outputPath"]!.GetValue<string>()).LogicalNodes);
     }
 
     private JsonNode CallData(string tool, JsonObject arguments)
