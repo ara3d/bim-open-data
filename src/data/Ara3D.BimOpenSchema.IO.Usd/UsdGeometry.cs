@@ -13,9 +13,10 @@ internal static class UsdGeometry
 
     /// <summary>/Model/Materials/M{i}, one per row of the BOS material table. Colours are the
     /// BOS bytes divided by 255, written as given: BOS does not say whether they are sRGB.</summary>
-    public static int WriteMaterials(UsdaWriter w, BimGeometry g)
+    public static int WriteMaterials(UsdaWriter w, BosScene scene)
     {
-        var count = g.GetNumMaterials();
+        var g = scene.Geometry;
+        var count = scene.MaterialCount;
         w.Line().Text("def Scope \"").Text(UsdNames.MaterialsScope).Text('"').End().Open();
         for (var i = 0; i < count; i++)
         {
@@ -42,9 +43,10 @@ internal static class UsdGeometry
     /// abstract ("class") scope so the prototypes themselves are not drawn. Instancing in USD
     /// shares a prim's descendants, not the prim, so each mesh sits one level below its
     /// prototype root.</summary>
-    public static int WritePrototypes(UsdaWriter w, BimGeometry g)
+    public static int WritePrototypes(UsdaWriter w, BosScene scene)
     {
-        var count = g.GetNumMeshes();
+        var g = scene.Geometry;
+        var count = scene.MeshCount;
         w.Line().Text("class Scope \"").Text(UsdNames.PrototypesScope).Text('"').End().Open();
         for (var i = 0; i < count; i++)
         {
@@ -108,43 +110,32 @@ internal static class UsdGeometry
             .Fixed4(maxX).Text(", ").Fixed4(maxY).Text(", ").Fixed4(maxZ).Text(")]").End();
     }
 
-    /// <summary>True when the instance's mesh index names a row of the mesh table; an
-    /// instance without one has nothing to draw and is not written.</summary>
-    public static bool HasMesh(BimGeometry g, int instance)
-        => (uint)g.InstanceMeshIndex[instance] < (uint)g.GetNumMeshes();
-
-    /// <summary>The prim I{instance}: instanceable, referencing its mesh's prototype, bound to
-    /// its material when it has one, hidden when its BOS flag says so, and transformed.</summary>
-    public static void WriteInstance(UsdaWriter w, BimGeometry g, int instance)
+    /// <summary>The prim I{index}: instanceable, referencing its mesh's prototype, bound to
+    /// its material when it has one, hidden when its BOS flag says so, and transformed. The
+    /// instance is drawable: <see cref="BosScene"/> has checked its mesh and transform.</summary>
+    public static void WriteInstance(UsdaWriter w, BosScene scene, int index)
     {
-        var material = g.InstanceMaterialIndex[instance];
-        var hasMaterial = (uint)material < (uint)g.GetNumMaterials();
+        var instance = scene.Instance(index);
+        var hasMaterial = instance.Material >= 0;
 
-        w.Line().Text("def Xform \"").Text(UsdNames.InstancePrefix).Int(instance).Text('"').OpenMetadata();
+        w.Line().Text("def Xform \"").Text(UsdNames.InstancePrefix).Int(index).Text('"').OpenMetadata();
         w.Line("instanceable = true");
         if (hasMaterial)
             w.Line(MaterialBindingApi);
-        w.Line().Text("prepend references = ").PathRef(UsdNames.PrototypePath, g.InstanceMeshIndex[instance]).End();
+        w.Line().Text("prepend references = ").PathRef(UsdNames.PrototypePath, instance.Mesh).End();
         w.CloseMetadata().Open();
         if (hasMaterial)
-            w.Line().Text("rel material:binding = ").PathRef(UsdNames.MaterialPath, material).End();
-        if (IsHidden(g, instance))
+            w.Line().Text("rel material:binding = ").PathRef(UsdNames.MaterialPath, instance.Material).End();
+        if (instance.IsHidden)
             w.Line("token visibility = \"invisible\"");
-        WriteTransform(w, g, g.InstanceTransformIndex[instance]);
+        WriteTransform(w, scene.Geometry, instance.Transform);
         w.Close();
     }
 
-    private static bool IsHidden(BimGeometry g, int instance)
-        => instance < g.InstanceFlags.Length
-           && (g.InstanceFlags[instance] & (byte)BimGeometry.InstanceFlagEnum.IsHidden) != 0;
-
     /// <summary>BOS composes scale, then rotation, then translation, which is USD's
-    /// translate-orient-scale op order. Ops equal to the identity are left out; a missing
-    /// transform row leaves the instance where its mesh is.</summary>
+    /// translate-orient-scale op order. Ops equal to the identity are left out.</summary>
     private static void WriteTransform(UsdaWriter w, BimGeometry g, int t)
     {
-        if ((uint)t >= (uint)g.GetNumTransforms())
-            return;
         var translate = g.TransformTX[t] != 0 || g.TransformTY[t] != 0 || g.TransformTZ[t] != 0;
         var orient = g.TransformQX[t] != 0 || g.TransformQY[t] != 0 || g.TransformQZ[t] != 0 || g.TransformQW[t] != 1;
         var scale = g.TransformSX[t] != 1 || g.TransformSY[t] != 1 || g.TransformSZ[t] != 1;

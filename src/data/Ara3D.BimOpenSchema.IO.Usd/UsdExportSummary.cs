@@ -19,6 +19,9 @@ namespace Ara3D.BimOpenSchema.IO.Usd;
 /// the target entity) or the descriptor is missing.</param>
 /// <param name="DuplicateParameters">Parameters left out because their entity already had a value for the
 /// same descriptor; the first value in table order is kept.</param>
+/// <param name="InstancesWithBadTransform">BOS instances with a mesh not written because their transform
+/// index is out of range of the Transforms table: there is nowhere to place them. Last, with a
+/// default, so callers that build a summary by name still compile.</param>
 public sealed record UsdExportSummary(
     int Materials,
     int Prototypes,
@@ -32,4 +35,5 @@ public sealed record UsdExportSummary(
     int Relationships,
     int RelationsLeftOut,
     int ParametersWithoutValue,
-    int DuplicateParameters);
+    int DuplicateParameters,
+    int InstancesWithBadTransform = 0);

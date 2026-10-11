@@ -6,18 +6,17 @@ namespace Ara3D.BimOpenSchema.IO.Usd;
 /// shape, a type, a property set) is a Scope, which has no transform and is not drawn. Both
 /// carry the entity's identity and parameters as bim: properties and its relations as bim:
 /// relationships. Instances whose entity is missing go under /Model/Unassigned. Then
-/// /Model/Descriptors declares each parameter property that was written. Parameters and
-/// relations are grouped by entity once, so the pass is linear in entities, instances,
-/// parameters, and relations.
+/// /Model/Descriptors declares each parameter property that was written. The
+/// <see cref="BosScene"/> groups instances, parameters, and relations by entity once, so the
+/// pass is linear in entities, instances, parameters, and relations.
 /// </summary>
 internal sealed class UsdEntities
 {
     private readonly UsdaWriter _w;
+    private readonly BosScene _scene;
     private readonly IBimData _data;
-    private readonly BimGeometry _g;
     private readonly string[] _primNames;
     private readonly ParameterAttribute?[] _attributes;
-    private readonly RowGroups _parametersByEntity;
     private readonly UsdRelations _relations;
 
     // _writtenFor[d] == entity + 1 when descriptor d already has a property on that entity's
@@ -27,61 +26,48 @@ internal sealed class UsdEntities
     // _described[d] is true once descriptor d has a value on some entity, so /Model/Descriptors declares it.
     private readonly bool[] _described;
 
-    private int _elements, _instances, _unassigned, _withoutMesh, _attributeCount, _withoutValue, _duplicates;
+    private int _elements, _instances, _unassigned, _attributeCount, _withoutValue, _duplicates;
 
-    private UsdEntities(UsdaWriter w, IBimData data, BimGeometry g)
+    private UsdEntities(UsdaWriter w, BosScene scene)
     {
         _w = w;
-        _data = data;
-        _g = g;
-        _primNames = EntityPrimNames.ForEntities(data);
-        _attributes = ParameterAttribute.ForDescriptors(data);
-        _parametersByEntity = new RowGroups(data.Entities.Length, data.Parameters.Length, p => (int)data.Parameters[p].Entity);
-        _relations = new UsdRelations(data, _primNames);
-        _writtenFor = new int[data.Descriptors.Length];
-        _described = new bool[data.Descriptors.Length];
+        _scene = scene;
+        _data = scene.Data;
+        _primNames = EntityPrimNames.ForEntities(scene);
+        _attributes = ParameterAttribute.ForDescriptors(scene);
+        _relations = new UsdRelations(scene, _primNames);
+        _writtenFor = new int[_data.Descriptors.Length];
+        _described = new bool[_data.Descriptors.Length];
     }
 
     /// <summary>Writes every entity prim, the Unassigned prim (when needed), and the
     /// Descriptors scope as children of the open root prim, and returns the counts the
     /// summary reports.</summary>
-    public static UsdExportSummary Write(UsdaWriter w, IBimData data, BimGeometry g, int materials, int prototypes)
+    public static UsdExportSummary Write(UsdaWriter w, BosScene scene, int materials, int prototypes)
     {
-        var e = new UsdEntities(w, data, g);
+        var e = new UsdEntities(w, scene);
         e.WriteAll();
         var described = e._attributes.Where((a, d) => a is not null && e._described[d]).Select(a => a!);
         var descriptors = ParameterAttribute.WriteDescriptors(w, described);
-        return new UsdExportSummary(materials, prototypes, descriptors, data.Entities.Length, e._elements,
-            e._instances, e._unassigned, e._withoutMesh, e._attributeCount, e._relations.Targets,
-            e._relations.LeftOut, e._withoutValue, e._duplicates);
+        return new UsdExportSummary(materials, prototypes, descriptors, scene.EntityCount, e._elements,
+            e._instances, e._unassigned, scene.InstancesWithBadMesh, e._attributeCount, e._relations.Targets,
+            e._relations.LeftOut, e._withoutValue, e._duplicates, scene.InstancesWithBadTransform);
     }
 
     private void WriteAll()
     {
-        var instanceCount = _g.GetNumInstances();
-        var entityCount = _data.Entities.Length;
-        var byEntity = new RowGroups(entityCount, instanceCount,
-            i => UsdGeometry.HasMesh(_g, i) ? _g.InstanceEntityIndex[i] : -1);
+        for (var e = 0; e < _scene.EntityCount; e++)
+            WriteEntity(e, _scene.InstancesOf(e));
 
-        for (var e = 0; e < entityCount; e++)
-            WriteEntity(e, byEntity.Rows(e));
-
-        var unassigned = new List<int>();
-        for (var i = 0; i < instanceCount; i++)
-        {
-            if (!UsdGeometry.HasMesh(_g, i))
-                _withoutMesh++;
-            else if ((uint)_g.InstanceEntityIndex[i] >= (uint)entityCount)
-                unassigned.Add(i);
-        }
-        if (unassigned.Count > 0)
+        var unassigned = _scene.UnassignedInstances;
+        if (unassigned.Length > 0)
         {
             _w.Line().Text("def Xform \"").Text(UsdNames.Unassigned).Text('"').End().Open();
             foreach (var i in unassigned)
-                UsdGeometry.WriteInstance(_w, _g, i);
+                UsdGeometry.WriteInstance(_w, _scene, i);
             _w.Close();
-            _instances += unassigned.Count;
-            _unassigned = unassigned.Count;
+            _instances += unassigned.Length;
+            _unassigned = unassigned.Length;
         }
     }
 
@@ -106,17 +92,17 @@ internal sealed class UsdEntities
             _w.Line().Text("custom int64 ").Text(UsdNames.LocalIdAttribute).Text(" = ").Int(entity.LocalId).End();
             _attributeCount++;
         }
-        WriteString(UsdNames.GlobalIdAttribute, BosValues.NonEmptyString(_data, entity.GlobalId));
-        WriteString(UsdNames.NameAttribute, BosValues.NonEmptyString(_data, entity.Name));
-        WriteString(UsdNames.CategoryAttribute, BosValues.EntityName(_data, entity.Category));
-        WriteString(UsdNames.TypeAttribute, BosValues.EntityName(_data, entity.Type));
-        WriteString(UsdNames.DocumentAttribute, BosValues.DocumentTitle(_data, entity.Document));
-        foreach (var p in _parametersByEntity.Rows(entityIndex))
+        WriteString(UsdNames.GlobalIdAttribute, _scene.GlobalId(entityIndex));
+        WriteString(UsdNames.NameAttribute, _scene.Name(entityIndex));
+        WriteString(UsdNames.CategoryAttribute, _scene.Name((int)entity.Category));
+        WriteString(UsdNames.TypeAttribute, _scene.Name((int)entity.Type));
+        WriteString(UsdNames.DocumentAttribute, _scene.DocumentTitle(entity.Document));
+        foreach (var p in _scene.ParametersOf(entityIndex))
             WriteParameter(entityIndex, _data.Parameters[p]);
         _relations.Write(_w, entityIndex);
 
         foreach (var i in instances)
-            UsdGeometry.WriteInstance(_w, _g, i);
+            UsdGeometry.WriteInstance(_w, _scene, i);
         _w.Close();
 
         if (hasGeometry)
@@ -144,7 +130,7 @@ internal sealed class UsdEntities
             _duplicates++;
             return;
         }
-        if (!HasValue(a.Type, p.Value))
+        if (!_scene.HasValue(p))
         {
             _withoutValue++;
             return;
@@ -154,38 +140,29 @@ internal sealed class UsdEntities
         _attributeCount++;
 
         _w.Line().Text("custom ").Text(a.UsdType).Text(' ').Text(a.Name).Text(" = ");
-        WriteValue(a.Type, p.Value);
+        WriteValue(a.Type, p);
         _w.End();
     }
 
-    private bool HasValue(ParameterType type, int value) => type switch
-    {
-        ParameterType.Int => true,
-        ParameterType.Number => BosValues.Number(_data, (NumberIndex)value).HasValue,
-        ParameterType.String => BosValues.String(_data, (StringIndex)value) is not null,
-        ParameterType.Entity => BosValues.Entity(_data, (EntityIndex)value).HasValue,
-        ParameterType.Point => BosValues.Point(_data, (PointIndex)value).HasValue,
-        _ => false,
-    };
-
-    private void WriteValue(ParameterType type, int value)
+    /// <summary>Writes a value that <see cref="BosScene.HasValue"/> has found present.</summary>
+    private void WriteValue(ParameterType type, Parameter p)
     {
         switch (type)
         {
             case ParameterType.Int:
-                _w.Int(value);
+                _w.Int(_scene.IntValue(p)!.Value);
                 break;
             case ParameterType.Number:
-                _w.Float(_data.Numbers[value]);
+                _w.Float(_scene.NumberValue(p)!.Value);
                 break;
             case ParameterType.String:
-                _w.Quoted(_data.Strings[value]);
+                _w.Quoted(_scene.StringValue(p)!);
                 break;
             case ParameterType.Entity:
-                _w.PathRef(UsdNames.EntityPathPrefix, _primNames[value]);
+                _w.PathRef(UsdNames.EntityPathPrefix, _primNames[_scene.EntityValue(p)!.Value]);
                 break;
             case ParameterType.Point:
-                var pt = _data.Points[value];
+                var pt = _scene.PointValue(p)!.Value;
                 _w.Float3(pt.X, pt.Y, pt.Z);
                 break;
         }

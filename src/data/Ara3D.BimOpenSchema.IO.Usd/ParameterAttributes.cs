@@ -16,24 +16,25 @@ internal sealed record ParameterAttribute(string Name, ParameterType Type, strin
     /// across descriptors, so no prim can get two attributes with one name: a collision
     /// (two groups or names that differ only in characters an identifier cannot hold, or one
     /// name with two value types) appends "_{descriptor index}" to the later name.</summary>
-    public static ParameterAttribute?[] ForDescriptors(IBimData data)
+    public static ParameterAttribute?[] ForDescriptors(BosScene scene)
     {
         var used = new HashSet<string>(StringComparer.Ordinal);
-        var result = new ParameterAttribute?[data.Descriptors.Length];
+        var descriptors = scene.Data.Descriptors;
+        var result = new ParameterAttribute?[descriptors.Length];
         for (var i = 0; i < result.Length; i++)
         {
-            var d = data.Descriptors[i];
+            var d = descriptors[i];
             if (UsdTypeOf(d.Type) is not { } usdType)
                 continue;
-            var group = BosValues.String(data, d.Group);
-            var name = BosValues.String(data, d.Name);
+            var group = scene.Text(d.Group);
+            var name = scene.Text(d.Name);
             var groupId = UsdNames.ToIdentifier(group ?? "");
             var nameId = UsdNames.ToIdentifier(name ?? "");
             var baseId = nameId;
             for (var attempt = 1; !used.Add(FullName(groupId, nameId)); attempt++)
                 nameId = baseId + "_" + i + (attempt == 1 ? "" : "_" + attempt);
             result[i] = new ParameterAttribute(FullName(groupId, nameId), d.Type, usdType,
-                group, name, BosValues.NonEmptyString(data, d.Units));
+                group, name, scene.Label(d.Units));
         }
         return result;
     }

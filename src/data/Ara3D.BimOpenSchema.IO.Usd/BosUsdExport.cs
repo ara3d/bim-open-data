@@ -16,6 +16,12 @@ public static class BosUsdExport
     /// the whole stage is written; if writing fails, the temporary file is deleted and any
     /// earlier file at <paramref name="usdaPath"/> is left as it was.</summary>
     public static UsdExportSummary WriteUsda(this IBimData data, string usdaPath)
+        => new BosScene(data).WriteUsda(usdaPath);
+
+    /// <summary>Writes the stage of a BOS scene to <paramref name="usdaPath"/>, as the
+    /// <see cref="IBimData"/> overload does. A caller that keeps the scene (an MCP session)
+    /// passes it here to skip building it again.</summary>
+    public static UsdExportSummary WriteUsda(this BosScene scene, string usdaPath)
     {
         var fullPath = Path.GetFullPath(usdaPath);
         var temporary = Path.Combine(Path.GetDirectoryName(fullPath)!,
@@ -25,7 +31,7 @@ public static class BosUsdExport
             UsdExportSummary summary;
             using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None, BufferSize))
             using (var text = new StreamWriter(stream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false), BufferSize))
-                summary = data.WriteUsda(text);
+                summary = scene.WriteUsda(text);
             File.Move(temporary, fullPath, overwrite: true);
             return summary;
         }
@@ -39,8 +45,11 @@ public static class BosUsdExport
     /// <summary>Writes the stage to <paramref name="output"/>. Numbers are formatted in the
     /// invariant culture whatever the writer's culture is; the caller owns and flushes the writer.</summary>
     public static UsdExportSummary WriteUsda(this IBimData data, TextWriter output)
+        => new BosScene(data).WriteUsda(output);
+
+    /// <summary>Writes the stage of a BOS scene to <paramref name="output"/>.</summary>
+    public static UsdExportSummary WriteUsda(this BosScene scene, TextWriter output)
     {
-        var g = data.Geometry ?? new BimGeometry();
         var w = new UsdaWriter(output);
 
         w.Line("#usda 1.0").Line("(").Line()
@@ -53,9 +62,9 @@ public static class BosUsdExport
         w.Line().Text("def Xform \"").Text(UsdNames.Root).Text('"').OpenMetadata();
         w.Line("kind = \"assembly\"");
         w.CloseMetadata().Open();
-        var materials = UsdGeometry.WriteMaterials(w, g);
-        var prototypes = UsdGeometry.WritePrototypes(w, g);
-        var summary = UsdEntities.Write(w, data, g, materials, prototypes);
+        var materials = UsdGeometry.WriteMaterials(w, scene);
+        var prototypes = UsdGeometry.WritePrototypes(w, scene);
+        var summary = UsdEntities.Write(w, scene, materials, prototypes);
         w.Close();
         return summary;
     }

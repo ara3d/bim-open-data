@@ -10,13 +10,13 @@ internal static class EntityPrimNames
     /// E{entity index} when the GlobalId is missing or an earlier entity already has that name
     /// (duplicate GlobalIds occur in federated models). The two forms cannot collide: the
     /// second character is "_" in one and a digit in the other.</summary>
-    public static string[] ForEntities(IBimData data)
+    public static string[] ForEntities(BosScene scene)
     {
         var used = new HashSet<string>(StringComparer.Ordinal);
-        var names = new string[data.Entities.Length];
+        var names = new string[scene.EntityCount];
         for (var e = 0; e < names.Length; e++)
         {
-            var globalId = BosValues.NonEmptyString(data, data.Entities[e].GlobalId);
+            var globalId = scene.GlobalId(e);
             var fromGlobalId = globalId is null ? null : UsdNames.ToIdentifier(UsdNames.ElementPrefix + "_" + globalId);
             names[e] = fromGlobalId is not null && used.Add(fromGlobalId)
                 ? fromGlobalId

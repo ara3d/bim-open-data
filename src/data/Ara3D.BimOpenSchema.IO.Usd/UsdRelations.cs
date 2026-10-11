@@ -11,17 +11,15 @@ internal sealed class UsdRelations
     // Relationship name by RelationType value; null for a value the enum does not define.
     private static readonly string?[] Names = BuildNames();
 
-    private readonly IBimData _data;
+    private readonly BosScene _scene;
     private readonly string[] _primNames;
-    private readonly RowGroups _bySource;
     private readonly List<(int Type, int Target)> _scratch = new();
 
-    public UsdRelations(IBimData data, string[] primNames)
+    public UsdRelations(BosScene scene, string[] primNames)
     {
-        _data = data;
+        _scene = scene;
         _primNames = primNames;
-        _bySource = new RowGroups(primNames.Length, data.Relations.Length, r => (int)data.Relations[r].EntityA);
-        LeftOut = data.Relations.Count(r => (uint)r.EntityA >= (uint)primNames.Length);
+        LeftOut = scene.Data.Relations.Count(r => !scene.IsEntity((int)r.EntityA));
     }
 
     /// <summary>Relationship targets written. A relation listed twice is one target.</summary>
@@ -38,10 +36,10 @@ internal sealed class UsdRelations
     public void Write(UsdaWriter w, int entity)
     {
         _scratch.Clear();
-        foreach (var r in _bySource.Rows(entity))
+        foreach (var r in _scene.RelationsFrom(entity))
         {
-            var relation = _data.Relations[r];
-            if (NameOf(relation.RelationType) is null || (uint)relation.EntityB >= (uint)_primNames.Length)
+            var relation = _scene.Data.Relations[r];
+            if (NameOf(relation.RelationType) is null || !_scene.IsEntity((int)relation.EntityB))
                 LeftOut++;
             else
                 _scratch.Add(((int)relation.RelationType, (int)relation.EntityB));

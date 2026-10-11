@@ -22,13 +22,17 @@ UsdExportSummary summary = data.WriteUsda("duplex.usda");
 `WriteUsda(this IBimData, string path)` writes a temporary file beside `path` and moves it into
 place only when the whole stage is written, so a failure leaves any earlier file untouched and
 no partial `.usda`. `WriteUsda(this IBimData, TextWriter)` writes to a writer the caller owns.
-Both return a `UsdExportSummary`: counts of materials, prototypes, declared parameter
+Each has an overload on `BosScene` for a caller that keeps the scene, so it is not built again.
+All return a `UsdExportSummary`: counts of materials, prototypes, declared parameter
 properties, entities, elements (entities with geometry), instances, properties, relationship
-targets, and of what was left out (instances with no mesh, relations with a bad end or type,
-parameters with no value, duplicate parameters).
+targets, and of what was left out (instances with no mesh or a transform index out of range,
+relations with a bad end or type, parameters with no value, duplicate parameters).
 
-The project reads only `IBimData` (from `Ara3D.BimOpenSchema`) and the geometry helpers in
-`Ara3D.BimOpenSchema.ObjectModel`; reading a `.bos` file is the caller's job.
+The project reads only `IBimData` (from `Ara3D.BimOpenSchema`) through `BosScene` in
+`Ara3D.BimOpenSchema.ObjectModel`, the view the GLB, USD and BCF writers share: it checks every
+instance's mesh, material, transform and entity index once, groups instances, parameters and
+relations by entity, and reads GlobalIds, names and typed values with absence as null.
+Reading a `.bos` file is the caller's job.
 
 ## What the stage holds
 
