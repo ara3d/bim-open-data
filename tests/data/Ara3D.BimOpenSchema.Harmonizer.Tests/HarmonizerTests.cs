@@ -29,7 +29,7 @@ public static class HarmonizerTests
     public static int FindDescriptor(IBimData data, string name)
     {
         for (var i = 0; i < data.Descriptors.Length; ++i)
-            if (data.Strings[(int)data.Descriptors[i].Name] == name)
+            if (data.Get(data.Descriptors[i].Name) == name)
                 return i;
         return -1;
     }
@@ -43,8 +43,8 @@ public static class HarmonizerTests
                 yield return p;
     }
 
-    public static IEnumerable<string> StringValuesOf(IBimData data, string descriptorName)
-        => ParametersOf(data, descriptorName).Select(p => data.Strings[p.Value]);
+    public static IEnumerable<string?> StringValuesOf(IBimData data, string descriptorName)
+        => ParametersOf(data, descriptorName).Select(p => data.Get((StringIndex)p.Value));
 
     // =====================
     // Unit conversion
@@ -101,7 +101,7 @@ public static class HarmonizerTests
         foreach (var p in levels.Take(10))
         {
             var level = output.Entities[p.Value];
-            var catName = output.Strings[(int)output.Entities[(int)level.Category].Name];
+            var catName = output.GetCategoryName(level);
             Assert.That(catName, Is.EqualTo(BosHarmonizer.BuildingStoreyCategoryName));
         }
     }
@@ -211,7 +211,7 @@ public static class HarmonizerTests
 
             var catCounts = data.Entities
                 .Where(e => e.Category >= 0)
-                .GroupBy(e => data.Strings[(int)data.Entities[(int)e.Category].Name])
+                .GroupBy(e => data.GetCategoryName(e) ?? "(no name)")
                 .OrderByDescending(g => g.Count())
                 .Take(25);
             Console.WriteLine("Top categories:");
@@ -221,9 +221,9 @@ public static class HarmonizerTests
             Console.WriteLine("Descriptors mentioning Area/Volume/Number/Level/Room (name | group | units | type):");
             foreach (var d in data.Descriptors)
             {
-                var n = data.Strings[(int)d.Name];
+                var n = data.Get(d.Name) ?? "";
                 if (n.Contains("Area") || n.Contains("Volume") || n.Contains("Number") || n.Contains("Level") || n.Contains("Room"))
-                    Console.WriteLine($"  {n} | {data.Strings[(int)d.Group]} | {data.Strings[(int)d.Units]} | {d.Type}");
+                    Console.WriteLine($"  {n} | {data.Get(d.Group) ?? "(none)"} | {data.Get(d.Units) ?? "(none)"} | {d.Type}");
             }
 
             Console.WriteLine($"Params with 'Rvt:Room:Number' descriptor: {ParametersOf(data, "Rvt:Room:Number").Count()}");
@@ -232,7 +232,7 @@ public static class HarmonizerTests
             foreach (var p in data.Parameters.Take(10))
             {
                 var d = data.Descriptors[(int)p.Descriptor];
-                Console.WriteLine($"  {data.Strings[(int)d.Name]} | {d.Type} | {p.Entity}");
+                Console.WriteLine($"  {data.Get(d.Name) ?? "(none)"} | {d.Type} | {p.Entity}");
             }
             var descUsage = data.Parameters.GroupBy(p => (int)p.Descriptor).Count();
             Console.WriteLine($"Distinct descriptors used by parameters: {descUsage} of {data.Descriptors.Length}");
