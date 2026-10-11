@@ -19,12 +19,21 @@ public static class IfcAbsenceTests
         #13=IFCRELDEFINESBYPROPERTIES('rd-gid',$,$,$,(#10),#12);
         #20=IFCMATERIAL('Concrete',$,$);
         #21=IFCRELASSOCIATESMATERIAL('am-gid',$,$,$,(#10),#20);
+        #30=IFCCARTESIANPOINT((0.,0.));
+        #31=IFCAXIS2PLACEMENT2D(#30,$);
+        #32=IFCRECTANGLEPROFILEDEF(.AREA.,$,#31,1.,2.);
+        #33=IFCRECTANGLEPROFILEDEF(.AREA.,'200x400',#31,0.2,0.4);
+        #34=IFCPRESENTATIONLAYERASSIGNMENT('A-WALL',$,(#10),$);
+        #35=IFCCOLOURRGB($,0.5,0.5,0.5);
+        #36=IFCWALL('wall2-gid',$,'#7',$,$,$,$);
         """, MiniIfc.Ifc4, "absence-test.ifc", "ViewDefinition");
 
-    static BimData Convert()
+    static BimData Convert() => Convert(AbsenceIfc);
+
+    static BimData Convert(string ifc)
     {
         var path = Path.Combine(Path.GetTempPath(), $"ara3d-absence-{Guid.NewGuid():N}.ifc");
-        File.WriteAllText(path, AbsenceIfc, Encoding.ASCII);
+        File.WriteAllText(path, ifc, Encoding.ASCII);
         IfcToBosConverter? converter = null;
         try
         {
@@ -46,6 +55,32 @@ public static class IfcAbsenceTests
     {
         var wall = EntityWithLocalId(Convert(), 10);
         Assert.That(wall.Name, Is.EqualTo(BimDataBuilder.InvalidStringIndex), "an unset IfcRoot.Name is -1, not \"#10\"");
+    }
+
+    /// <summary>Attribute 2 is Name only on an IfcRoot: on IfcRectangleProfileDef it is Position, a
+    /// reference whose text "#31" was stored as the name. A name now comes from the class's own name
+    /// attribute (ProfileName, IfcPresentationLayerAssignment.Name) and only from a string.</summary>
+    [Test]
+    public static void NameComesFromTheClassNameAttributeAndOnlyFromAString()
+    {
+        var d = Convert();
+        string? NameOf(long localId) => d.Get(EntityWithLocalId(d, localId).Name);
+        Assert.Multiple(() =>
+        {
+            Assert.That(NameOf(32), Is.Null, "unset ProfileName; attribute 2 is the reference #31");
+            Assert.That(NameOf(33), Is.EqualTo("200x400"));
+            Assert.That(NameOf(34), Is.EqualTo("A-WALL"));
+            Assert.That(NameOf(35), Is.Null, "unset IfcColourRgb.Name; attribute 2 is a number");
+            Assert.That(NameOf(36), Is.EqualTo("#7"), "a name the file states is kept, whatever it looks like");
+        });
+    }
+
+    [Test]
+    public static void NoNameStartsWithHashUnlessTheFileSaysSo()
+    {
+        var d = Convert();
+        var hashNames = d.Entities.Where(e => d.Get(e.Name)?.StartsWith('#') == true).Select(e => e.LocalId);
+        Assert.That(hashNames, Is.EquivalentTo(new[] { 36L }));
     }
 
     [Test]
