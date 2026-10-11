@@ -183,7 +183,7 @@ public static class FederationExample
         {
             if (_categories.TryGetValue(name, out var e))
                 return e;
-            e = _builder.AddEntity(-1, "", _document, name, BimDataBuilder.InvalidEntityIndex, BimDataBuilder.InvalidEntityIndex);
+            e = _builder.AddEntity(-1, null, _document, name, BimDataBuilder.InvalidEntityIndex, BimDataBuilder.InvalidEntityIndex);
             _categories.Add(name, e);
             return e;
         }
