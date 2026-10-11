@@ -13,9 +13,13 @@ public static class BosGlb
     /// <summary>Node extras key: the entity's GlobalId (IFC GlobalId, Revit UniqueId), when it has one.</summary>
     public const string GlobalIdKey = "globalId";
 
-    /// <summary>Reads a .bos archive and writes its geometry to a .glb file.</summary>
+    /// <summary>The tables an export reads: the geometry, and the Entities table for each node's name and
+    /// GlobalId (the read adds the Strings table those index). Parameters, Relations, and the rest are never used.</summary>
+    public const BosTables TablesRead = BosTables.Geometry | BosTables.Entities;
+
+    /// <summary>Reads the <see cref="TablesRead"/> of a .bos archive and writes its geometry to a .glb file.</summary>
     public static GlbExportSummary WriteGlb(string bosPath, string glbPath, GlbExportOptions? options = null)
-        => ParquetUtils.ReadBimDataFromParquetZip(bosPath).WriteGlb(glbPath, options);
+        => ParquetUtils.ReadBimDataFromParquetZip(bosPath, TablesRead).WriteGlb(glbPath, options);
 
     /// <summary>Writes the geometry of a loaded BOS model to a .glb file.</summary>
     public static GlbExportSummary WriteGlb(this IBimData data, string glbPath, GlbExportOptions? options = null)
