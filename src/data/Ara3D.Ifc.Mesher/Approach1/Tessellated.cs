@@ -29,12 +29,12 @@ public static class Tessellated
             if (name == "IFCINDEXEDPOLYGONALFACEWITHVOIDS")
             {
                 ctx.Diagnostics.RecordSupported("IFCINDEXEDPOLYGONALFACEWITHVOIDS");
-                TriangulatePolygonFaceWithVoids(coords, face, faces);
+                TriangulatePolygonFaceWithVoids(ctx, coords, face, faces);
             }
             else if (name == "IFCINDEXEDPOLYGONALFACE")
             {
                 ctx.Diagnostics.RecordSupported("IFCINDEXEDPOLYGONALFACE");
-                TriangulatePolygonFace(coords, ReadPositiveIndices(face, IfcIndexedPolygonalFace.Instance.CoordIndex.Index), faces);
+                TriangulatePolygonFace(ctx, coords, face, ReadPositiveIndices(face, IfcIndexedPolygonalFace.Instance.CoordIndex.Index), faces);
             }
         }
         return new TriangleMesh3D(coords, faces);
@@ -106,14 +106,22 @@ public static class Tessellated
     }
 
     /// <summary>Triangulates one face of the set in 3D (<see cref="ShellMesher"/>), wound the way
-    /// its outer loop is; a degenerate face adds nothing.</summary>
-    static void TriangulatePolygonFace(IReadOnlyList<Point3D> coords, IReadOnlyList<int> indices, List<Integer3> faces)
-        => ShellMesher.TriangulateFace(coords, indices, [], faces);
+    /// its outer loop is; a degenerate face adds nothing and is recorded as dropped.</summary>
+    static void TriangulatePolygonFace(MeshingContext ctx, IReadOnlyList<Point3D> coords, IfcEntity face, IReadOnlyList<int> indices, List<Integer3> faces)
+        => TriangulateOrRecord(ctx, face, coords, indices, [], faces);
 
-    static void TriangulatePolygonFaceWithVoids(IReadOnlyList<Point3D> coords, IfcEntity face, List<Integer3> faces)
+    static void TriangulatePolygonFaceWithVoids(MeshingContext ctx, IReadOnlyList<Point3D> coords, IfcEntity face, List<Integer3> faces)
     {
         var outer = ReadPositiveIndices(face, IfcIndexedPolygonalFaceWithVoids.Instance.CoordIndex.Index);
         var holes = ReadNestedPositiveIndices(face, IfcIndexedPolygonalFaceWithVoids.Instance.InnerCoordIndices.Index);
-        ShellMesher.TriangulateFace(coords, outer, holes, faces);
+        TriangulateOrRecord(ctx, face, coords, outer, holes, faces);
+    }
+
+    static void TriangulateOrRecord(
+        MeshingContext ctx, IfcEntity face, IReadOnlyList<Point3D> coords,
+        IReadOnlyList<int> outer, IReadOnlyList<IReadOnlyList<int>> holes, List<Integer3> faces)
+    {
+        if (!ShellMesher.TriangulateFace(coords, outer, holes, faces))
+            ctx.RecordDroppedFace(face.Id, "triangulation failed");
     }
 }

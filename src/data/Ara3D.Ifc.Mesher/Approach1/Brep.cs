@@ -89,7 +89,10 @@ public static class Brep
             RecordFaceDiagnostics(ctx, face);
             var (outer, holes, sameSense) = ReadFaceBounds(ctx, face);
             if (outer.Count < 3)
+            {
+                ctx.RecordDroppedFace(faceId, "fewer than 3 boundary points");
                 continue;
+            }
 
             var map = ResolveSurfaceMap(ctx, face, outer);
             var outer2 = DedupeConsecutive(map.ProjectRing(outer));
@@ -106,10 +109,16 @@ public static class Brep
                     .ToList();
             }
             if (outer2.Count < 3)
+            {
+                ctx.RecordDroppedFace(faceId, "fewer than 3 distinct boundary points");
                 continue;
+            }
 
-            if (!TryTriangulateFaceRing(outer2, holes2, out var tris))
+            if (!TryTriangulateFaceRing(outer2, holes2, out var tris, out var dropReason))
+            {
+                ctx.RecordDroppedFace(faceId, dropReason);
                 continue;
+            }
 
             var indexMap = new Dictionary<(int, int, int), int>();
             int GetIndex(Vector3 p3)
@@ -308,23 +317,28 @@ public static class Brep
     static List<Vector3> EvaluateBoundaryCurve3D(MeshingContext ctx, IfcEntity curve)
         => DedupeConsecutive3D(CurveEvaluator.Evaluate3D(ctx, curve).ToList());
 
-    /// <summary>
-    /// Triangulates a projected face boundary. Thin 3- and 4-vertex rings (common on Institute
-    /// helix shell facets) are kept as one or two triangles, or dropped when their area is below
-    /// <see cref="Tolerance.Eps"/>; other rings go to earcut, and are dropped when its triangles'
-    /// area is more than <see cref="MaxFaceAreaDeviation"/> from the ring's.
-    /// </summary>
     /// <summary>The largest relative difference between a face ring's area and its triangles'
     /// (<see cref="Earcut.Deviation(IReadOnlyList{Vector2}, IReadOnlyList{IReadOnlyList{Vector2}}, IReadOnlyList{Integer3})"/>)
     /// for the face to be kept.</summary>
     const double MaxFaceAreaDeviation = 0.01;
 
+    const string TriangulationFailed = "triangulation failed";
+
+    /// <summary>
+    /// Triangulates a projected face boundary. Thin 3- and 4-vertex rings (common on Institute
+    /// helix shell facets) are kept as one or two triangles, or dropped when their area is below
+    /// <see cref="Tolerance.Eps"/>; other rings go to earcut, and are dropped when its triangles'
+    /// area is more than <see cref="MaxFaceAreaDeviation"/> from the ring's. When it returns false,
+    /// <paramref name="dropReason"/> says why, for the caller to record.
+    /// </summary>
     static bool TryTriangulateFaceRing(
         IReadOnlyList<Vector2> outer2,
         IReadOnlyList<List<Vector2>> holes2,
-        out IReadOnlyList<Triangle2D> tris)
+        out IReadOnlyList<Triangle2D> tris,
+        out string dropReason)
     {
         tris = [];
+        dropReason = TriangulationFailed;
         if (outer2.Count < 3)
             return false;
 
@@ -364,8 +378,12 @@ public static class Brep
         // folds over); earcut's triangles then overlap and cover more than the face. Leave such a
         // face out rather than emit area it does not have.
         var indices = Earcut.Triangulate(outer2, holes2);
-        if (Earcut.Deviation(outer2, holes2, indices) > MaxFaceAreaDeviation)
+        var deviation = Earcut.Deviation(outer2, holes2, indices);
+        if (deviation > MaxFaceAreaDeviation)
+        {
+            dropReason = $"area off by {deviation * 100:0.#} %";
             return false;
+        }
         tris = PolygonWithHoles.ToTriangles(outer2, holes2, indices);
         return tris.Count > 0;
     }

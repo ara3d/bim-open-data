@@ -85,6 +85,13 @@ public sealed class MeshingContext : IDisposable
 
     public MeshingDiagnostics Diagnostics { get; } = new();
 
+    /// <summary>Express id of the product being meshed, so a diagnostic can name it; null outside one.</summary>
+    public int? CurrentProductId { get; set; }
+
+    /// <summary>Records a face left out of the mesh against <see cref="CurrentProductId"/>.</summary>
+    public void RecordDroppedFace(int faceId, string reason)
+        => Diagnostics.RecordDroppedFace(CurrentProductId, faceId, reason);
+
 
 
     public float ScaleLength(double value) => (float)(value * LengthScale);

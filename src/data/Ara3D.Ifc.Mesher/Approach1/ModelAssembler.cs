@@ -22,6 +22,7 @@ public static class ModelAssembler
             if (!IsProduct(entity))
                 continue;
 
+            ctx.CurrentProductId = entity.Id;
             ctx.Try(() =>
             {
                 var representation = MeshHelpers.ResolveOptional(ctx, entity, IfcProduct.Instance.Representation);
@@ -51,6 +52,7 @@ public static class ModelAssembler
             }, entity.GetEntityName(), $"product #{entity.Id}");
         }
 
+        ctx.CurrentProductId = null;
         EmitAggregatedVoidHosts(ctx, builder, meshBuckets, voidRelations, openingSolidCache);
         RecordOpeningRelations(ctx);
         return (builder.Build(), ctx.Diagnostics);
@@ -119,6 +121,7 @@ public static class ModelAssembler
             if (childRep is null)
                 continue;
 
+            ctx.CurrentProductId = childId;
             var childParts = new List<CollectedPart>();
             GeometryPartCollector.CollectParts(ctx, childRep, Matrix4x4.Identity, childId, childParts);
             if (childParts.Count == 0)
@@ -406,6 +409,7 @@ public static class ModelAssembler
     {
         if (IsProduct(entity))
         {
+            ctx.CurrentProductId = entity.Id;
             var representation = MeshHelpers.ResolveOptional(ctx, entity, IfcProduct.Instance.Representation);
             if (representation is null)
                 return null;
