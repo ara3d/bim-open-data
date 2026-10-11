@@ -19,8 +19,13 @@ public static class BosGlb
 
     /// <summary>Writes the geometry of a loaded BOS model to a .glb file.</summary>
     public static GlbExportSummary WriteGlb(this IBimData data, string glbPath, GlbExportOptions? options = null)
+        => new BosScene(data).WriteGlb(glbPath, options);
+
+    /// <summary>Writes the geometry of a BOS scene to a .glb file. A caller that keeps the
+    /// scene (an MCP session) passes it here to skip building it again.</summary>
+    public static GlbExportSummary WriteGlb(this BosScene scene, string glbPath, GlbExportOptions? options = null)
     {
-        var (model, summary) = data.ToGltf(options);
+        var (model, summary) = scene.ToGltf(options);
         model.SaveGLB(glbPath);
         return summary with { Bytes = new FileInfo(glbPath).Length };
     }
@@ -28,5 +33,9 @@ public static class BosGlb
     /// <summary>Builds the glTF model in memory, for a caller that wants another container
     /// (model.SaveGLTF, model.WriteGLB to a stream) or to add to the scene first.</summary>
     public static (ModelRoot Model, GlbExportSummary Summary) ToGltf(this IBimData data, GlbExportOptions? options = null)
-        => new GltfSceneBuilder(data, options ?? GlbExportOptions.Default).Build();
+        => new BosScene(data).ToGltf(options);
+
+    /// <summary>Builds the glTF model of a BOS scene in memory.</summary>
+    public static (ModelRoot Model, GlbExportSummary Summary) ToGltf(this BosScene scene, GlbExportOptions? options = null)
+        => new GltfSceneBuilder(scene, options ?? GlbExportOptions.Default).Build();
 }

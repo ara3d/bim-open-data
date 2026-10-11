@@ -31,6 +31,9 @@ s = bimData.WriteGlb("doors.glb", new GlbExportOptions { EntityIndices = doorEnt
 
 // In memory, to write another container or add to the scene
 var (model, summary) = bimData.ToGltf();   // SharpGLTF.Schema2.ModelRoot
+
+// From a BosScene a caller keeps, so the view is not built again
+s = scene.WriteGlb("model.glb");
 ```
 
 The summary counts nodes, glTF meshes, materials, triangles drawn, instances skipped because
@@ -53,7 +56,8 @@ number it passed, and a file with no nodes.
 - **Hidden instances** (`InstanceFlags` bit `IsHidden`, set by the converter that wrote the
   `.bos`) are left out unless `IncludeHidden` is set.
 - **Bad indices.** Every index in the Instances table is checked against the table it points
-  into. A mesh index out of range or an empty mesh skips the instance (`SkippedEmpty`); a
+  into, once, by `BosScene` (in Ara3D.BimOpenSchema.ObjectModel), the view the GLB, USD and BCF
+  writers share. A mesh index out of range or an empty mesh skips the instance (`SkippedEmpty`); a
   transform index out of range skips it (`SkippedBadTransform`); a material index out of range
   draws it with the default grey (`DefaultedMaterials`). An `InstanceFlags` column shorter than
   the Instances table (older files, hand-built geometry) leaves the missing instances visible.

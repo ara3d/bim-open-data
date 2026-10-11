@@ -13,7 +13,7 @@ namespace Ara3D.BimOpenSchema.IO.Gltf;
 /// to a node, so each pair of BOS mesh and BOS material becomes one glTF mesh over the same
 /// accessors. Each instance becomes one root node whose matrix is the BOS transform followed
 /// by the z-up to y-up rotation.</summary>
-internal sealed class GltfSceneBuilder(IBimData data, GlbExportOptions options)
+internal sealed class GltfSceneBuilder(BosScene scene, GlbExportOptions options)
 {
     public const string Generator = "Ara3D.BimOpenSchema.IO.Gltf";
 
@@ -26,7 +26,7 @@ internal sealed class GltfSceneBuilder(IBimData data, GlbExportOptions options)
         0, 1, 0, 0,
         0, 0, 0, 1);
 
-    private readonly BimGeometry _geometry = data.Geometry ?? new BimGeometry();
+    private readonly BimGeometry _geometry = scene.Geometry;
     private readonly ModelRoot _model = ModelRoot.CreateModel();
     private readonly Dictionary<int, (Accessor Positions, Accessor Indices)> _accessors = new();
     private readonly Dictionary<int, GltfMaterial> _materials = new();
@@ -35,32 +35,36 @@ internal sealed class GltfSceneBuilder(IBimData data, GlbExportOptions options)
     public (ModelRoot Model, GlbExportSummary Summary) Build()
     {
         _model.Asset.Generator = Generator;
-        var scene = _model.UseScene(0);
-        _model.DefaultScene = scene;
+        var root = _model.UseScene(0);
+        _model.DefaultScene = root;
 
-        var selection = InstanceSelection.Select(_geometry, options);
-        var placements = selection.Placements;
+        var selection = scene.Select(new BosSceneFilter
+        {
+            Entities = options.EntityIndices,
+            IncludeHidden = options.IncludeHidden,
+        });
+        var placements = selection.Instances;
         WriteMeshBuffers(placements);
 
         long triangles = 0;
         foreach (var p in placements)
         {
-            var node = scene.CreateNode(EntityString(p.Entity, e => e.Name));
+            var node = root.CreateNode(scene.Name(p.Entity));
             node.Mesh = UseMesh(p.Mesh, p.Material);
-            node.LocalMatrix = (Matrix4x4)_geometry.GetTransformMatrix(p.Transform) * ZUpToYUp;
+            node.LocalMatrix = scene.WorldMatrix(p.Transform) * ZUpToYUp;
             node.Extras = EntityExtras(p.Entity);
             triangles += _accessors[p.Mesh].Indices.Count / 3;
         }
 
         return (_model, new GlbExportSummary(placements.Count, _meshes.Count, _materials.Count, triangles,
-            selection.SkippedEmpty, selection.SkippedBadTransform, selection.DefaultedMaterials,
-            selection.UnmatchedEntityIndices));
+            selection.SkippedBadMesh + selection.SkippedEmptyMesh, selection.SkippedBadTransform,
+            selection.DefaultedMaterials, selection.UnmatchedEntities));
     }
 
     /// <summary>Writes each mesh the instances use, once, in metres: positions as float VEC3 in
     /// one strided buffer view and indices as uint32 in another. BOS indices are already local
     /// to their mesh, as glTF accessors expect.</summary>
-    private void WriteMeshBuffers(List<Placement> placements)
+    private void WriteMeshBuffers(IReadOnlyList<BosInstance> placements)
     {
         var meshes = placements.Select(p => p.Mesh).Distinct().Order().ToList();
         var slices = meshes.Select(_geometry.GetMeshSlice).ToList();
@@ -143,23 +147,11 @@ internal sealed class GltfSceneBuilder(IBimData data, GlbExportOptions options)
     /// Entities table and its GlobalId. A missing id is left out, never filled in.</summary>
     private JsonObject? EntityExtras(int entityIndex)
     {
-        if (!IsEntity(entityIndex))
+        if (!scene.IsEntity(entityIndex))
             return null;
         var extras = new JsonObject { [BosGlb.EntityIndexKey] = entityIndex };
-        var globalId = EntityString(entityIndex, e => e.GlobalId);
-        if (globalId is not null)
+        if (scene.GlobalId(entityIndex) is { } globalId)
             extras[BosGlb.GlobalIdKey] = globalId;
         return extras;
     }
-
-    private string? EntityString(int entityIndex, Func<Entity, StringIndex> field)
-    {
-        if (!IsEntity(entityIndex))
-            return null;
-        var s = (int)field(data.Entities[entityIndex]);
-        return s >= 0 && s < data.Strings.Length && !string.IsNullOrEmpty(data.Strings[s]) ? data.Strings[s] : null;
-    }
-
-    private bool IsEntity(int entityIndex)
-        => entityIndex >= 0 && entityIndex < data.Entities.Length;
 }
