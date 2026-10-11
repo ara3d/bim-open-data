@@ -11,12 +11,13 @@ using Ara3D.Utils;
 namespace BimOpenMcp.Ifc;
 
 /// <summary>Tools over a .bos file rather than an open IFC session: reading a That Open Fragments
-/// file into BOS, and writing a BOS model as GLB, OpenUSD, or BCF. A BOS path comes from
-/// <c>ifc_to_bos</c> (its <c>bosPath</c>) or <c>frag_to_bos</c>, so one chain serves both sources.
-/// Every tool here writes a file and reads its input whole on each call; none is cached.</summary>
+/// file into BOS, querying a BOS model, and writing it as GLB, OpenUSD, or BCF. A BOS path comes
+/// from <c>ifc_to_bos</c> (its <c>bosPath</c>), <c>frag_to_bos</c>, or disk, so one chain serves
+/// every source. Each tool works on the model's <see cref="BosSession"/>, opened once per file and
+/// kept in the server's <see cref="BosSessionCache"/>.</summary>
 public static class BosFileTools
 {
-    public static McpServer Register(this McpServer mcp)
+    public static McpServer Register(this McpServer mcp, BosSessionCache sessions)
         => mcp
             .Tool(
                 "frag_to_bos",
@@ -29,22 +30,39 @@ public static class BosFileTools
                     .String("outputPath", "Path of the .bos file to write. Default: beside the .frag.")
                     .Build(),
                 (args, _) => ToolRunner.RunAsync(
-                    () => FragToBos(args.GetRequiredString("path"), args.GetString("outputPath")),
-                    ["bos_sql", "bos_export_glb", "bos_export_usd", "bos_export_bcf"]))
+                    () => FragToBos(sessions, args.GetRequiredString("path"), args.GetString("outputPath")),
+                    ["bos_table", "bos_sql", "bos_export_glb", "bos_export_usd", "bos_export_bcf"]))
+            .Tool(
+                "bos_table",
+                "Lists the tables and views bos_sql sees in a .bos model, with their row counts and "
+                + "column types, so a query can be written without guessing. They are the ones "
+                + "ifc_table describes for an IFC model: start with the EntityText, ParameterText "
+                + "and RelationText views, and see ifc_table for StoreyOfElement and MetricCatalog. "
+                + "Set 'table' to describe just one.",
+                BosPath()
+                    .String("table", "Optional single table to describe, e.g. Entities.")
+                    .Paged()
+                    .Build(),
+                (args, _) => ToolRunner.RunAsync(
+                    () => IfcShapes.Page(
+                        IfcDuck.Tables(Session(sessions, args).DatabasePath, args.GetString("table")),
+                        args.Skip(),
+                        args.Take()),
+                    ["bos_sql"]))
             .Tool(
                 "bos_sql",
                 "Runs a read-only SQL query (DuckDB dialect) over a .bos model, from any source, and "
                 + "returns a page of rows plus the unpaged row count. The views are the ones ifc_sql "
-                + "sees: EntityText, ParameterText, RelationText, StoreyOfEntity, StoreyOfElement. The "
-                + "first call builds a DuckDB database in a temporary folder; later calls reuse it until "
-                + "the .bos file changes.",
+                + "sees: EntityText, ParameterText, RelationText, StoreyOfEntity, StoreyOfElement, "
+                + "MetricCatalog; bos_table lists them. The first call builds a DuckDB database in a "
+                + "temporary folder; later calls reuse it until the .bos file changes.",
                 BosPath()
                     .String("sql", "A single SELECT or WITH statement.", required: true)
                     .Paged()
                     .Build(),
                 (args, _) => ToolRunner.RunAsync(
                     () => IfcDuck.Query(
-                        CachedDatabase(Input(args.GetRequiredString("bosPath"))),
+                        Session(sessions, args).DatabasePath,
                         args.GetRequiredString("sql"),
                         args.Skip(),
                         args.Take())))
@@ -59,7 +77,7 @@ public static class BosFileTools
                     .String("outputPath", "Path of the .glb file to write.", required: true)
                     .Build(),
                 (args, _) => ToolRunner.RunAsync(
-                    () => ExportGlb(args.GetRequiredString("bosPath"), args.GetIntList("entityIndices"), args.GetRequiredString("outputPath"))))
+                    () => ExportGlb(Session(sessions, args), args.GetIntList("entityIndices"), args.GetRequiredString("outputPath"))))
             .Tool(
                 "bos_export_usd",
                 "Writes a BOS model as an OpenUSD text stage (.usda) that Omniverse, Blender, Houdini "
@@ -73,7 +91,7 @@ public static class BosFileTools
                     .String("outputPath", "Path of the .usda file to write.", required: true)
                     .Build(),
                 (args, _) => ToolRunner.RunAsync(
-                    () => ExportUsd(args.GetRequiredString("bosPath"), args.GetRequiredString("outputPath"))))
+                    () => ExportUsd(Session(sessions, args), args.GetRequiredString("outputPath"))))
             .Tool(
                 "bos_export_bcf",
                 "Runs a read-only SQL query over a BOS model and writes its rows as a BCF 3.0 file "
@@ -90,7 +108,7 @@ public static class BosFileTools
                     .Build(),
                 (args, _) => ToolRunner.RunAsync(
                     () => ExportBcf(
-                        args.GetRequiredString("bosPath"),
+                        Session(sessions, args),
                         args.GetRequiredString("sql"),
                         args.GetRequiredString("outputPath"),
                         args.GetString("guidSeed"))));
@@ -98,7 +116,13 @@ public static class BosFileTools
     private static McpSchemaBuilder BosPath()
         => McpSchema.Object().String("bosPath", "Absolute path to the .bos file (from ifc_to_bos or frag_to_bos).", required: true);
 
-    private static object FragToBos(string path, string? outputPath)
+    private static BosSession Session(BosSessionCache sessions, McpToolArgs args)
+        => sessions.Get(args.GetRequiredString("bosPath"));
+
+    /// <summary>Reads the .frag, writes the .bos, and holds the model as a session, so the bos_*
+    /// tools given the returned bosPath do not read it again. The database beside the .bos is a
+    /// copy of the session's.</summary>
+    private static object FragToBos(BosSessionCache sessions, string path, string? outputPath)
     {
         var input = new FilePath(path);
         if (!File.Exists(input.FullPath))
@@ -106,24 +130,25 @@ public static class BosFileTools
         var bos = Output(outputPath ?? Path.ChangeExtension(input.FullPath, ".bos"));
         var data = FragmentsToBos.Read(input);
         data.WriteToParquetZip(bos);
+        var session = sessions.Put(new BosSession(bos, data));
         var database = new FilePath(Path.ChangeExtension(bos.FullPath, ".duckdb"));
-        BuildDatabase(bos, database);
+        CopyInPlace(session.DatabasePath, database);
         return new
         {
             path = input.FullPath,
             bosPath = bos.FullPath,
             databasePath = database.FullPath,
-            bosBytes = new FileInfo(bos.FullPath).Length,
+            bosBytes = session.BosBytes,
             entities = data.Entities.Length,
             instances = data.Geometry.InstanceEntityIndex.Length,
         };
     }
 
-    private static object ExportGlb(string bosPath, IReadOnlyList<int>? entityIndices, string outputPath)
+    private static object ExportGlb(BosSession session, IReadOnlyList<int>? entityIndices, string outputPath)
     {
         var output = Output(outputPath);
         var options = new GlbExportOptions { EntityIndices = entityIndices };
-        var summary = BosGlb.WriteGlb(Input(bosPath).FullPath, output.FullPath, options);
+        var summary = session.Scene.WriteGlb(output.FullPath, options);
         var requested = entityIndices?.Distinct().Count() ?? 0;
         if (requested > 0 && summary.UnmatchedEntityIndices == requested)
         {
@@ -132,68 +157,35 @@ public static class BosFileTools
                 $"None of the {requested} entity indices draws anything: each is out of range, has no geometry, "
                 + "or only hidden instances. entityIndices are EntityText.EntityIndex values, not STEP ids.");
         }
-        return new { bosPath, outputPath = output.FullPath, summary };
+        return new { bosPath = session.BosPath.FullPath, outputPath = output.FullPath, summary };
     }
 
-    private static object ExportUsd(string bosPath, string outputPath)
+    private static object ExportUsd(BosSession session, string outputPath)
     {
         var output = Output(outputPath);
-        var summary = Read(bosPath).WriteUsda(output.FullPath);
-        return new { bosPath, outputPath = output.FullPath, bytes = new FileInfo(output.FullPath).Length, summary };
+        var summary = session.Scene.WriteUsda(output.FullPath);
+        return new { bosPath = session.BosPath.FullPath, outputPath = output.FullPath, bytes = new FileInfo(output.FullPath).Length, summary };
     }
 
-    private static object ExportBcf(string bosPath, string sql, string outputPath, string? guidSeed)
+    private static object ExportBcf(BosSession session, string sql, string outputPath, string? guidSeed)
     {
-        var data = Read(bosPath);
-        using var conn = data.ToDuckDb();
-        var issues = conn.Query(IfcDuck.ReadOnlyQuery(sql)).ToBcfIssues();
+        IReadOnlyList<BcfIssue> issues;
+        using (var conn = BosDuckDb.Open(session.DatabasePath))
+            issues = conn.Query(IfcDuck.ReadOnlyQuery(sql)).ToBcfIssues();
         var output = Output(outputPath);
-        var summary = BcfWriter.WriteFile(
-            output.FullPath, issues, new BcfOptions { GuidSeed = guidSeed ?? Path.GetFileNameWithoutExtension(bosPath) }, ElementBounds.FromBimData(data));
-        return new { bosPath, outputPath = output.FullPath, bytes = new FileInfo(output.FullPath).Length, summary };
+        var options = new BcfOptions { GuidSeed = guidSeed ?? Path.GetFileNameWithoutExtension(session.BosPath.FullPath) };
+        var summary = BcfWriter.WriteFile(output.FullPath, issues, options, ElementBounds.FromScene(session.Scene));
+        return new { bosPath = session.BosPath.FullPath, outputPath = output.FullPath, bytes = new FileInfo(output.FullPath).Length, summary };
     }
 
-    /// <summary>Writes the BOS tables and the text views ifc_sql uses into a fresh database. It is
-    /// built under a temporary name and moved into place, so a failed build never leaves a
-    /// half-written database for a later call to reuse.</summary>
-    private static void BuildDatabase(FilePath bos, FilePath database)
+    /// <summary>Copies under a temporary name and moves into place, so a failed copy never leaves
+    /// a half-written database where a reader would take it for a whole one.</summary>
+    private static void CopyInPlace(FilePath source, FilePath destination)
     {
-        var building = new FilePath(database.FullPath + ".building");
-        if (File.Exists(building.FullPath))
-            File.Delete(building.FullPath);
-        bos.BosToDuckDB(building);
-        IfcDuck.CreateViews(building);
-        File.Move(building.FullPath, database.FullPath, overwrite: true);
+        var partial = destination.FullPath + ".partial";
+        File.Copy(source.FullPath, partial, overwrite: true);
+        File.Move(partial, destination.FullPath, overwrite: true);
     }
-
-    /// <summary>The database for a .bos file, in a temporary folder named by the file's path, size,
-    /// and write time, so a changed .bos gets a new database and the source folder is never written.</summary>
-    private static FilePath CachedDatabase(FilePath bos)
-    {
-        var info = new FileInfo(bos.FullPath);
-        var key = $"{info.FullName}|{info.Length}|{info.LastWriteTimeUtc.Ticks}";
-        var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(key)))[..16];
-        var folder = Path.Combine(Path.GetTempPath(), "bimopenmcp-bos");
-        Directory.CreateDirectory(folder);
-        var database = new FilePath(Path.Combine(folder, $"{Path.GetFileNameWithoutExtension(bos.FullPath)}-{hash}.duckdb"));
-        lock (CacheLock)
-            if (!File.Exists(database.FullPath))
-                BuildDatabase(bos, database);
-        return database;
-    }
-
-    private static readonly object CacheLock = new();
-
-    private static FilePath Input(string bosPath)
-    {
-        var input = new FilePath(bosPath);
-        if (!File.Exists(input.FullPath))
-            throw new FileNotFoundException($"BOS file not found: {input.FullPath}");
-        return input;
-    }
-
-    private static IBimData Read(string bosPath)
-        => ParquetUtils.ReadBimDataFromParquetZip(Input(bosPath));
 
     private static FilePath Output(string outputPath)
     {

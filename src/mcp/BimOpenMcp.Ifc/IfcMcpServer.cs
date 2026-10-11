@@ -21,7 +21,7 @@ public static class IfcMcpServer
         IfcRelationTools.Register(mcp, cache);
         IfcAnalyticsTools.Register(mcp, cache);
         IfcGeometryTools.Register(mcp, cache);
-        BosFileTools.Register(mcp);
+        BosFileTools.Register(mcp, cache.BosSessions);
         return mcp;
     }
 }

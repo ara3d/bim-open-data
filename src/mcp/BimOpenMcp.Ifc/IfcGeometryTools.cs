@@ -1,6 +1,5 @@
 using System.Text.Json.Nodes;
 using Ara3D.BimOpenSchema;
-using Ara3D.BimOpenSchema.IO;
 using Ara3D.BimOpenSchema.IO.Gltf;
 using Ara3D.Ifc.Mesher;
 using Ara3D.MCP;
@@ -16,9 +15,10 @@ namespace BimOpenMcp.Ifc;
 /// the meshed model is built once per session and reused. A model whose mesher failed is reported
 /// through <c>ifc_meshing_diagnostics</c> rather than crashing the other tools.
 /// The GLB export instead writes the session's BIM Open Schema conversion (web-ifc geometry, the
-/// model the SQL tools read) through <see cref="BosGlb"/>: on the AC20-FZK-Haus sample Approach1
-/// leaves the four roof-clipped upper walls unclipped, up to 2.8 m too tall, where the conversion
-/// clips them (GlbSourceComparisonTests prints the per-element comparison).</summary>
+/// model the SQL tools read) from the cached <see cref="BosSession.Scene"/> through
+/// <see cref="BosGlb"/>: on the AC20-FZK-Haus sample Approach1 leaves the four roof-clipped upper
+/// walls unclipped, up to 2.8 m too tall, where the conversion clips them
+/// (GlbSourceComparisonTests prints the per-element comparison).</summary>
 public static class IfcGeometryTools
 {
     /// <summary>Node extras key for the element's STEP id (the #123 in the .ifc file), written beside
@@ -119,13 +119,14 @@ public static class IfcGeometryTools
 
     private static object Export(IfcSession session, IReadOnlyList<int>? ids, string outputPath)
     {
-        var data = ParquetUtils.ReadBimDataFromParquetZip(session.Bos.BosPath);
+        var bos = session.Bos;
+        var data = bos.Data;
         var options = new GlbExportOptions
         {
             EntityIndices = ids == null ? null : EntityRows(data, ids),
             IncludeHidden = ids != null,
         };
-        var (model, summary) = data.ToGltf(options);
+        var (model, summary) = bos.Scene.ToGltf(options);
         var written = AddStepIds(model, data);
         var unmatched = ids?.Distinct().Where(id => !written.Contains(id)).ToList() ?? [];
         if (ids is { Count: > 0 } && unmatched.Count == ids.Distinct().Count())

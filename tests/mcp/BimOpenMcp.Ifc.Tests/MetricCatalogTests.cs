@@ -79,6 +79,18 @@ public sealed class MetricCatalogTests
         Assert.That(Count(path), Is.EqualTo(0));
     }
 
+    /// <summary>A .bos saved away from the IFC file still finds the dictionary: the model records
+    /// the IFC file as its document, and the URI resolves against that file's folder.</summary>
+    [Test]
+    public void SavedBos_ResolvesTheDictionaryAgainstItsSourceDocument()
+    {
+        var saved = Path.Combine(_scratch, "enriched-copy.bos");
+        _mcp.CallData("ifc_to_bos", new JsonObject { ["path"] = RepoPaths.Samples("nrc", "duplex-enriched.ifc"), ["outputPath"] = saved });
+        var rows = _mcp.CallData("bos_sql", new JsonObject { ["bosPath"] = saved, ["sql"] = "SELECT count(*) FROM MetricCatalog" })["rows"]!;
+
+        Assert.That(rows[0]![0]!.GetValue<long>(), Is.EqualTo(File.ReadLines(RepoPaths.Samples("nrc", "nrc-metrics.csv")).Count() - 1));
+    }
+
     private long Count(string path)
         => _mcp.Rows(path, "SELECT count(*) FROM MetricCatalog")[0]![0]!.GetValue<long>();
 

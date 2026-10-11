@@ -92,7 +92,7 @@ public static class IfcAnalyticsTools
             bosPath = bos.BosPath.FullPath,
             databasePath = bos.DatabasePath.FullPath,
             bosBytes = bos.BosBytes,
-            builtUtc = bos.BuiltUtc,
+            builtUtc = session.Conversion.BuiltUtc,
             metricDictionary = bos.MetricDictionary?.FullPath,
             savedTo = saved,
         };

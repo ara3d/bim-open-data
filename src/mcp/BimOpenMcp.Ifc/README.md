@@ -56,20 +56,21 @@ Client config:
 | `ifc_mesh` | Mesh statistics for an element or the whole model. |
 | `ifc_bounds` | Bounding boxes, per element and whole-model. |
 | `ifc_volume` | Volume and surface area from geometry. |
-| `ifc_export_glb` | Writes a GLB. |
+| `ifc_export_glb` | Writes a GLB from the model's BOS conversion (web-ifc geometry): one node per instance with its own material, stepId, globalId and entityIndex in each node's extras; hidden instances only when named in `ids`. |
 | `ifc_meshing_diagnostics` | What failed to mesh, and why. |
 | `ifc_to_bos` | Converts a model to BIM Open Schema, optionally saving the `.bos` file. |
 | `ifc_table` | The tables and views a query can use, with row counts and column types. |
 | `ifc_sql` | A read-only DuckDB query over the converted model, paged. |
 | `ifc_sql_export` | The full result of a query, written to `.csv`, `.parquet`, or `.json`. |
-| `frag_to_bos` | Converts a That Open Fragments 2 file (`.frag`) to BOS, with a DuckDB database beside it. |
+| `frag_to_bos` | Converts a That Open Fragments 2 file (`.frag`) to BOS, with a DuckDB database beside it, and keeps the model open for the `bos_*` tools. |
+| `bos_table` | The tables and views `bos_sql` can use in a `.bos` model, with row counts and column types. |
 | `bos_sql` | A read-only DuckDB query over any `.bos` model, with the same views as `ifc_sql`, paged. |
 | `bos_export_glb` | Writes a `.bos` model's geometry as GLB, entity index and GlobalId in each node's extras. |
 | `bos_export_usd` | Writes a `.bos` model as an OpenUSD `.usda` stage with element data as `bim:` attributes. |
 | `bos_export_bcf` | Writes the rows of a SQL query over a `.bos` model as BCF 3.0 topics, one per `Title`. |
 
-The five `bos_*`/`frag_*` tools take a `.bos` path (from `ifc_to_bos`'s `bosPath`, or `frag_to_bos`) instead
-of an IFC session, so they work for any source that becomes BOS.
+The six `bos_*`/`frag_*` tools take a `.bos` path (from `ifc_to_bos`'s `bosPath`, `frag_to_bos`, or disk)
+instead of an IFC file, so they work for any source that becomes BOS.
 
 Anything returning a list takes `skip` and `take` and reports the unpaged `total`, so a caller can
 tell a complete answer from a truncated one.
@@ -80,6 +81,16 @@ tell a complete answer from a truncated one.
 one model, so `IfcSessionCache` keeps recent models open — three by default, evicting the least
 recently used. Relation and property indexes are each another full scan, so they are built on first
 use and kept for the life of the session.
+
+**BOS sessions.** `BosSessionCache`, owned by `IfcSessionCache`, does the same for BOS models, keyed
+by `.bos` path: three by default, least recently used evicted, and a session whose file has changed
+size or write time on disk is read again. A `BosSession` holds the model's tables (`IBimData`, every
+table read), the `BosScene` the GLB, USD and BCF writers share, and a DuckDB database with the text
+views; each is built on first use, so a SQL-only session never loads the tables and an export-only
+one never builds the database. An IFC session's conversion and a model `frag_to_bos` has just read
+are put in the same cache, so the `bosPath` either returns is already open. Reading every table is
+deliberate: `BosScene` cannot tell an unread table from an empty one. On Schependomlaan
+(`samples/public/schependomlaan.bos`) a repeated `bos_export_glb` takes 0.32 s instead of 0.78 s.
 
 **Lifetime.** Every `IfcEntity` points into the file's pinned buffer. Nothing derived from a session
 may outlive it, which is why tools serialize their answers before returning.
@@ -95,9 +106,10 @@ memory — and in particular it does not touch the BOS conversion, so parameter 
 `ifc_sql` remains the tool for arbitrary joins; these four cover the common shapes without SQL.
 
 **Analytics.** `IfcBosArtifacts` converts a model to a `.bos` (a zip of Brotli-compressed Parquet
-tables) and loads it into a DuckDB database. Both are temp files owned by the session, so closing a
-model or evicting it from the cache deletes them. The conversion is a second whole-file parse, so it
-happens once per session rather than once per query.
+tables) in a temp folder owned by the IFC session; the session opens it as a `BosSession`, whose
+DuckDB database the SQL tools query. Closing the model or evicting it from the cache closes the BOS
+session and deletes both. The conversion is a second whole-file parse, so it happens once per
+session rather than once per query.
 
 **Why the views matter.** BIM Open Schema interns every string and every enum: `Entities.Name` is an
 index into `Strings`, `Entities.Category` is an index into `Entities`, and `Parameters.Value` is a
@@ -108,7 +120,9 @@ which resolve those indexes by joining on `rowid`. The views are defined once, i
 
 **MetricCatalog.** `IfcMetricCatalog` adds one table beside the views: the analytics metric
 dictionary the model names in `Pset_NRCAnalyticsProvenance.MetricDictionaryURI`, read from that
-CSV (resolved against the IFC file's folder) when the database is built. An agent resolves a metric
+CSV when the database is built. A relative URI is resolved against the folder of the source file
+the model records for that entity (the Documents table's `Path`: the IFC file, for a conversion),
+then against the `.bos` file's folder. An agent resolves a metric
 through it to the property set, property name, unit, and rollup rule at each level, instead of
 guessing from names. A model without the provenance set, or whose dictionary file is missing, gets
 the table with its columns and no rows.

@@ -14,11 +14,15 @@ public sealed class IfcSession : IDisposable
     private IfcRelations? _relations;
     private IfcPropData? _properties;
     private IfcParameterIndex? _parameters;
-    private IfcBosArtifacts? _bos;
+    private readonly BosSessionCache _bosSessions;
+    private IfcBosArtifacts? _conversion;
     private IfcMeshingResult? _meshing;
 
-    public IfcSession(FilePath path)
+    /// <summary>Opens the file. <paramref name="bosSessions"/> holds the session over its BOS
+    /// conversion once one is built; disposing this session closes that one.</summary>
+    public IfcSession(FilePath path, BosSessionCache bosSessions)
     {
+        _bosSessions = bosSessions;
         Path = path;
         File = IfcFile.Load(path, includeGeometry: false);
         OpenedUtc = DateTime.UtcNow;
@@ -47,14 +51,21 @@ public sealed class IfcSession : IDisposable
     public IfcParameterIndex Parameters
         => _parameters ??= new IfcParameterIndex(this);
 
-    /// <summary>The BOS conversion and its DuckDB database, built on first use. Unlike the other
-    /// indexes this one re-reads the file from disk with geometry enabled, so it is by far the most
-    /// expensive thing a session can hold.</summary>
-    public IfcBosArtifacts Bos
-        => _bos ??= new IfcBosArtifacts(Path);
+    /// <summary>The BOS conversion, built on first use. Unlike the other indexes this one re-reads
+    /// the file from disk with geometry enabled, so it is by far the most expensive thing a session
+    /// can hold.</summary>
+    public IfcBosArtifacts Conversion
+        => _conversion ??= new IfcBosArtifacts(Path);
+
+    /// <summary>The BOS session over <see cref="Conversion"/>: its tables, scene, and DuckDB
+    /// database, held in the shared <see cref="BosSessionCache"/> under the conversion's bosPath,
+    /// so the bos_* tools given that path use it too. Converts on first use, and reads the
+    /// conversion's .bos again if the cache has evicted the session since.</summary>
+    public BosSession Bos
+        => _bosSessions.Get(Conversion.BosPath.FullPath);
 
     public bool BosIsBuilt
-        => _bos != null;
+        => _conversion != null;
 
     /// <summary>Triangle meshes for the model, built on first use and then kept. The Approach1 mesher
     /// reads STEP geometry definitions in pure C# — its own <c>Build(FilePath)</c> overload opens the
@@ -67,16 +78,24 @@ public sealed class IfcSession : IDisposable
     public bool MeshingIsBuilt
         => _meshing != null;
 
-    public IfcBosArtifacts RebuildBos()
+    public BosSession RebuildBos()
     {
-        _bos?.Dispose();
-        _bos = null;
+        DropConversion();
         return Bos;
+    }
+
+    private void DropConversion()
+    {
+        if (_conversion == null)
+            return;
+        _bosSessions.Close(_conversion.BosPath.FullPath);
+        _conversion.Dispose();
+        _conversion = null;
     }
 
     public void Dispose()
     {
-        _bos?.Dispose();
+        DropConversion();
         File.Dispose();
     }
 }

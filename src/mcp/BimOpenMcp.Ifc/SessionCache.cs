@@ -3,7 +3,7 @@ using Ara3D.Utils;
 namespace BimOpenMcp.Ifc;
 
 /// <summary>Open sessions keyed by file path, bounded, evicting the least recently used: the
-/// part of <see cref="IfcSessionCache"/> that does not depend on the kind of session. The cache owns
+/// shared part of <see cref="IfcSessionCache"/> and <see cref="BosSessionCache"/>. The cache owns
 /// its sessions and disposes one when it is closed, evicted, or replaced. A session is opened
 /// under the cache's lock, so two calls for one file never open it twice.</summary>
 internal sealed class SessionCache<TSession> : IDisposable

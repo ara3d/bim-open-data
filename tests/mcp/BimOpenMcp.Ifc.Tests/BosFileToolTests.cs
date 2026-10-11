@@ -53,7 +53,7 @@ public sealed class BosFileToolTests
             .Select(tool => tool!["name"]!.GetValue<string>())
             .ToList();
 
-        Assert.That(names, Is.SupersetOf(new[] { "frag_to_bos", "bos_export_glb", "bos_export_usd", "bos_export_bcf" }));
+        Assert.That(names, Is.SupersetOf(new[] { "frag_to_bos", "bos_table", "bos_sql", "bos_export_glb", "bos_export_usd", "bos_export_bcf" }));
     }
 
     [Test]
@@ -76,6 +76,31 @@ public sealed class BosFileToolTests
             ["sql"] = "SELECT count(*) AS n FROM EntityText WHERE Category = 'IFCDOOR'",
         });
         Assert.That(System.Convert.ToInt32(doors["rows"]![0]![0]!.ToString()), Is.EqualTo(14));
+        Assert.That(_cache.BosSessions.IsOpen(output), Is.True, "frag_to_bos holds the model it read as a session");
+    }
+
+    [Test]
+    public void Table_ListsTheViewsAndMetricCatalog()
+    {
+        var items = _mcp.CallData("bos_table", new JsonObject { ["bosPath"] = _bos, ["take"] = 100 })["items"]!.AsArray();
+        var names = items.Select(item => item!["table"]!.GetValue<string>()).ToList();
+
+        Assert.That(names, Is.SupersetOf(new[] { "Entities", "EntityText", "ParameterText", "StoreyOfElement", "MetricCatalog" }));
+        var entities = _mcp.CallData("bos_table", new JsonObject { ["bosPath"] = _bos, ["table"] = "Entities" })["items"]![0]!;
+        Assert.That(entities["rowCount"]!.GetValue<long>(), Is.EqualTo(_cache.BosSessions.Get(_bos).Data.Entities.Length));
+    }
+
+    [Test]
+    public void IfcConversion_IsTheSessionTheBosToolsGetForItsBosPath()
+    {
+        var ifc = TestModel.RequirePath(TestModel.FzkHaus);
+        var bosPath = _mcp.CallData("ifc_to_bos", new JsonObject { ["path"] = ifc })["bosPath"]!.GetValue<string>();
+
+        Assert.That(_cache.BosSessions.IsOpen(bosPath), Is.True);
+        Assert.That(_cache.BosSessions.Get(bosPath), Is.SameAs(_cache.Get(ifc).Bos));
+        const string count = "SELECT count(*) FROM EntityText";
+        var viaBos = _mcp.CallData("bos_sql", new JsonObject { ["bosPath"] = bosPath, ["sql"] = count })["rows"]![0]![0]!.ToString();
+        Assert.That(viaBos, Is.EqualTo(_mcp.Rows(ifc, count)[0]![0]!.ToString()));
     }
 
     [Test]

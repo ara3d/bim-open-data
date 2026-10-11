@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using Ara3D.BimOpenSchema;
-using Ara3D.BimOpenSchema.IO;
 using Ara3D.Geometry;
 using Ara3D.Models;
 using Ara3D.Utils;
@@ -33,21 +32,22 @@ public sealed class GlbSourceComparisonTests
     public void Measure_geometry_sources(string model)
     {
         var path = Path.IsPathRooted(model) ? model : TestModel.RequirePath(model);
-        using var session = new IfcSession(new FilePath(path));
+        using var bosSessions = new BosSessionCache();
+        using var session = new IfcSession(new FilePath(path), bosSessions);
 
         var watch = Stopwatch.StartNew();
         var approach1 = Measure(session.Model(), entity => entity);
         var approach1Ms = watch.ElapsedMilliseconds;
 
         watch.Restart();
-        var data = ParquetUtils.ReadBimDataFromParquetZip(session.Bos.BosPath);
+        var data = session.Bos.Data;
         var bosMs = watch.ElapsedMilliseconds;
         var fromBos = Measure(data.Geometry.ToModel3D(), row => StepId(data, row));
 
         var shared = approach1.Keys.Intersect(fromBos.Keys).ToList();
         var gaps = shared.ToDictionary(id => id, id => Gap(approach1[id].Bounds, fromBos[id].Bounds));
         TestContext.Progress.WriteLine(
-            $"{Path.GetFileName(path)}: Approach1 {approach1Ms} ms, BOS conversion {bosMs} ms (with its DuckDB); " +
+            $"{Path.GetFileName(path)}: Approach1 {approach1Ms} ms, BOS conversion {bosMs} ms (converted and read back); " +
             $"elements Approach1 {approach1.Count}, BOS {fromBos.Count}, both {shared.Count}; " +
             $"same instance count {shared.Count(id => approach1[id].Instances == fromBos[id].Instances)}, " +
             $"same triangle count {shared.Count(id => approach1[id].Triangles == fromBos[id].Triangles)}, " +

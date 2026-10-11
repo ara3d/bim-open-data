@@ -3,9 +3,10 @@ using Ara3D.Utils;
 
 namespace BimOpenMcp.Ifc;
 
-/// <summary>The BIM Open Schema conversion of one model, plus the DuckDB database built from it.
-/// Both are derived artifacts kept in a private temp folder that is deleted on dispose, so they
-/// live and die with the <see cref="IfcSession"/> that owns them.
+/// <summary>The BIM Open Schema conversion of one IFC file: a .bos archive in a private temp
+/// folder that is deleted on dispose, so it lives and dies with the <see cref="IfcSession"/> that
+/// owns it. The session opens the archive as a <see cref="BosSession"/>, which holds the tables,
+/// the scene, and the DuckDB database.
 /// Conversion is a second whole-file parse that also loads geometry — <see cref="IfcToBosConverter"/>
 /// hardcodes <c>includeGeometry: true</c> — so it is paid once per session, not per query.</summary>
 public sealed class IfcBosArtifacts : IDisposable
@@ -20,12 +21,8 @@ public sealed class IfcBosArtifacts : IDisposable
 
         var stem = Path.GetFileNameWithoutExtension(source.FullPath);
         BosPath = new FilePath(Path.Combine(_folder, stem + ".bos"));
-        DatabasePath = new FilePath(Path.Combine(_folder, stem + ".duckdb"));
 
         Build(source, BosPath);
-        BosPath.BosToDuckDB(DatabasePath);
-        IfcDuck.CreateViews(DatabasePath);
-        MetricDictionary = IfcMetricCatalog.Create(DatabasePath, source);
         BuiltUtc = DateTime.UtcNow;
     }
 
@@ -33,15 +30,7 @@ public sealed class IfcBosArtifacts : IDisposable
 
     public FilePath BosPath { get; }
 
-    public FilePath DatabasePath { get; }
-
     public DateTime BuiltUtc { get; }
-
-    /// <summary>The metric dictionary MetricCatalog was read from, or null when it is empty.</summary>
-    public FilePath? MetricDictionary { get; }
-
-    public long BosBytes
-        => new FileInfo(BosPath.FullPath).Length;
 
     /// <summary>Runs the converter directly rather than through <c>IfcToBosConverter.Convert</c>,
     /// which never disposes the <c>IfcFile</c> it opens; a long-lived server cannot afford to leak
