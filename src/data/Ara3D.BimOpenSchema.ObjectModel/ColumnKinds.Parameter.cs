@@ -16,7 +16,7 @@ public static partial class ColumnKinds
         "The unit name the source file gave a parameter; absent when it gave none.", ColumnRole.Category);
 
     public static readonly ColumnKind Value = new("Value", ColumnScalarType.Text,
-        "A parameter's value as text, whatever its ValueType.", ColumnRole.Label);
+        "A parameter's value as text, whatever its ValueType (the ParameterText view). The lowercase value column of chart, scale and colour tables is a number and is not this kind.", ColumnRole.Label);
 
     public static readonly ColumnKind Count = new("Count", ColumnScalarType.Integer,
         "How many rows or entities fall in the group.", ColumnRole.Measure);
