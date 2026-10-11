@@ -1,7 +1,7 @@
 {
   "bim-open-schema": {
     "url": "https://github.com/ara3d/bim-open-schema",
-    "commit": "c4bd3f3b52aaa2634be7e3d755c06d81362c1f43"
+    "commit": "c369c32021c0930b54cb338253d82fce933846b2"
   },
   "ara3d-sdk": {
     "url": "https://github.com/ara3d/ara3d-sdk",
