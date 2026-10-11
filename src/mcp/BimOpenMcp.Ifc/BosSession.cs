@@ -41,12 +41,18 @@ public sealed class BosSession : IDisposable
         OpenedUtc = DateTime.UtcNow;
     }
 
-    /// <summary>A session over <paramref name="data"/>, which must be what <paramref name="bosPath"/>
-    /// holds: a caller that has just written the file passes the data it wrote, so it is not read
-    /// back.</summary>
-    public BosSession(FilePath bosPath, IBimData data, DerivedFiles? files = null)
-        : this(bosPath, new Lazy<IBimData>(data), files ?? DerivedFiles.Default)
+    /// <summary>Writes <paramref name="data"/> to <paramref name="bosPath"/>, creating its folder,
+    /// and returns a session over the data, so the tables are not read back. The recipe for a tool
+    /// that reads another format into BOS (frag_to_bos today): read, then
+    /// <see cref="BosSessionCache.Put"/> the session this returns, then
+    /// <see cref="CopyDatabaseBeside"/> if the caller wants the database next to the .bos.</summary>
+    public static BosSession FromData(IBimData data, FilePath bosPath, DerivedFiles? files = null)
     {
+        var directory = System.IO.Path.GetDirectoryName(bosPath.FullPath);
+        if (!string.IsNullOrEmpty(directory))
+            Directory.CreateDirectory(directory);
+        data.WriteToParquetZip(bosPath);
+        return new BosSession(bosPath, new Lazy<IBimData>(data), files ?? DerivedFiles.Default);
     }
 
     /// <summary>A session over the archive at <paramref name="bosPath"/>, whose tables are read,
@@ -91,6 +97,19 @@ public sealed class BosSession : IDisposable
     {
         var info = new FileInfo(path.FullPath);
         return (info.Length, info.LastWriteTimeUtc);
+    }
+
+    /// <summary>Copies the database (building it if needed) to the .bos path with the extension
+    /// .duckdb and returns that path. Copies under a temporary name and moves into place, so a
+    /// failed copy never leaves a half-written database where a reader would take it for a whole
+    /// one.</summary>
+    public FilePath CopyDatabaseBeside()
+    {
+        var destination = System.IO.Path.ChangeExtension(BosPath.FullPath, ".duckdb");
+        var partial = destination + ".partial";
+        File.Copy(DatabasePath.FullPath, partial, overwrite: true);
+        File.Move(partial, destination, overwrite: true);
+        return new FilePath(destination);
     }
 
     /// <summary>Marks the session closed. Files it built stay in <see cref="DerivedFiles"/>.</summary>

@@ -1,3 +1,5 @@
+using Ara3D.BimOpenSchema.IO;
+using Ara3D.Utils;
 using BimOpenData.TestSupport;
 
 namespace BimOpenMcp.Ifc.Tests;
@@ -176,6 +178,20 @@ public sealed class BosSessionCacheTests
         Assert.That(cache.BosSessions.IsOpen(bos.BosPath.FullPath), Is.True);
         Assert.That(cache.Get(ifc).Bos, Is.SameAs(bos));
         Assert.That(File.Exists(database), Is.True, "the databasePath ifc_to_bos returned is still there");
+    }
+
+    [Test]
+    public void FromData_WritesTheArchive_AndKeepsTheDataItWasGiven()
+    {
+        var data = ParquetUtils.ReadBimDataFromParquetZip(new FilePath(RepoPaths.Samples("public", "duplex.bos")));
+        var path = Path.Combine(_scratch, "nested", "from-data.bos");
+        using var session = BosSession.FromData(data, path, Files());
+
+        Assert.That(session.Data, Is.SameAs(data), "the tables are not read back");
+        Assert.That(new FilePath(path).ReadBimDataFromParquetZip().Entities.Length, Is.EqualTo(data.Entities.Length));
+        var beside = session.CopyDatabaseBeside();
+        Assert.That(beside.FullPath, Is.EqualTo(Path.ChangeExtension(path, ".duckdb")));
+        Assert.That(File.Exists(beside.FullPath), Is.True);
     }
 
     /// <summary>A store of derived files of its own, so a test sees only what it built. Under the

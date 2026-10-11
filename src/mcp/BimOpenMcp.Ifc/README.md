@@ -92,7 +92,10 @@ size or write time on disk is read again. A `BosSession` holds the model's table
 table read), the `BosScene` the GLB, USD and BCF writers share, and a DuckDB database with the text
 views; each is built on first use, so a SQL-only session never loads the tables and an export-only
 one never builds the database. An IFC session's conversion and a model `frag_to_bos` has just read
-are put in the same cache, so the `bosPath` either returns is already open. Reading every table is
+are put in the same cache, so the `bosPath` either returns is already open. A tool that reads
+another format into BOS follows `frag_to_bos`: `BosSession.FromData` writes the `.bos` and returns a
+session over the tables in memory, `BosSessionCache.Put` holds it, and `CopyDatabaseBeside` puts a
+copy of the database next to the `.bos`. Reading every table is
 deliberate: `BosScene` cannot tell an unread table from an empty one. On Schependomlaan
 (`samples/public/schependomlaan.bos`) a repeated `bos_export_glb` takes 0.32 s instead of 0.78 s.
 

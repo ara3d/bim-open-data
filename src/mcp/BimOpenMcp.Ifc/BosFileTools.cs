@@ -140,13 +140,11 @@ public static class BosFileTools
         var input = new FilePath(path);
         if (!File.Exists(input.FullPath))
             throw new FileNotFoundException($"Fragments file not found: {input.FullPath}");
-        var bos = Output(outputPath ?? Path.ChangeExtension(input.FullPath, ".bos"));
+        var bos = new FilePath(outputPath ?? Path.ChangeExtension(input.FullPath, ".bos"));
         var data = FragmentsToBos.Read(input);
-        data.WriteToParquetZip(bos);
-        using var lease = sessions.Put(new BosSession(bos, data, sessions.Files));
+        using var lease = sessions.Put(BosSession.FromData(data, bos, sessions.Files));
         var session = lease.Session;
-        var database = new FilePath(Path.ChangeExtension(bos.FullPath, ".duckdb"));
-        CopyInPlace(session.DatabasePath, database);
+        var database = session.CopyDatabaseBeside();
         return new
         {
             path = input.FullPath,
@@ -190,15 +188,6 @@ public static class BosFileTools
         var options = new BcfOptions { GuidSeed = guidSeed ?? Path.GetFileNameWithoutExtension(session.BosPath.FullPath) };
         var summary = BcfWriter.WriteFile(output.FullPath, issues, options, ElementBounds.FromScene(session.Scene));
         return new { bosPath = session.BosPath.FullPath, outputPath = output.FullPath, bytes = new FileInfo(output.FullPath).Length, summary };
-    }
-
-    /// <summary>Copies under a temporary name and moves into place, so a failed copy never leaves
-    /// a half-written database where a reader would take it for a whole one.</summary>
-    private static void CopyInPlace(FilePath source, FilePath destination)
-    {
-        var partial = destination.FullPath + ".partial";
-        File.Copy(source.FullPath, partial, overwrite: true);
-        File.Move(partial, destination.FullPath, overwrite: true);
     }
 
     private static FilePath Output(string outputPath)
