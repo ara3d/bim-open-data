@@ -78,6 +78,8 @@ public sealed class IdsEvaluatorTests
             Is.EqualTo(Verdict.Pass));
         Assert.That(ByGlobalId(Run(Entity("IFCWALL"), Property("Qto_WallBaseQuantities", "Length", dataType: "IFCLENGTHMEASURE")))[Wall1].Verdict,
             Is.EqualTo(Verdict.Pass));
+        Assert.That(ByGlobalId(Run(Entity("IFCWALL"), Property("Pset_WallCommon", "FireRating", dataType: "IFCDESCRIPTIVEMEASURE")))[Wall1].Verdict,
+            Is.EqualTo(Verdict.Pass), "a descriptive measure is text");
     }
 
     [Test]
@@ -95,6 +97,31 @@ public sealed class IdsEvaluatorTests
         Assert.That(verdicts[Door1].Verdict, Is.EqualTo(Verdict.Pass));
         Assert.That(verdicts[Door2].Verdict, Is.EqualTo(Verdict.Fail));
         Assert.That(verdicts[Door2].Reason, Does.Contain("0.8"));
+    }
+
+    [Test]
+    public void AttributeFacet_EnumerationIsComparedWithoutItsDots()
+    {
+        var verdicts = ByGlobalId(Run(Entity("IFCDOOR"), Attribute("PredefinedType", Simple("NOTDEFINED"), cardinality: "prohibited")));
+        Assert.That(verdicts[Door1].Verdict, Is.EqualTo(Verdict.Pass), ".DOOR. is not NOTDEFINED");
+        Assert.That(ByGlobalId(Run(Entity("IFCDOOR"), Attribute("PredefinedType", Simple("DOOR"))))[Door1].Verdict, Is.EqualTo(Verdict.Pass));
+    }
+
+    [Test]
+    public void AttributeFacet_ASpacesNameIsItsRoomNumber_NotItsLongName()
+    {
+        Assert.That(ByGlobalId(Run(Entity("IFCSPACE"), Attribute("Name", Pattern("[0-9]{3}"))))[Space].Verdict, Is.EqualTo(Verdict.Pass));
+        Assert.That(ByGlobalId(Run(Entity("IFCSPACE"), Attribute("Name", Simple("Kitchen"))))[Space].Verdict, Is.EqualTo(Verdict.Fail));
+    }
+
+    [Test]
+    public void ModelNotInMetres_Warns()
+    {
+        var millimetres = new IdsModel(Model.Entities.Append(new IdsEntity(99, "P", "Project", "IFCPROJECT",
+            [new IdsValue("IFCPROJECT", "Ifc:LengthUnitToMetre", BimOpenSchema.ParameterType.Number, "0.001")])).ToList());
+        var report = IdsEvaluator.Evaluate(IdsFile.Parse(Document(Specification("S", Entity("IFCDOOR"), Attribute("OverallWidth", AtLeast(0.85))))), millimetres);
+        Assert.That(report.Warnings, Has.Exactly(1).Contains("0.001 m"));
+        Assert.That(IdsEvaluator.Evaluate(IdsFile.Parse(Document(Specification("S", Entity("IFCDOOR")))), Model).Warnings, Is.Empty, "the test model records no unit");
     }
 
     [Test]

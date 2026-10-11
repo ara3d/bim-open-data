@@ -14,8 +14,21 @@ public sealed record IdsValue(string Group, string Name, ParameterType Type, str
     public bool IsPresent
         => Text.Length > 0;
 
+    /// <summary>True for an IFC logical stored as text: <c>.T.</c>, <c>.F.</c>, or <c>.U.</c>.</summary>
+    public bool IsLogical
+        => Text is ".T." or ".F." or ".U.";
+
+    /// <summary>True for an IFC enumeration stored as its STEP token, <c>.DOOR.</c> or
+    /// <c>.NOTDEFINED.</c>: the converter keeps the dots.</summary>
+    public bool IsEnumeration
+        => Text.Length > 2 && Text[0] == '.' && Text[^1] == '.' && !IsLogical;
+
+    /// <summary>The text an IDS compares against: an enumeration without its dots, else the text.</summary>
+    public string Token
+        => IsEnumeration ? Text[1..^1] : Text;
+
     /// <summary>The value typed for an IDS constraint: a number for Number and Int, a boolean for
-    /// the IFC <c>.T.</c> and <c>.F.</c> logicals BOS stores as text, otherwise the text.</summary>
+    /// the IFC <c>.T.</c> and <c>.F.</c> logicals BOS stores as text, otherwise the token.</summary>
     public object Candidate
         => Type switch
         {
@@ -25,7 +38,7 @@ public sealed record IdsValue(string Group, string Name, ParameterType Type, str
             {
                 ".T." => true,
                 ".F." => false,
-                _ => Text,
+                _ => Token,
             },
         };
 
@@ -34,7 +47,7 @@ public sealed record IdsValue(string Group, string Name, ParameterType Type, str
         => Type switch
         {
             ParameterType.Number or ParameterType.Int => IdsValueKind.Number,
-            ParameterType.String when Text is ".T." or ".F." or ".U." => IdsValueKind.Boolean,
+            ParameterType.String when IsLogical => IdsValueKind.Boolean,
             _ => IdsValueKind.Text,
         };
 }
@@ -69,8 +82,18 @@ public sealed record IdsEntity(
     public IEnumerable<(string Name, IdsValue Value)> Attributes
         => Values.Where(IsAttribute)
             .Select(v => (v.Name[IfcParameterNames.Prefix.Length..], v))
-            .Prepend((IfcParameterNames.NameAttribute, new IdsValue(Category, IfcParameterNames.NameAttribute, ParameterType.String, Name)))
+            .Prepend((IfcParameterNames.NameAttribute, NameAttribute))
             .Prepend((IfcParameterNames.GlobalIdAttribute, new IdsValue(Category, IfcParameterNames.GlobalIdAttribute, ParameterType.String, GlobalId)));
+
+    /// <summary>The IFC Name attribute. For a space the converter stores the LongName as the
+    /// entity's name and the IFC Name under <c>Ifc:Room:Number</c>, so that row is the Name.</summary>
+    private IdsValue NameAttribute
+        => Category == SpaceCategory
+            ? Values.FirstOrDefault(v => v.Group == Category && v.Name == IfcParameterNames.RoomNumber)
+                ?? new IdsValue(Category, IfcParameterNames.NameAttribute, ParameterType.String, "")
+            : new IdsValue(Category, IfcParameterNames.NameAttribute, ParameterType.String, Name);
+
+    private const string SpaceCategory = "IFCSPACE";
 
     public IdsValue? Attribute(string name)
         => Attributes.FirstOrDefault(a => a.Name == name).Value;
@@ -82,9 +105,20 @@ public sealed record IdsEntity(
 public sealed class IdsModel
 {
     public IdsModel(IReadOnlyList<IdsEntity> entities)
-        => Entities = entities;
+    {
+        Entities = entities;
+        LengthToMetre = entities.SelectMany(e => e.Values)
+            .Where(v => v.Name == IfcParameterNames.LengthUnitToMetre)
+            .Select(v => double.TryParse(v.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out var d) ? d : (double?)null)
+            .FirstOrDefault();
+    }
 
     public IReadOnlyList<IdsEntity> Entities { get; }
+
+    /// <summary>Metres per model length unit, from the project's <c>Ifc:LengthUnitToMetre</c>
+    /// row; null when the model records none. IDS values are in SI, and the evaluator compares
+    /// numbers as stored, so a model not in metres gets a warning.</summary>
+    public double? LengthToMetre { get; }
 
     /// <summary>Every entity whose category is a row (the class entity), with its parameters in
     /// table order. Values are rendered as the DuckDB text views render them: an entity value by

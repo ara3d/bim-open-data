@@ -21,6 +21,8 @@ public static class IdsEvaluator
         var warnings = new IdsWarnings();
         foreach (var warning in loaderWarnings ?? [])
             warnings.Add(warning);
+        if (model.LengthToMetre is { } scale && Math.Abs(scale - 1) > 1e-9)
+            warnings.Add($"numbers are compared in the model's own units (1 length unit = {scale.ToString(System.Globalization.CultureInfo.InvariantCulture)} m); IDS values are in SI, so a bound on a length may not mean what it says");
         var verdicts = new List<IdsVerdict>();
         foreach (var specification in ids.AllSpecifications())
             Evaluate(specification, model, verdicts, warnings);

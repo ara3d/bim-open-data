@@ -61,11 +61,11 @@ internal static class IdsFacets
         if (IsEmpty(facet.PredefinedType))
             return FacetMatch.Yes;
         var predefined = entity.Attribute("PredefinedType");
-        if (predefined is { Text: "USERDEFINED" })
+        if (predefined is { Token: "USERDEFINED" })
             predefined = entity.Attribute("ObjectType");
-        return predefined is { IsPresent: true } && Satisfies(facet.PredefinedType, predefined.Text, ignoreCase: false)
+        return predefined is { IsPresent: true } && Satisfies(facet.PredefinedType, predefined.Token, ignoreCase: false)
             ? FacetMatch.Yes
-            : FacetMatch.No($"PredefinedType '{predefined?.Text}' is not {facet.PredefinedType!.Short()}");
+            : FacetMatch.No($"PredefinedType '{predefined?.Token}' is not {facet.PredefinedType!.Short()}");
     }
 
     private static FacetMatch MatchProperty(IfcPropertyFacet facet, IdsEntity entity, IdsWarnings warnings)
@@ -111,12 +111,12 @@ internal static class IdsFacets
         var type = dataType.Trim().ToUpperInvariant();
         if (type is "IFCBOOLEAN" or "IFCLOGICAL")
             return IdsValueKind.Boolean;
-        if (type.EndsWith("MEASURE", StringComparison.Ordinal)
-            || type is "IFCREAL" or "IFCINTEGER" or "IFCNUMBER" or "IFCPOSITIVEINTEGER" or "IFCBINARY")
-            return IdsValueKind.Number;
         if (type is "IFCLABEL" or "IFCTEXT" or "IFCIDENTIFIER" or "IFCDATE" or "IFCDATETIME" or "IFCTIME"
-            or "IFCDURATION" or "IFCTIMESTAMP" or "IFCGLOBALLYUNIQUEID" or "IFCURIREFERENCE")
+            or "IFCDURATION" or "IFCTIMESTAMP" or "IFCGLOBALLYUNIQUEID" or "IFCURIREFERENCE" or "IFCDESCRIPTIVEMEASURE")
             return IdsValueKind.Text;
+        if (type.EndsWith("MEASURE", StringComparison.Ordinal)
+            || type is "IFCREAL" or "IFCINTEGER" or "IFCNUMBER" or "IFCPOSITIVEINTEGER")
+            return IdsValueKind.Number;
         warnings.Add($"dataType {dataType} is not checked: BOS does not record it");
         return IdsValueKind.Unknown;
     }

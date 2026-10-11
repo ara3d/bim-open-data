@@ -6,10 +6,12 @@ namespace Ara3D.Ids.Tests;
 /// <summary>A five-entity model built from the two text tables, the shape <c>bos.load</c>
 /// outputs, so the evaluator is tested without a file: two doors (widths 0.9 and 0.8, one with
 /// a predefined type, one USERDEFINED with an ObjectType), two walls (one with a fire rating and
-/// a length quantity, one with an empty fire rating and a logical), and a window.</summary>
+/// a length quantity, one with an empty fire rating and a logical), a window, and a space whose
+/// LongName is the entity name and whose IFC Name is the room number. Enumerations are stored
+/// as the converter stores them, with their dots.</summary>
 internal static class IdsTestModel
 {
-    public const string Door1 = "D1", Door2 = "D2", Wall1 = "W1", Wall2 = "W2", Window = "X1";
+    public const string Door1 = "D1", Door2 = "D2", Wall1 = "W1", Wall2 = "W2", Window = "X1", Space = "S1";
 
     public static IdsModel Build()
         => IdsModel.FromTables(Entities(), Parameters());
@@ -17,10 +19,10 @@ internal static class IdsTestModel
     public static IDataTable Entities()
     {
         var b = new DataTableBuilder("entities");
-        b.AddColumn(new object?[] { 0L, 1L, 2L, 3L, 4L, 5L }, "EntityIndex", typeof(long));
-        b.AddColumn(new object?[] { Door1, Door2, Wall1, Wall2, Window, null }, "GlobalId", typeof(string));
-        b.AddColumn(new object?[] { "Door 1", "Door 2", "Wall 1", "Wall 2", "Window 1", "IFCDOOR" }, "Name", typeof(string));
-        b.AddColumn(new object?[] { "IFCDOOR", "IFCDOOR", "IFCWALL", "IFCWALL", "IFCWINDOW", null }, "Category", typeof(string));
+        b.AddColumn(new object?[] { 0L, 1L, 2L, 3L, 4L, 5L, 6L }, "EntityIndex", typeof(long));
+        b.AddColumn(new object?[] { Door1, Door2, Wall1, Wall2, Window, Space, null }, "GlobalId", typeof(string));
+        b.AddColumn(new object?[] { "Door 1", "Door 2", "Wall 1", "Wall 2", "Window 1", "Kitchen", "IFCDOOR" }, "Name", typeof(string));
+        b.AddColumn(new object?[] { "IFCDOOR", "IFCDOOR", "IFCWALL", "IFCWALL", "IFCWINDOW", "IFCSPACE", null }, "Category", typeof(string));
         return b.Build();
     }
 
@@ -29,16 +31,17 @@ internal static class IdsTestModel
         var rows = new (long Entity, string Name, string Group, string Type, string? Value)[]
         {
             (0, "Ifc:OverallWidth", "IFCDOOR", "Number", "0.9"),
-            (0, "Ifc:PredefinedType", "IFCDOOR", "String", "DOOR"),
+            (0, "Ifc:PredefinedType", "IFCDOOR", "String", ".DOOR."),
             (0, "FireRating", "Pset_DoorCommon", "String", "EI30"),
             (0, "IsExternal", "Pset_DoorCommon", "String", ".T."),
             (1, "Ifc:OverallWidth", "IFCDOOR", "Number", "0.8"),
-            (1, "Ifc:PredefinedType", "IFCDOOR", "String", "USERDEFINED"),
+            (1, "Ifc:PredefinedType", "IFCDOOR", "String", ".USERDEFINED."),
             (1, "Ifc:ObjectType", "IFCDOOR", "String", "Hatch"),
             (2, "FireRating", "Pset_WallCommon", "String", "REI60"),
             (2, "Length", "Qto_WallBaseQuantities", "Number", "5"),
             (3, "FireRating", "Pset_WallCommon", "String", null),
             (3, "LoadBearing", "Pset_WallCommon", "String", ".F."),
+            (5, "Ifc:Room:Number", "IFCSPACE", "String", "101"),
         };
         var b = new DataTableBuilder("parameters");
         b.AddColumn(rows.Select(r => (object?)r.Entity).ToArray(), "EntityIndex", typeof(long));
