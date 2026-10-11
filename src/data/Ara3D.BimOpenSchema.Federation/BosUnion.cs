@@ -1,9 +1,7 @@
-using System.IO.Compression;
 using Ara3D.BimOpenSchema.DuckDb;
 using Ara3D.BimOpenSchema.IO;
 using Ara3D.Logging;
 using Ara3D.Utils;
-using Parquet;
 
 namespace Ara3D.BimOpenSchema.Federation;
 
@@ -68,18 +66,9 @@ public static class BosUnion
     private static bool HasGeometry(UnionInput input)
         => input.Data.Geometry is { InstanceEntityIndex.Length: > 0 };
 
-    /// <summary>Parquet zip of the tables, plus the geometry tables (Instances, Meshes, ...)
-    /// when the union has geometry, laid out as IfcToBosConverter.SaveToBos lays out one
-    /// converted file; ReadBimDataFromParquetZip reads both back.</summary>
+    /// <summary>Parquet zip of the tables, plus the geometry tables when the union has geometry.</summary>
     public static void WriteBos(IBimData union, FilePath output)
-    {
-        using (var fs = new FileStream(output, FileMode.Create, FileAccess.Write, FileShare.None))
-        using (var zip = new ZipArchive(fs, ZipArchiveMode.Create, leaveOpen: false))
-        {
-            union.ToDataSet().WriteParquetToZip(zip, CompressionMethod.Brotli, CompressionLevel.Optimal, CompressionLevel.Fastest);
-            union.Geometry?.WriteParquetToZip(zip, CompressionMethod.Brotli, CompressionLevel.Optimal, CompressionLevel.Fastest);
-        }
-    }
+        => union.WriteToParquetZip(output);
 
     /// <summary>Deletes then writes a DuckDB file: BOS tables via BosDuckDb.LoadBimData, then
     /// BosDuckDbViews.CreateViews. This load path avoids the enum shift the DuckDb README warns
