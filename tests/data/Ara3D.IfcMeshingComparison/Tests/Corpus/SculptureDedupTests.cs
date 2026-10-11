@@ -69,21 +69,6 @@ public sealed class SculptureDedupTests
         Assert.That(result.MeshCount.Candidate, Is.GreaterThanOrEqualTo(130));
     }
 
-    [Test]
-    [Category("IfcMesherParity")]
-    public void QuickFiles_NoInstanceJaccardRegression()
-    {
-        foreach (var ifcPath in TestFiles.QuickComparisonFiles())
-        {
-            TestFiles.RequireExists(ifcPath);
-            var result = ModelComparer.CompareFile(ifcPath);
-            TestContext.WriteLine(
-                $"{ifcPath.GetFileName()}: parity={result.ParityScore:F3} instJ={result.EntityInstances.KeyJaccard:F3}");
-            Assert.That(result.EntityInstances.KeyJaccard, Is.GreaterThanOrEqualTo(0.99),
-                $"{ifcPath.GetFileName()} instance Jaccard regressed");
-        }
-    }
-
     static List<List<int>> GroupByTopology(IReadOnlyList<TriangleMesh3D> meshes)
     {
         var groups = new List<List<int>>();

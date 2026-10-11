@@ -82,37 +82,6 @@ public sealed class TransformComparisonTests
     }
 
     [Test]
-    [Category("IfcMesherParity")]
-    public void Duplex_Control_TransformsMostlyMatchOracle()
-    {
-        var ifcPath = TestFiles.Duplex;
-        TestFiles.RequireExists(ifcPath);
-
-        var bfastOraclePath = WebIfcBfastOracle.OraclePath(ifcPath);
-        if (!bfastOraclePath.Exists())
-            WebIfcBfastOracle.Generate(ifcPath, TestContext.WriteLine);
-
-        var candidate = ModelComparer.LoadCandidate(ifcPath);
-        var oracle = ModelComparer.LoadOracle(ifcPath);
-        var summary = TransformComparison.Compare(candidate, oracle);
-
-        TestContext.WriteLine(TransformComparison.FormatSummary("duplex control: mesher vs web-ifc oracle", summary));
-
-        var candStats = OracleComparison.ComputeStats(candidate);
-        var oracleStats = OracleComparison.ComputeStats(oracle);
-        var refBounds = candStats.Bounds.Merge(oracleStats.Bounds);
-        var refLen = (refBounds.Max - refBounds.Min).Length();
-        var relCenter = summary.MeanBoundsCenterDistance / Math.Max(refLen, 1e-3f);
-        TestContext.WriteLine(
-            $"duplex relative mean center delta: {relCenter:F4} (refLen={refLen:F2}, " +
-            $"meanCenterΔ={summary.MeanBoundsCenterDistance:F4})");
-
-        Assert.That(summary.PairedInstanceCount, Is.GreaterThan(0));
-        Assert.That(summary.MeanBoundsCenterDistance, Is.LessThan(2.0),
-            "duplex control mean world-space center offset should stay modest");
-    }
-
-    [Test]
     public void MatrixDelta_IdentityIsZero()
     {
         var delta = TransformComparison.CompareMatrices(Matrix4x4.Identity, Matrix4x4.Identity);

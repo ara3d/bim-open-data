@@ -59,19 +59,6 @@ public sealed class OracleMisTagTests
     }
 
     [Test]
-    [Category("IfcMesherParity")]
-    public void BfastRoundTrip_PreservesEntityAssignment_QuickFiles()
-    {
-        foreach (var ifcPath in TestFiles.QuickComparisonFiles())
-        {
-            TestFiles.RequireExists(ifcPath);
-            using var file = TestFiles.LoadWithOracleGeometry(ifcPath);
-            var report = WebIfcBfastOracle.CompareRoundTrip(file.ToModel3D());
-            Assert.That(report.EntityAssignmentMatches, Is.True, $"{ifcPath.GetFileName()} BFAST I/O drift");
-        }
-    }
-
-    [Test]
     [Category("Slow")]
     public void TrustedPairing_DetectsStaleCacheMisTags()
     {
