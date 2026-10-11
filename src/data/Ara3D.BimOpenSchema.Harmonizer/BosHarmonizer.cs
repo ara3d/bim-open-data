@@ -17,12 +17,13 @@ public static class BosHarmonizer
 
     /// <summary>
     /// True if the data already contains canonical descriptors (in the canonical group).
+    /// A descriptor with no group (-1) is in no group, so it never marks data as harmonized.
     /// </summary>
     public static bool IsHarmonized(IBimData input, HarmonizerOptions options = null)
     {
         options ??= new HarmonizerOptions();
         foreach (var d in input.Descriptors)
-            if (input.Strings[(int)d.Group] == options.CanonicalGroup)
+            if (input.Get(d.Group) == options.CanonicalGroup)
                 return true;
         return false;
     }
@@ -78,6 +79,7 @@ public static class BosHarmonizer
     {
         var lookup = CategoryMappings.ForSource(source);
         var unmapped = new HashSet<string>();
+        var unnamed = 0;
         var catDesc = bdb.AddDescriptor(
             options.CanonicalPrefix + ParameterMappings.Canonical.Category, "", options.CanonicalGroup, ParameterType.String);
 
@@ -86,8 +88,10 @@ public static class BosHarmonizer
             var e = input.Entities[i];
             if (e.Category < 0)
                 continue;
-            var catName = input.Strings[(int)input.Entities[(int)e.Category].Name];
-            if (lookup.TryGetValue(catName, out var canonical))
+            var catName = input.GetCategoryName(e);
+            if (catName == null)
+                ++unnamed;
+            else if (lookup.TryGetValue(catName, out var canonical))
                 bdb.AddParameter((EntityIndex)i, canonical, catDesc);
             else
                 unmapped.Add(catName);
@@ -97,6 +101,11 @@ public static class BosHarmonizer
             bdb.AddDiagnostic(DiagnosticType.ExporterInfo,
                 $"No canonical category mapping for source category '{name}'.",
                 diagDoc, BimDataBuilder.InvalidEntityIndex);
+
+        if (unnamed > 0)
+            bdb.AddDiagnostic(DiagnosticType.ExporterInfo,
+                $"No canonical category for {unnamed} entities whose category has no name.",
+                diagDoc, BimDataBuilder.InvalidEntityIndex);
     }
 
     private static void AddCanonicalParameters(
@@ -104,13 +113,16 @@ public static class BosHarmonizer
     {
         var mappings = ParameterMappings.ForSource(source);
 
-        // Resolve each input descriptor against the mapping table once.
+        // Resolve each input descriptor against the mapping table once. A descriptor with no
+        // name maps to nothing; one with no group matches only the mappings for any group.
         var descMap = new ParameterMappings.ParameterMapping[input.Descriptors.Length];
         for (var i = 0; i < input.Descriptors.Length; ++i)
         {
             var d = input.Descriptors[i];
-            var name = input.Strings[(int)d.Name];
-            var group = input.Strings[(int)d.Group];
+            var name = input.Get(d.Name);
+            if (name == null)
+                continue;
+            var group = input.Get(d.Group);
             if (!mappings.TryGetValue((name, group), out var m))
                 mappings.TryGetValue((name, null), out m);
             if (m != null && m.Type == d.Type)
@@ -124,6 +136,7 @@ public static class BosHarmonizer
                 options.CanonicalGroup,
                 m.Type);
 
+        // A value index of -1 is an absent value: no canonical parameter is added for it.
         foreach (var p in input.Parameters)
         {
             var m = descMap[(int)p.Descriptor];
@@ -134,15 +147,15 @@ public static class BosHarmonizer
             switch (m.Type)
             {
                 case ParameterType.Number:
-                    var num = input.Numbers[p.Value];
-                    bdb.AddParameter(p.Entity, UnitConversion.ToSI(num, m.Quantity, source), cd);
+                    if (input.Get((NumberIndex)p.Value) is { } num)
+                        bdb.AddParameter(p.Entity, UnitConversion.ToSI(num, m.Quantity, source), cd);
                     break;
                 case ParameterType.Point:
-                    var pt = input.Points[p.Value];
-                    bdb.AddParameter(p.Entity, UnitConversion.ToSI(pt, source), cd);
+                    if (input.Get((PointIndex)p.Value) is { } pt)
+                        bdb.AddParameter(p.Entity, UnitConversion.ToSI(pt, source), cd);
                     break;
                 case ParameterType.String:
-                    bdb.AddParameter(p.Entity, input.Strings[p.Value], cd);
+                    bdb.AddParameter(p.Entity, input.Get((StringIndex)p.Value), cd);
                     break;
                 case ParameterType.Entity:
                     bdb.AddParameter(p.Entity, (EntityIndex)p.Value, cd);
@@ -164,12 +177,6 @@ public static class BosHarmonizer
         var levelDesc = bdb.AddDescriptor(
             options.CanonicalPrefix + ParameterMappings.Canonical.Level, "", options.CanonicalGroup, ParameterType.Entity);
 
-        string CategoryName(EntityIndex ei)
-        {
-            var cat = input.Entities[(int)ei].Category;
-            return cat < 0 ? "" : input.Strings[(int)input.Entities[(int)cat].Name];
-        }
-
         var seen = new HashSet<EntityIndex>();
         foreach (var r in input.Relations)
         {
@@ -180,9 +187,9 @@ public static class BosHarmonizer
 
             // Be tolerant of relation direction: one endpoint must be a building storey.
             EntityIndex element, level;
-            if (CategoryName(r.EntityB) == BuildingStoreyCategoryName)
+            if (input.GetCategoryName(r.EntityB) == BuildingStoreyCategoryName)
                 (element, level) = (r.EntityA, r.EntityB);
-            else if (CategoryName(r.EntityA) == BuildingStoreyCategoryName)
+            else if (input.GetCategoryName(r.EntityA) == BuildingStoreyCategoryName)
                 (element, level) = (r.EntityB, r.EntityA);
             else
                 continue;

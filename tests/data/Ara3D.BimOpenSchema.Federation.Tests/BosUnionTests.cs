@@ -102,4 +102,24 @@ public sealed class BosUnionTests
         Assert.That(plumb.LengthUnit, Is.Null);
         Assert.That(plumb.LengthUnitToMetre, Is.Null);
     }
+
+    /// <summary>A title or path stored as -1 (absent), or as "" by files written before -1
+    /// meant absent, comes back null; a category entity with no name is not IFCPROJECT.</summary>
+    [Test]
+    public void Summarize_ReportsAnAbsentTitleOrPathAsNull()
+    {
+        var bdb = new BimDataBuilder();
+        bdb.AddDocument("doc", null);
+        var untitled = bdb.AddDocument(null, null);
+        bdb.AddDocument("", "");
+        var unnamedCategory = bdb.AddEntity(-1, null, untitled, null, BimDataBuilder.InvalidEntityIndex, BimDataBuilder.InvalidEntityIndex);
+        bdb.AddEntity(7, null, untitled, null, unnamedCategory, BimDataBuilder.InvalidEntityIndex);
+
+        var summaries = BosUnion.Summarize(bdb.Build());
+
+        Assert.That(summaries.Select(s => s.Title), Is.EqualTo(new[] { "doc", null, null }));
+        Assert.That(summaries.Select(s => s.Path), Is.EqualTo(new string?[] { null, null, null }));
+        Assert.That(summaries[1].Entities, Is.EqualTo(2));
+        Assert.That(summaries[1].LengthUnit, Is.Null);
+    }
 }

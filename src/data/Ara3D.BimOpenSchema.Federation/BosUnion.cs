@@ -10,8 +10,9 @@ public sealed record UnionInput(IBimData Data, string Title, string Path);
 
 /// <summary>One document's entity count and declared length unit, as recorded on its
 /// IFCPROJECT entity by the converter (C2). LengthUnit is null when the document declares
-/// none, which storey matching treats as unknown rather than guessing metres.</summary>
-public sealed record DocumentSummary(string Title, string Path, int Entities, string? LengthUnit, double? LengthUnitToMetre);
+/// none, which storey matching treats as unknown rather than guessing metres. Title and Path
+/// are null when the document records none (string index -1, or "" in older files).</summary>
+public sealed record DocumentSummary(string? Title, string? Path, int Entities, string? LengthUnit, double? LengthUnitToMetre);
 
 /// <summary>Converts IFC files one at a time and unions the results, tables and geometry, into
 /// one document, with no matching or federation logic: that lives in the match graph (C5, C6) and
@@ -95,7 +96,7 @@ public static class BosUnion
         {
             var doc = union.Documents[d];
             var (name, scale) = ReadLengthUnit(union, (DocumentIndex)d);
-            result[d] = new DocumentSummary(union.Strings[(int)doc.Title], union.Strings[(int)doc.Path], entityCounts[d], name, scale);
+            result[d] = new DocumentSummary(union.Label(doc.Title), union.Label(doc.Path), entityCounts[d], name, scale);
         }
         return result;
     }
@@ -114,16 +115,16 @@ public static class BosUnion
                 if ((int)p.Entity != e)
                     continue;
                 var descriptor = union.Descriptors[(int)p.Descriptor];
-                var descriptorName = union.Strings[(int)descriptor.Name];
+                var descriptorName = union.Get(descriptor.Name);
                 if (descriptorName == LengthUnitNameParameter)
-                    name = union.Strings[p.Value];
+                    name = union.Label((StringIndex)p.Value);
                 else if (descriptorName == LengthUnitScaleParameter)
-                    scale = union.Numbers[p.Value];
+                    scale = union.Get((NumberIndex)p.Value);
             }
         }
         return (name, scale);
     }
 
     private static bool IsCategory(IBimData union, EntityIndex category, string name)
-        => (int)category >= 0 && union.Strings[(int)union.Entities[(int)category].Name] == name;
+        => union.EntityName(category) == name;
 }

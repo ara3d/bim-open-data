@@ -31,8 +31,7 @@ public static class SourceDetector
 
         foreach (var d in data.Descriptors)
         {
-            var name = data.Strings[(int)d.Name];
-            if (name.StartsWith("Rvt:", StringComparison.Ordinal))
+            if (data.Get(d.Name)?.StartsWith("Rvt:", StringComparison.Ordinal) == true)
                 return SourceKind.Revit;
         }
 
@@ -43,8 +42,7 @@ public static class SourceDetector
             .Distinct();
         foreach (var ci in categoryIndices)
         {
-            var name = data.Strings[(int)data.Entities[ci].Name];
-            if (name.StartsWith("IFC", StringComparison.Ordinal))
+            if (data.EntityName((EntityIndex)ci)?.StartsWith("IFC", StringComparison.Ordinal) == true)
                 return SourceKind.Ifc;
         }
 
