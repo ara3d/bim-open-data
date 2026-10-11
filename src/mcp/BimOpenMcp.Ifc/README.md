@@ -56,21 +56,25 @@ Client config:
 | `ifc_mesh` | Mesh statistics for an element or the whole model. |
 | `ifc_bounds` | Bounding boxes, per element and whole-model. |
 | `ifc_volume` | Volume and surface area from geometry. |
-| `ifc_export_glb` | Writes a GLB from the model's BOS conversion (web-ifc geometry): one node per instance with its own material, stepId, globalId and entityIndex in each node's extras; hidden instances only when named in `ids`. |
+| `ifc_export_glb` | Writes a GLB from the model's BOS conversion (web-ifc geometry), or from a `.bos` file: one node per instance with its own material, stepId, globalId and entityIndex in each node's extras; hidden instances only when named in `ids`. |
 | `ifc_meshing_diagnostics` | What failed to mesh, and why. |
 | `ifc_to_bos` | Converts a model to BIM Open Schema, optionally saving the `.bos` file. |
-| `ifc_table` | The tables and views a query can use, with row counts and column types. |
-| `ifc_sql` | A read-only DuckDB query over the converted model, paged. |
-| `ifc_sql_export` | The full result of a query, written to `.csv`, `.parquet`, or `.json`. |
+| `ifc_table` | The tables and views a query can use, with row counts and column types. Takes an IFC or a `.bos` path. |
+| `ifc_sql` | A read-only DuckDB query over the converted model or a `.bos` file, paged. |
+| `ifc_sql_export` | The full result of a query, written to `.csv`, `.parquet`, or `.json`. Takes an IFC or a `.bos` path. |
 | `frag_to_bos` | Converts a That Open Fragments 2 file (`.frag`) to BOS, with a DuckDB database beside it, and keeps the model open for the `bos_*` tools. |
-| `bos_table` | The tables and views `bos_sql` can use in a `.bos` model, with row counts and column types. |
-| `bos_sql` | A read-only DuckDB query over any `.bos` model, with the same views as `ifc_sql`, paged. |
+| `bos_table` | `ifc_table` with the path argument named `bosPath`. |
+| `bos_sql` | `ifc_sql` with the path argument named `bosPath`. |
 | `bos_export_glb` | Writes a `.bos` model's geometry as GLB, entity index and GlobalId in each node's extras. |
 | `bos_export_usd` | Writes a `.bos` model as an OpenUSD `.usda` stage with element data as `bim:` attributes. |
 | `bos_export_bcf` | Writes the rows of a SQL query over a `.bos` model as BCF 3.0 topics, one per `Title`. |
 
 The six `bos_*`/`frag_*` tools take a `.bos` path (from `ifc_to_bos`'s `bosPath`, `frag_to_bos`, or disk)
-instead of an IFC file, so they work for any source that becomes BOS.
+instead of an IFC file, so they work for any source that becomes BOS. The tools that read only the
+converted model, `ifc_table`, `ifc_sql`, `ifc_sql_export` and `ifc_export_glb`, take a `.bos` as
+their `path` too and query its BOS session; the other `ifc_*` tools read the STEP file itself and
+fail on a `.bos` with a message naming the ones that work. `bos_table` and `bos_sql` stay, as the
+same tools under the argument name `bosPath`, so callers written against them keep working.
 
 Anything returning a list takes `skip` and `take` and reports the unpaged `total`, so a caller can
 tell a complete answer from a truncated one.

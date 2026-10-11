@@ -104,6 +104,36 @@ public sealed class BosFileToolTests
     }
 
     [Test]
+    public void IfcQueryTools_TakeABosPath()
+    {
+        Assert.That(_mcp.Rows(_bos, "SELECT count(*) FROM EntityText WHERE Category = 'IFCDOOR'")[0]![0]!.ToString(), Is.EqualTo("14"));
+        var tables = _mcp.CallData("ifc_table", new JsonObject { ["path"] = _bos, ["take"] = 100 });
+        var aliased = _mcp.CallData("bos_table", new JsonObject { ["bosPath"] = _bos, ["take"] = 100 });
+        Assert.That(tables.ToJsonString(), Is.EqualTo(aliased.ToJsonString()), "bos_table is ifc_table with the argument named bosPath");
+
+        var csv = Path.Combine(_scratch, "doors.csv");
+        var export = _mcp.CallData("ifc_sql_export", new JsonObject
+        {
+            ["path"] = _bos,
+            ["sql"] = "SELECT GlobalId FROM EntityText WHERE Category = 'IFCDOOR'",
+            ["outputPath"] = csv,
+        });
+        Assert.That(export["rows"]!.GetValue<long>(), Is.EqualTo(14));
+        var glb = _mcp.CallData("ifc_export_glb", new JsonObject { ["path"] = _bos, ["outputPath"] = Path.Combine(_scratch, "ifc-tool.glb") });
+        Assert.That(glb["instanceCount"]!.GetValue<int>(), Is.EqualTo(660));
+        Assert.That(_cache.IsOpen(_bos), Is.False, "a .bos path never opens an IFC session");
+    }
+
+    [Test]
+    public void IfcOnlyTools_OnABos_NameTheToolsThatReadIt()
+    {
+        var payload = _mcp.Call("ifc_type_counts", new JsonObject { ["path"] = _bos });
+
+        Assert.That(payload["ok"]!.GetValue<bool>(), Is.False);
+        Assert.That(payload["error"]!.GetValue<string>(), Does.Contain("IFC files only").And.Contain("ifc_sql"));
+    }
+
+    [Test]
     public void Sql_QueriesTheTextViewsOfACommittedSample()
     {
         var data = _mcp.CallData("bos_sql", new JsonObject

@@ -62,13 +62,18 @@ public static class IfcGeometryTools
                 + "differ from ifc_mesh, which uses the Approach1 mesher. Without 'ids', hidden "
                 + "instances (spaces, zones, grids, annotations) are left out; 'ids' writes the named "
                 + "elements, hidden or not, lists those that draw nothing in unmatchedIds, and fails when "
-                + "none draws.",
-                IfcToolArgs.Model()
+                + "none draws. 'path' may name a .bos file; its ids are then the Entities table's "
+                + "LocalId, the STEP id for a model converted from IFC.",
+                IfcToolArgs.ModelOrBos()
                     .Ids()
                     .String("outputPath", "Path of the .glb file to write.", required: true)
                     .Build(),
                 (args, _) => ToolRunner.RunAsync(
-                    () => Export(args.Session(cache), args.GetIds(), args.GetRequiredString("outputPath"))))
+                    () => Export(
+                        new FilePath(args.GetRequiredString("path")),
+                        args.BosSession(cache),
+                        args.GetIds(),
+                        args.GetRequiredString("outputPath"))))
             .Tool(
                 "ifc_meshing_diagnostics",
                 "Reports whether the mesher succeeded and every message and error it produced — the way "
@@ -117,9 +122,8 @@ public static class IfcGeometryTools
         };
     }
 
-    private static object Export(IfcSession session, IReadOnlyList<int>? ids, string outputPath)
+    private static object Export(FilePath path, BosSession bos, IReadOnlyList<int>? ids, string outputPath)
     {
-        var bos = session.Bos;
         var data = bos.Data;
         var options = new GlbExportOptions
         {
@@ -142,7 +146,7 @@ public static class IfcGeometryTools
 
         return new
         {
-            path = session.Path.FullPath,
+            path = path.FullPath,
             outputPath = output.FullPath,
             bytes = new FileInfo(output.FullPath).Length,
             instanceCount = summary.Nodes,

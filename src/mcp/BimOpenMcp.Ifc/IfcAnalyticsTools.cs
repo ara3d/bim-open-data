@@ -5,7 +5,8 @@ namespace BimOpenMcp.Ifc;
 
 /// <summary>Whole-model analytics: convert a model to BIM Open Schema, then ask SQL questions of
 /// the result. Every tool here builds the conversion on demand, so <c>ifc_to_bos</c> is a way to
-/// pay that cost deliberately rather than a prerequisite.
+/// pay that cost deliberately rather than a prerequisite. The query tools read only the
+/// conversion, so they also take a .bos path and query that model's <see cref="BosSession"/>.
 /// A conversion that fails — for example on an IFC relation kind
 /// <c>IfcRelationMapping.ToBos</c> does not map — comes back as a tool error, not a server crash,
 /// because every handler runs through <see cref="ToolRunner"/>.
@@ -43,27 +44,29 @@ public static class IfcAnalyticsTools
                 + "from the CSV the model's Pset_NRCAnalyticsProvenance.MetricDictionaryURI names, "
                 + "beside the IFC file, and is empty when the model names none or the file is "
                 + "missing. Aggregate the element-level properties only; storey and building totals "
-                + "already sit in their own summary sets.",
-                IfcToolArgs.Model()
+                + "already sit in their own summary sets. 'path' may name a .bos file instead of an "
+                + "IFC file.",
+                IfcToolArgs.ModelOrBos()
                     .String("table", "Optional single table to describe, e.g. Entities.")
                     .Paged()
                     .Build(),
                 (args, _) => ToolRunner.RunAsync(
-                    () => Tables(args.Session(cache), args.GetString("table"), args.Skip(), args.Take()),
+                    () => Tables(args.BosSession(cache), args.GetString("table"), args.Skip(), args.Take()),
                     ["ifc_sql"]))
             .Tool(
                 "ifc_sql",
                 "Runs a read-only SQL query (DuckDB dialect) over a model's BIM Open Schema tables and "
                 + "returns a page of rows plus the unpaged row count. One SELECT or WITH statement only. "
                 + "Query the EntityText, ParameterText and RelationText views unless you need the raw "
-                + "interned tables. Call ifc_table first to see what exists.",
-                IfcToolArgs.Model()
+                + "interned tables. Call ifc_table first to see what exists. 'path' may name a .bos "
+                + "file instead of an IFC file.",
+                IfcToolArgs.ModelOrBos()
                     .String("sql", "A single SELECT or WITH statement.", required: true)
                     .Paged()
                     .Build(),
                 (args, _) => ToolRunner.RunAsync(
                     () => IfcDuck.Query(
-                        args.Session(cache).Bos.DatabasePath,
+                        args.BosSession(cache).DatabasePath,
                         args.GetRequiredString("sql"),
                         args.Skip(),
                         args.Take())))
@@ -71,14 +74,15 @@ public static class IfcAnalyticsTools
                 "ifc_sql_export",
                 "Runs a read-only SQL query and writes every row to a file. The format follows the "
                 + "output extension: .parquet, .json, or CSV with a header row for anything else. "
-                + "Use this instead of paging through ifc_sql for a large result.",
-                IfcToolArgs.Model()
+                + "Use this instead of paging through ifc_sql for a large result. 'path' may name a "
+                + ".bos file instead of an IFC file.",
+                IfcToolArgs.ModelOrBos()
                     .String("sql", "A single SELECT or WITH statement.", required: true)
                     .String("outputPath", "Path of the file to write.", required: true)
                     .Build(),
                 (args, _) => ToolRunner.RunAsync(
                     () => Export(
-                        args.Session(cache),
+                        args.BosSession(cache),
                         args.GetRequiredString("sql"),
                         args.GetRequiredString("outputPath"))));
 
@@ -98,13 +102,14 @@ public static class IfcAnalyticsTools
         };
     }
 
-    private static IfcPage<IfcTableInfo> Tables(IfcSession session, string? table, int skip, int take)
-        => IfcShapes.Page(IfcDuck.Tables(session.Bos.DatabasePath, table), skip, take);
+    /// <summary>The page of tables and views ifc_table and bos_table return.</summary>
+    internal static IfcPage<IfcTableInfo> Tables(BosSession session, string? table, int skip, int take)
+        => IfcShapes.Page(IfcDuck.Tables(session.DatabasePath, table), skip, take);
 
-    private static object Export(IfcSession session, string sql, string outputPath)
+    private static object Export(BosSession session, string sql, string outputPath)
     {
         var output = new FilePath(outputPath);
-        var rows = IfcDuck.Export(session.Bos.DatabasePath, sql, output);
+        var rows = IfcDuck.Export(session.DatabasePath, sql, output);
         return new
         {
             path = output.FullPath,

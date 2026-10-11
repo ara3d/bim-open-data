@@ -14,7 +14,9 @@ namespace BimOpenMcp.Ifc;
 /// file into BOS, querying a BOS model, and writing it as GLB, OpenUSD, or BCF. A BOS path comes
 /// from <c>ifc_to_bos</c> (its <c>bosPath</c>), <c>frag_to_bos</c>, or disk, so one chain serves
 /// every source. Each tool works on the model's <see cref="BosSession"/>, opened once per file and
-/// kept in the server's <see cref="BosSessionCache"/>.</summary>
+/// kept in the server's <see cref="BosSessionCache"/>. ifc_table and ifc_sql take a .bos path as
+/// well; bos_table and bos_sql stay as the same tools with the argument named bosPath, so callers
+/// written against them keep working.</summary>
 public static class BosFileTools
 {
     public static McpServer Register(this McpServer mcp, BosSessionCache sessions)
@@ -34,27 +36,24 @@ public static class BosFileTools
                     ["bos_table", "bos_sql", "bos_export_glb", "bos_export_usd", "bos_export_bcf"]))
             .Tool(
                 "bos_table",
-                "Lists the tables and views bos_sql sees in a .bos model, with their row counts and "
-                + "column types, so a query can be written without guessing. They are the ones "
-                + "ifc_table describes for an IFC model: start with the EntityText, ParameterText "
-                + "and RelationText views, and see ifc_table for StoreyOfElement and MetricCatalog. "
-                + "Set 'table' to describe just one.",
+                "ifc_table with the argument named bosPath: lists the tables and views bos_sql sees "
+                + "in a .bos model, with their row counts and column types, so a query can be written "
+                + "without guessing. Start with the EntityText, ParameterText and RelationText views, "
+                + "and see ifc_table for StoreyOfElement and MetricCatalog. Set 'table' to describe "
+                + "just one.",
                 BosPath()
                     .String("table", "Optional single table to describe, e.g. Entities.")
                     .Paged()
                     .Build(),
                 (args, _) => ToolRunner.RunAsync(
-                    () => IfcShapes.Page(
-                        IfcDuck.Tables(Session(sessions, args).DatabasePath, args.GetString("table")),
-                        args.Skip(),
-                        args.Take()),
+                    () => IfcAnalyticsTools.Tables(Session(sessions, args), args.GetString("table"), args.Skip(), args.Take()),
                     ["bos_sql"]))
             .Tool(
                 "bos_sql",
-                "Runs a read-only SQL query (DuckDB dialect) over a .bos model, from any source, and "
-                + "returns a page of rows plus the unpaged row count. The views are the ones ifc_sql "
-                + "sees: EntityText, ParameterText, RelationText, StoreyOfEntity, StoreyOfElement, "
-                + "MetricCatalog; bos_table lists them. The first call builds a DuckDB database in a "
+                "ifc_sql with the argument named bosPath: runs a read-only SQL query (DuckDB dialect) "
+                + "over a .bos model, from any source, and returns a page of rows plus the unpaged row "
+                + "count. The views: EntityText, ParameterText, RelationText, StoreyOfEntity, "
+                + "StoreyOfElement, MetricCatalog; bos_table lists them. The first call builds a DuckDB database in a "
                 + "temporary folder; later calls reuse it until the .bos file changes.",
                 BosPath()
                     .String("sql", "A single SELECT or WITH statement.", required: true)

@@ -12,6 +12,11 @@ internal static class IfcToolArgs
     public static IfcSession Session(this McpToolArgs args, IfcSessionCache cache)
         => cache.Get(args.GetRequiredString("path"));
 
+    /// <summary>The BOS session of the model at 'path', a .bos file or an IFC file's conversion:
+    /// what the tools that read only the converted model (SQL, tables, GLB) work on.</summary>
+    public static BosSession BosSession(this McpToolArgs args, IfcSessionCache cache)
+        => cache.GetBos(args.GetRequiredString("path"));
+
     public static int Skip(this McpToolArgs args)
         => args.GetInt("skip") ?? 0;
 
@@ -20,6 +25,14 @@ internal static class IfcToolArgs
 
     public static McpSchemaBuilder Model()
         => McpSchema.Object().String("path", "Absolute path to the .ifc file.", required: true);
+
+    /// <summary>The 'path' argument of a tool that reads only the converted model, so it takes a
+    /// .bos file as well as an IFC file.</summary>
+    public static McpSchemaBuilder ModelOrBos()
+        => McpSchema.Object().String(
+            "path",
+            "Absolute path to the .ifc file, or to a .bos file (from ifc_to_bos, frag_to_bos, or disk).",
+            required: true);
 
     public static McpSchemaBuilder Paged(this McpSchemaBuilder builder)
         => builder
