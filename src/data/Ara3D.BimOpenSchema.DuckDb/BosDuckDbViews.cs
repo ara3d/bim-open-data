@@ -7,7 +7,10 @@ namespace Ara3D.BimOpenSchema.DuckDb;
 /// <summary>Adds the views that make the database answerable. BIM Open Schema interns every
 /// string and every enum, so the raw tables are almost entirely integer indexes: a query
 /// against <c>Entities</c> alone can see no names at all. Each view resolves those indexes by
-/// joining on <c>rowid</c>, which is the order the BOS arrays were written in.</summary>
+/// joining on <c>rowid</c>, which is the order the BOS arrays were written in.
+/// <para>Every join is a LEFT JOIN, so an index of -1 (absent, as the specification defines it)
+/// gives NULL and keeps its row. A GlobalId or an entity name stored as "" by files written before
+/// -1 meant absent also reads as NULL; a String parameter value of "" stays "".</para></summary>
 public static class BosDuckDbViews
 {
     public static void CreateViews(FilePath database)
@@ -20,8 +23,8 @@ public static class BosDuckDbViews
     {
         conn.Execute("""
             CREATE OR REPLACE VIEW EntityText AS
-            SELECT e.rowid AS EntityIndex, e.LocalId AS StepId, sg.Strings AS GlobalId,
-                   sn.Strings AS Name, sc.Strings AS Category, st.Strings AS Type
+            SELECT e.rowid AS EntityIndex, e.LocalId AS StepId, NULLIF(sg.Strings, '') AS GlobalId,
+                   NULLIF(sn.Strings, '') AS Name, NULLIF(sc.Strings, '') AS Category, NULLIF(st.Strings, '') AS Type
             FROM Entities e
             LEFT JOIN Strings sg ON sg.rowid = e.GlobalId
             LEFT JOIN Strings sn ON sn.rowid = e.Name
@@ -38,7 +41,7 @@ public static class BosDuckDbViews
                    CASE d.Type
                        WHEN {(int)ParameterType.String} THEN sv.Strings
                        WHEN {(int)ParameterType.Number} THEN CAST(nv.Numbers AS VARCHAR)
-                       WHEN {(int)ParameterType.Entity} THEN ev.Strings
+                       WHEN {(int)ParameterType.Entity} THEN NULLIF(ev.Strings, '')
                        ELSE CAST(p.Value AS VARCHAR)
                    END AS Value
             FROM Parameters p
@@ -54,8 +57,8 @@ public static class BosDuckDbViews
 
         conn.Execute($"""
             CREATE OR REPLACE VIEW RelationText AS
-            SELECT r.EntityA AS EntityIndexA, an.Strings AS NameA,
-                   r.EntityB AS EntityIndexB, bn.Strings AS NameB,
+            SELECT r.EntityA AS EntityIndexA, NULLIF(an.Strings, '') AS NameA,
+                   r.EntityB AS EntityIndexB, NULLIF(bn.Strings, '') AS NameB,
                    {EnumCase("r.RelationType", Enum.GetValues<RelationType>())} AS RelationType
             FROM Relations r
             LEFT JOIN Entities ea ON ea.rowid = r.EntityA
