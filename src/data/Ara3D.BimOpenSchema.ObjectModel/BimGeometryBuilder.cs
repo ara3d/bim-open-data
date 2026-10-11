@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Ara3D.Geometry;
 using Ara3D.Models;
@@ -45,6 +46,19 @@ public class BimGeometryBuilder
     public int AddTransform(Matrix4x4 matrix)
         => Matrices.Add(matrix);
 
+    /// <summary>
+    /// Converts a coordinate in metres to BOS vertex units (0.1 mm), rounding to the nearest unit with halves
+    /// away from zero. Truncating instead would pull every vertex toward the origin and shrink a 5 cm tube's
+    /// volume by about 0.26 %. The product is taken in double because a float cannot count single units above
+    /// 16,777,216 (1.68 km). A coordinate beyond the int range (about 214.7 km) saturates at int.MaxValue or
+    /// int.MinValue rather than wrapping.
+    /// </summary>
+    public static int ToVertexUnits(float metres)
+        => (int)Math.Clamp(
+            Math.Round((double)metres * BimGeometry.VertexMultiplier, MidpointRounding.AwayFromZero),
+            int.MinValue,
+            int.MaxValue);
+
     public BimGeometry BuildModel()
     {
         var r = new BimGeometry
@@ -81,9 +95,9 @@ public class BimGeometryBuilder
             r.MeshIndexOffset[i] = indices.Count;
             foreach (var vert in m.Points)
             {
-                verticesX.Add((int)(vert.X * BimGeometry.VertexMultiplier));
-                verticesY.Add((int)(vert.Y * BimGeometry.VertexMultiplier));
-                verticesZ.Add((int)(vert.Z * BimGeometry.VertexMultiplier));
+                verticesX.Add(ToVertexUnits(vert.X));
+                verticesY.Add(ToVertexUnits(vert.Y));
+                verticesZ.Add(ToVertexUnits(vert.Z));
             }
 
             foreach (var face in m.FaceIndices)
