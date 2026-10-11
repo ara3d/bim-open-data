@@ -70,13 +70,13 @@ internal sealed class FragmentsEntityReader
             var (name, roomNumber) = NameOf(i);
             _bdb.UpdateEntity(_entityOfItem[i], _items.LocalIds[i], _items.GlobalIds[i], _doc, name, category, type);
             if (roomNumber != null)
-                _bdb.AddParameter(_entityOfItem[i], roomNumber, IfcParameterNames.RoomNumber, "", _items.Categories[i]!);
+                _bdb.AddParameter(_entityOfItem[i], roomNumber, IfcParameterNames.RoomNumber, null, _items.Categories[i]);
         }
     }
 
     private void AddAttributeParameters(int item)
     {
-        var group = _items.Categories[item] ?? "";
+        var group = _items.Categories[item];
         foreach (var a in _items.Attributes[item])
             if (!IfcParameterNames.NotParameters.Contains(a.Name))
                 AddValue(_entityOfItem[item], IfcParameterNames.Attribute(a.Name), group, a.Value, a.IfcType);
@@ -85,7 +85,7 @@ internal sealed class FragmentsEntityReader
     private void AddRelations(int item, int[] typeOfItem)
     {
         var entity = _entityOfItem[item];
-        var group = _items.Categories[item] ?? "";
+        var group = _items.Categories[item];
         var seenProperties = new HashSet<(string Set, string Name, string Value)>();
         foreach (var rel in _items.Relations[item])
         {
@@ -111,7 +111,7 @@ internal sealed class FragmentsEntityReader
                 continue;
             }
             foreach (var target in Items(rel))
-                _bdb.AddParameter(entity, _entityOfItem[target], IfcParameterNames.Attribute(rel.Name), "", group);
+                _bdb.AddParameter(entity, _entityOfItem[target], IfcParameterNames.Attribute(rel.Name), null, group);
         }
     }
 
@@ -133,7 +133,7 @@ internal sealed class FragmentsEntityReader
                 .FirstOrDefault(a => a != null);
             if (name == null || value == null || !seen.Add((setName ?? "", name, value.Value.GetRawText())))
                 continue;
-            AddValue(entity, name, setName ?? "", value.Value, value.IfcType);
+            AddValue(entity, name, setName, value.Value, value.IfcType);
         }
     }
 
@@ -149,26 +149,26 @@ internal sealed class FragmentsEntityReader
     /// Int 0 or 1 (BOS stores booleans as Int), a number as Int when its IFC type is an integer
     /// type and Number otherwise, and a list or object as String holding its JSON text. Null adds
     /// nothing.</summary>
-    private void AddValue(EntityIndex entity, string name, string group, JsonElement value, string? ifcType)
+    private void AddValue(EntityIndex entity, string name, string? group, JsonElement value, string? ifcType)
     {
         switch (value.ValueKind)
         {
             case JsonValueKind.String:
-                _bdb.AddParameter(entity, value.GetString()!, name, "", group);
+                _bdb.AddParameter(entity, value.GetString()!, name, null, group);
                 break;
             case JsonValueKind.True:
             case JsonValueKind.False:
-                _bdb.AddParameter(entity, value.ValueKind == JsonValueKind.True ? 1 : 0, name, "", group);
+                _bdb.AddParameter(entity, value.ValueKind == JsonValueKind.True ? 1 : 0, name, null, group);
                 break;
             case JsonValueKind.Number when IfcPropertyValues.IsIntegerType(ifcType) && value.TryGetInt32(out var n):
-                _bdb.AddParameter(entity, n, name, "", group);
+                _bdb.AddParameter(entity, n, name, null, group);
                 break;
             case JsonValueKind.Number:
-                _bdb.AddParameter(entity, value.GetDouble(), name, "", group);
+                _bdb.AddParameter(entity, value.GetDouble(), name, null, group);
                 break;
             case JsonValueKind.Array:
             case JsonValueKind.Object:
-                _bdb.AddParameter(entity, value.GetRawText(), name, "", group);
+                _bdb.AddParameter(entity, value.GetRawText(), name, null, group);
                 break;
         }
     }

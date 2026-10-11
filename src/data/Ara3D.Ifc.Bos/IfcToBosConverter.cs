@@ -157,7 +157,7 @@ public class IfcToBosConverter
             IfcIdToBosId.Add(id, ei);
 
             if (roomNumber != null)
-                BimDataBuilder.AddParameter(ei, roomNumber, IfcParameterNames.RoomNumber, "", e.GetEntityName());
+                BimDataBuilder.AddParameter(ei, roomNumber, IfcParameterNames.RoomNumber, null, e.GetEntityName());
             else if (e.GetEntityName() == "IFCGRIDAXIS")
             {
                 // IFCGRIDAXIS is not an IfcRoot, so attribute 0 is AxisTag rather than GlobalId.
@@ -165,7 +165,7 @@ public class IfcToBosConverter
                 // recorded here instead.
                 var axisTag = e.GetStringOrEmpty(0).DecodeIfc();
                 if (!string.IsNullOrEmpty(axisTag))
-                    BimDataBuilder.AddParameter(ei, axisTag, IfcParameterNames.AxisTag, "", e.GetEntityName());
+                    BimDataBuilder.AddParameter(ei, axisTag, IfcParameterNames.AxisTag, null, e.GetEntityName());
             }
 
             // Additional attributes are added as properties. An IfcRoot entity's first three are
@@ -194,8 +194,8 @@ public class IfcToBosConverter
             var projectEi = projectEntity != null ? GetBosEntityIndexFromIfc(projectEntity.Id) : InvalidEntityIndex;
             if (projectEi != InvalidEntityIndex)
             {
-                BimDataBuilder.AddParameter(projectEi, lengthUnit.Value.Name, IfcLengthUnit.NameParameter, "", "IFCPROJECT");
-                BimDataBuilder.AddParameter(projectEi, lengthUnit.Value.ToMetre, IfcLengthUnit.ScaleParameter, "", "IFCPROJECT");
+                BimDataBuilder.AddParameter(projectEi, lengthUnit.Value.Name, IfcLengthUnit.NameParameter, null, "IFCPROJECT");
+                BimDataBuilder.AddParameter(projectEi, lengthUnit.Value.ToMetre, IfcLengthUnit.ScaleParameter, null, "IFCPROJECT");
             }
         }
 
@@ -348,7 +348,7 @@ public class IfcToBosConverter
         {
             var refId = GetBosEntityIndexFromIfc(p.Value!.Value.AsId());
             if (refId != InvalidEntityIndex)
-                BimDataBuilder.AddParameter(bosId, refId, name, "", propSetName);
+                BimDataBuilder.AddParameter(bosId, refId, name, null, propSetName);
         }
         else if (val.IsEntity)
         {
@@ -358,16 +358,16 @@ public class IfcToBosConverter
         else if (val.IsNumber)
         {
             var num = val.AsNumber();
-            BimDataBuilder.AddParameter(bosId, num, name, "", propSetName);
+            BimDataBuilder.AddParameter(bosId, num, name, null, propSetName);
         }
         else if (val.IsString)
         {
             var str = val.AsString().DecodeIfc();
-            BimDataBuilder.AddParameter(bosId, str, name, "", propSetName);
+            BimDataBuilder.AddParameter(bosId, str, name, null, propSetName);
         }
         else
         {
-            BimDataBuilder.AddParameter(bosId, val.ToString()?.DecodeIfc(), name, "", propSetName);
+            BimDataBuilder.AddParameter(bosId, val.ToString()?.DecodeIfc(), name, null, propSetName);
         }
     }
 
@@ -396,8 +396,8 @@ public class IfcToBosConverter
                 if (memberEi == InvalidEntityIndex)
                     continue;
                 var group = GetEntity(members[i]).GetEntityName();
-                BimDataBuilder.AddParameter(memberEi, setEi, materialSet.SetParameter, "", group);
-                BimDataBuilder.AddParameter(memberEi, i + 1, materialSet.IndexParameter, "", group);
+                BimDataBuilder.AddParameter(memberEi, setEi, materialSet.SetParameter, null, group);
+                BimDataBuilder.AddParameter(memberEi, i + 1, materialSet.IndexParameter, null, group);
             }
         }
     }
@@ -422,7 +422,7 @@ public class IfcToBosConverter
             var refId = GetBosEntityIndexFromIfc(val.AsId());
             if (refId < 0)
                 return;
-            BimDataBuilder.AddParameter(bosId, refId, ifcPropName, "", entityName);
+            BimDataBuilder.AddParameter(bosId, refId, ifcPropName, null, entityName);
         }
         else if (val.IsEntity)
         {
@@ -431,21 +431,21 @@ public class IfcToBosConverter
         else if (val.IsNumber)
         {
             var num = val.AsNumber();
-            BimDataBuilder.AddParameter(bosId, num, ifcPropName, "", entityName);
+            BimDataBuilder.AddParameter(bosId, num, ifcPropName, null, entityName);
         }
         else if (val.IsString)
         {
             var str = val.AsString().DecodeIfc();
             if (str == null)
                 return;
-            BimDataBuilder.AddParameter(bosId, str, ifcPropName, "", entityName);
+            BimDataBuilder.AddParameter(bosId, str, ifcPropName, null, entityName);
         }
         else
         {
             var str = val.ToString()?.DecodeIfc();
             if (str == null)
                 return;
-            BimDataBuilder.AddParameter(bosId, str, ifcPropName, "", entityName);
+            BimDataBuilder.AddParameter(bosId, str, ifcPropName, null, entityName);
         }
     }
 

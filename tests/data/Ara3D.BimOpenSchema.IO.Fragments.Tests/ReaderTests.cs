@@ -46,6 +46,30 @@ public class ReaderTests
         }));
     }
 
+    /// <summary>Fragments states no units, so every descriptor's units are -1 (absent), not "";
+    /// a property in a set without a Name has no group (-1).</summary>
+    [Test]
+    public void UnitsAndTheGroupOfAnUnnamedSet_AreAbsent()
+    {
+        var model = new TestModel
+        {
+            Items =
+            {
+                new(1, "IFCWALL", "wall-guid", ["""["Name","Wall A","IFCLABEL"]"""], ["""["IsDefinedBy",2]"""]),
+                new(2, "IFCPROPERTYSET", "set-guid", [], ["""["HasProperties",3]"""]),
+                new(3, "IFCPROPERTYSINGLEVALUE", null, ["""["Name","Mark","IFCIDENTIFIER"]""", """["NominalValue","M1","IFCLABEL"]"""]),
+            },
+        };
+        var d = Read(model);
+        var mark = d.Parameters.Single(p => (int)p.Entity == d.EntityByLocalId(1)).Descriptor;
+        Assert.Multiple(() =>
+        {
+            Assert.That(d.Descriptors.Select(x => x.Units), Is.All.EqualTo(BimDataBuilder.InvalidStringIndex));
+            Assert.That(d.Descriptors[(int)mark].Group, Is.EqualTo(BimDataBuilder.InvalidStringIndex));
+            Assert.That(d.Strings, Has.None.EqualTo(""), "no \"\" stands in for a missing unit or group");
+        });
+    }
+
     [Test]
     public void NullAttribute_AddsNoParameter()
         => Assert.That(WallParameters(Read(Storey())).Select(p => p.Name), Has.None.EqualTo("Ifc:LongName"));
