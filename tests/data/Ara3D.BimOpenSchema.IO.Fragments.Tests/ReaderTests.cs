@@ -185,6 +185,33 @@ public class ReaderTests
         Assert.That(flagOf, Is.EquivalentTo(new Dictionary<string, byte> { ["IFCSPACE"] = 1, ["IFCWALL"] = 0 }));
     }
 
+    /// <summary>A mesh with a NaN vertex is stored empty and a coordinate beyond the vertex range
+    /// is clamped; each is reported as a warning with its count.</summary>
+    [Test]
+    public void NonFiniteMeshesAndClampedCoordinates_AreReported()
+    {
+        var model = new TestModel
+        {
+            Items = { new(1, "IFCWALL", "wall-guid", []), new(2, "IFCSLAB", "slab-guid", []) },
+            Shells =
+            {
+                new([new(0, 0, 0), new(1_000_000, 0, 0), new(0, 1, 0)], [[0, 1, 2]]),
+                new([new(0, 0, 0), new(float.NaN, 0, 0), new(0, 1, 0)], [[0, 1, 2]]),
+            },
+            Representations = { (RepresentationClass.SHELL, 0), (RepresentationClass.SHELL, 1) },
+            MeshesItems = { 0, 1 },
+            GlobalTransforms = { TestTransform.Identity, TestTransform.Identity },
+            Samples = { new TestSample(Item: 0, Representation: 0), new TestSample(Item: 1, Representation: 1) },
+        };
+        var d = Read(model);
+        Assert.That(d.Diagnostics.Where(x => x.Type == DiagnosticType.ExporterWarning).Select(x => d.Strings[(int)x.Message]),
+            Is.SupersetOf(new[]
+            {
+                "1 meshes left out: a vertex is not a finite number",
+                "1 vertex coordinates clamped: they lie beyond about 214.7 km",
+            }));
+    }
+
     /// <summary>Both readers take the hidden classes from Ara3D.Ifc.Conventions, so on the Duplex
     /// they hide the instances of the same entities, its 21 spaces, one instance each.</summary>
     [Test]

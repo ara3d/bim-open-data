@@ -49,14 +49,20 @@ internal sealed class FragmentsGeometryReader
             Count("models whose coordinates transform cannot be inverted: geometry is left where the file has it");
     }
 
-    /// <summary>Problems met, each with the number of times: samples or profiles left out.</summary>
+    /// <summary>Problems met, each with the number of times: samples or profiles left out, meshes
+    /// with a non-finite vertex, and coordinates clamped to the vertex range.</summary>
     public IReadOnlyDictionary<string, int> Problems => _problems;
 
     public BimGeometry Read()
     {
         for (var s = 0; s < _meshes.SamplesLength; s++)
             AddSample(_meshes.Samples(s)!.Value);
-        return _builder.BuildModel();
+        var geometry = _builder.BuildModel();
+        if (_builder.NonFiniteMeshCount > 0)
+            Count("meshes left out: a vertex is not a finite number", _builder.NonFiniteMeshCount);
+        if (_builder.ClampedCoordinateCount > 0)
+            Count("vertex coordinates clamped: they lie beyond about 214.7 km", _builder.ClampedCoordinateCount);
+        return geometry;
     }
 
     private void AddSample(Sample sample)

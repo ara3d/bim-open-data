@@ -330,12 +330,25 @@ public class IfcToBosConverter
 
         logger?.Log("Building geometry");
         BimDataBuilder.Geometry = BimGeometry = BimGeometryBuilder.BuildModel();
+        AddGeometryDiagnostics();
 
         logger?.Log("Building BIM data");
         var bimData = BimDataBuilder.Build();
 
         logger?.Log("Creating dataset");
         DataSet = bimData.ToDataSet();
+    }
+
+    /// <summary>Records as warnings what the last BuildModel left out or bent: meshes with a
+    /// non-finite vertex (stored empty) and coordinates beyond the vertex range (clamped).</summary>
+    private void AddGeometryDiagnostics()
+    {
+        if (BimGeometryBuilder.NonFiniteMeshCount > 0)
+            BimDataBuilder.AddDiagnostic(DiagnosticType.ExporterWarning,
+                $"{BimGeometryBuilder.NonFiniteMeshCount} meshes left out: a vertex is not a finite number", _docIndex, InvalidEntityIndex);
+        if (BimGeometryBuilder.ClampedCoordinateCount > 0)
+            BimDataBuilder.AddDiagnostic(DiagnosticType.ExporterWarning,
+                $"{BimGeometryBuilder.ClampedCoordinateCount} vertex coordinates clamped: they lie beyond about 214.7 km", _docIndex, InvalidEntityIndex);
     }
 
     /// <summary>Adds the property's value as a parameter; an unset ($ or *) value, or a reference
