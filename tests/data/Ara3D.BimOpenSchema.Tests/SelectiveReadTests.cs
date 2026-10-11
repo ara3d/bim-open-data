@@ -38,7 +38,8 @@ public static class SelectiveReadTests
         Assert.That(partial.Strings, Is.EqualTo(full.Strings));
         Assert.That(partial.Numbers, Is.EqualTo(full.Numbers));
         Assert.That(partial.Points, Is.EqualTo(full.Points));
-        Assert.That(partial.Entities, Is.Empty);
+        Assert.That(partial.Entities, Is.EqualTo(full.Entities), "Parameter.Entity indexes Entities");
+        Assert.That(partial.Documents, Is.EqualTo(full.Documents));
         Assert.That(partial.Relations, Is.Empty);
         AssertSameGeometry(partial.Geometry, new BimGeometry());
     }
@@ -77,6 +78,86 @@ public static class SelectiveReadTests
         Assert.That(none.Numbers, Is.Empty);
         Assert.That(none.Parameters, Is.Empty);
         AssertSameGeometry(none.Geometry, new BimGeometry());
+    }
+
+    [TestCase(BosTables.Entities)]
+    [TestCase(BosTables.Documents)]
+    [TestCase(BosTables.Descriptors)]
+    [TestCase(BosTables.Parameters)]
+    [TestCase(BosTables.Relations)]
+    [TestCase(BosTables.Diagnostics)]
+    [TestCase(BosTables.Geometry)]
+    public static void EveryIndexInTheSelectedRowsResolvesToARowThatWasRead(BosTables selected)
+    {
+        var d = Schependomlaan.ReadBimDataFromParquetZip(selected);
+        var full = Schependomlaan.ReadBimDataFromParquetZip();
+        var ownRows = selected switch
+        {
+            BosTables.Entities => d.Entities.Length,
+            BosTables.Documents => d.Documents.Length,
+            BosTables.Descriptors => d.Descriptors.Length,
+            BosTables.Parameters => d.Parameters.Length,
+            BosTables.Relations => d.Relations.Length,
+            BosTables.Diagnostics => d.Diagnostics.Length,
+            _ => d.Geometry.InstanceEntityIndex.Length,
+        };
+        if (selected != BosTables.Diagnostics)
+            Assert.That(ownRows, Is.GreaterThan(0), $"{selected}: the sample must have rows for the check to mean anything");
+
+        void Resolves(int index, int rows, string what)
+        {
+            if (index >= 0) Assert.That(index, Is.LessThan(rows), $"{selected}: {what} {index}");
+        }
+
+        foreach (var e in d.Entities)
+        {
+            Resolves((int)e.GlobalId, d.Strings.Length, "Entity.GlobalId");
+            Resolves((int)e.Name, d.Strings.Length, "Entity.Name");
+            Resolves((int)e.Document, d.Documents.Length, "Entity.Document");
+            Resolves((int)e.Category, d.Entities.Length, "Entity.Category");
+            Resolves((int)e.Type, d.Entities.Length, "Entity.Type");
+        }
+        foreach (var x in d.Documents)
+        {
+            Resolves((int)x.Title, d.Strings.Length, "Document.Title");
+            Resolves((int)x.Path, d.Strings.Length, "Document.Path");
+        }
+        foreach (var x in d.Descriptors)
+        {
+            Resolves((int)x.Name, d.Strings.Length, "Descriptor.Name");
+            Resolves((int)x.Units, d.Strings.Length, "Descriptor.Units");
+            Resolves((int)x.Group, d.Strings.Length, "Descriptor.Group");
+        }
+        foreach (var x in d.Parameters)
+        {
+            Resolves((int)x.Entity, d.Entities.Length, "Parameter.Entity");
+            Resolves((int)x.Descriptor, d.Descriptors.Length, "Parameter.Descriptor");
+            var rows = d.Descriptors[(int)x.Descriptor].Type switch
+            {
+                ParameterType.Entity => d.Entities.Length,
+                ParameterType.String => d.Strings.Length,
+                ParameterType.Number => d.Numbers.Length,
+                ParameterType.Point => d.Points.Length,
+                _ => int.MaxValue,
+            };
+            Resolves(x.Value, rows, "Parameter.Value");
+        }
+        foreach (var x in d.Relations)
+        {
+            Resolves((int)x.EntityA, d.Entities.Length, "Relation.EntityA");
+            Resolves((int)x.EntityB, d.Entities.Length, "Relation.EntityB");
+        }
+        foreach (var x in d.Diagnostics)
+        {
+            Resolves((int)x.Document, d.Documents.Length, "Diagnostic.Document");
+            Resolves((int)x.Entity, d.Entities.Length, "Diagnostic.Entity");
+            Resolves((int)x.Message, d.Strings.Length, "Diagnostic.Message");
+        }
+        foreach (var i in d.Geometry.InstanceEntityIndex)
+            Resolves(i, d.Entities.Length, "Instance entity");
+
+        // The tables that the closure pulled in are whole, not truncated.
+        if (d.Entities.Length > 0) Assert.That(d.Entities, Is.EqualTo(full.Entities));
     }
 
     private static void AssertSameGeometry(BimGeometry actual, BimGeometry expected)

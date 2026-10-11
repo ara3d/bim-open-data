@@ -551,17 +551,34 @@ public static class ParquetUtils
         };
     }
 
-    /// <summary>Adds to <paramref name="tables"/> the tables that its rows hold indices into, so a
-    /// selected row never points into an empty table: Entities, Descriptors, Documents, and
-    /// Diagnostics index Strings; Parameters index Descriptors, Strings, Numbers, and Points.
-    /// This also covers older files, whose single-valued parameters are interned into Numbers.</summary>
+    /// <summary>For each table, the tables its rows hold indices into. Entities index Strings,
+    /// Documents, and other Entities (Category, Type); Documents and Descriptors index Strings;
+    /// Parameters index Entities, Descriptors, and, by the descriptor's type, Strings, Numbers,
+    /// and Points (older files intern single values into Numbers); Relations and Geometry
+    /// instances index Entities; Diagnostics index Documents, Entities, and Strings.</summary>
+    private static readonly (BosTables Table, BosTables Indexes)[] References =
+    [
+        (BosTables.Entities, BosTables.Strings | BosTables.Documents),
+        (BosTables.Documents, BosTables.Strings),
+        (BosTables.Descriptors, BosTables.Strings),
+        (BosTables.Parameters, BosTables.Entities | BosTables.Descriptors | BosTables.Strings | BosTables.Numbers | BosTables.Points),
+        (BosTables.Relations, BosTables.Entities),
+        (BosTables.Diagnostics, BosTables.Documents | BosTables.Entities | BosTables.Strings),
+        (BosTables.Geometry, BosTables.Entities),
+    ];
+
+    /// <summary>Adds to <paramref name="tables"/> every table its rows index, transitively, so a
+    /// selected row never points into an empty table. See <see cref="References"/>.</summary>
     public static BosTables WithReferencedTables(BosTables tables)
     {
-        const BosTables stringUsers = BosTables.Entities | BosTables.Descriptors | BosTables.Documents | BosTables.Diagnostics;
-        if ((tables & BosTables.Parameters) != 0)
-            tables |= BosTables.Descriptors | BosTables.Numbers | BosTables.Points;
-        if ((tables & (stringUsers | BosTables.Parameters)) != 0)
-            tables |= BosTables.Strings;
+        BosTables before;
+        do
+        {
+            before = tables;
+            foreach (var (table, indexes) in References)
+                if ((tables & table) != 0)
+                    tables |= indexes;
+        } while (tables != before);
         return tables;
     }
 
