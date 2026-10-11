@@ -389,7 +389,7 @@ public static class ParquetUtils
             else
                 Debug.WriteLine($"Unexpected table {table.Name}");
         }
-        // Files written by WriteToParquetZip contain no geometry tables; use an empty geometry.
+        // A file written from data with no geometry has no geometry tables; use an empty geometry.
         bimData.Geometry = geometryTables.Count > 0
             ? geometryTables.ToDataSet().ToBimGeometry()
             : new BimGeometry();
@@ -497,8 +497,16 @@ public static class ParquetUtils
     public static BimData ReadBimDataFromParquetZip(this FilePath fp)
         => Task.Run(() => fp.ReadBimDataFromParquetZipAsync()).GetAwaiter().GetResult();
 
+    /// <summary>Writes the data tables and, when <see cref="IBimData.Geometry"/> is set, the
+    /// geometry tables (Instances, Meshes, ...) into one <c>.bos</c> archive.</summary>
     public static async Task WriteToParquetZipAsync(this IBimData data, FilePath fp)
-        => await data.ToDataSet().WriteParquetToZipAsync(fp);
+    {
+        await using var fs = new FileStream(fp, FileMode.Create, FileAccess.Write, FileShare.None);
+        using var zip = new ZipArchive(fs, ZipArchiveMode.Create, leaveOpen: false);
+        await data.ToDataSet().WriteParquetToZipAsync(zip, CompressionMethod.Brotli, CompressionLevel.Optimal, CompressionLevel.NoCompression);
+        if (data.Geometry != null)
+            await data.Geometry.WriteParquetToZipAsync(zip);
+    }
 
     public static void WriteToParquetZip(this IBimData data, FilePath fp)
         => Task.Run(() => data.WriteToParquetZipAsync(fp)).GetAwaiter().GetResult();
