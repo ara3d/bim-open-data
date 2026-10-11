@@ -1,0 +1,12 @@
+{
+  "name": "ifc-mesher-adapters",
+  "private": true,
+  "type": "module",
+  "description": "Runs the external IFC meshers over model files and writes .meshdump files for the comparison harness",
+  "scripts": {
+    "dump": "node run.mjs"
+  },
+  "dependencies": {
+    "web-ifc": "0.0.78"
+  }
+}
