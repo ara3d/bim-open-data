@@ -44,7 +44,7 @@ One pipeline, read top to bottom:
 
 ## How it is tested and measured
 
-`tests/data/Ara3D.Ifc.Mesher.Tests` holds the fast tests: micro-IFC fixtures that assert exact meshes for one entity at a time, with no model files. `tests/data/Ara3D.IfcMeshingComparison` holds the corpus tests over the model files in `data/` and a parity scorecard against web-ifc's tessellation of the same files. The toolkit's tickets hold the measured gaps: `TKT-188` (walls under roofs are not clipped) and `TKT-190` (curves are sampled about 1.45 times more densely than web-ifc).
+`tests/data/Ara3D.Ifc.Mesher.Tests` holds the fast tests: micro-IFC fixtures that assert exact meshes for one entity at a time, with no model files. `tests/data/Ara3D.IfcMeshingComparison` holds the corpus tests over the model files in `data/` and a parity scorecard against web-ifc's tessellation of the same files. The committed parity numbers are in [`bench/ifc-mesher/`](../../../bench/ifc-mesher/README.md). The toolkit's tickets hold the open gaps: `TKT-65` (shape and density differences on the quick files), `TKT-188` (upper walls on AC20-FZK-Haus are not clipped by their roofs), and `TKT-190` (FM_ARC_DigitalHub meshes to 1.45 times web-ifc's triangle count; cause not yet measured).
 
 ## History
 
