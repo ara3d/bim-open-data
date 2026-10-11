@@ -57,7 +57,7 @@ public class IfcEntity
     /// <summary>The schema attributes of this entity's class, in the schema of its file; empty
     /// when the class is not in that schema.</summary>
     public IReadOnlyList<IfcAttribute> GetSchemaAttributes()
-        => IfcFile.SchemaOf(Document).Entities.TryGetValue(GetEntityCode(), out var e) ? e.Attributes : [];
+        => IfcSchemas.Of(Document).Entities.TryGetValue(GetEntityCode(), out var e) ? e.Attributes : [];
 
     /// <summary>The attribute's decoded text, or null when it is not a STEP string: unset ($),
     /// redeclared (*), a reference, a number, a list, or past the entity's attributes. A stored ''

@@ -38,7 +38,7 @@ The tables load straight into DuckDB, an in-process analytical database, which i
 
 ## Projects
 
-These are the 26 projects in `src/data`, grouped by what they do. Most target `net8.0-windows` because the IFC loader does; the schema libraries target plain `net8.0`.
+These are the 27 projects in `src/data`, grouped by what they do. Most target `net8.0-windows` because the IFC loader does; the schema libraries, `Ara3D.Ifc.Conventions`, `Ara3D.Ifc.Entities`, and `Ara3D.Ifc.Mesher` target plain `net8.0`.
 
 ### BIM Open Schema
 
@@ -63,8 +63,9 @@ These are the 26 projects in `src/data`, grouped by what they do. Most target `n
 | Project | Role |
 |---|---|
 | `Ara3D.IfcTypes` | Generated IFC entity types, produced by `Ara3D.IfcTypeGen` from a Parakeet grammar |
-| `Ara3D.IfcLoader` | STEP parsing, with geometry from web-ifc |
-| `Ara3D.Ifc.Mesher` | Tessellation in pure C# |
+| `Ara3D.Ifc.Entities` | The entity model over a STEP document: `IfcEntity`, `IfcEntityResolver`, schema detection; portable (net8.0) |
+| `Ara3D.IfcLoader` | `IfcFile`: the entity model plus web-ifc geometry when asked for (native, Windows x64) |
+| `Ara3D.Ifc.Mesher` | Tessellation from the STEP geometry definitions in pure C#; portable (net8.0) |
 | `Ara3D.Ifc.Editing` | Property-set patching that locates each entity by byte range, so every byte you did not edit comes out identical |
 | `Ara3D.Ifc.Bos` | IFC to BOS conversion |
 | `Ara3D.Ifc.Conventions` | Portable (net8.0) IFC rules shared by the IFC and Fragments readers: hidden classes, parameter and relation names, material sets |

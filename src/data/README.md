@@ -18,8 +18,9 @@ IFC stack. Nothing here references `src/flow` or `src/mcp`; those build on this.
 | `Ara3D.BimOpenSchema.DataModel`, `.DataModel.IO` | Relational snapshot model with validation and spatial index |
 | `Ara3D.BimOpenSchema.BuildingModel`, `.Source`, `.Workflows`, `.Workflows.IO`, `.DuckDb` | Typed building model with source mapping and DuckDB projection |
 | `Ara3D.IfcTypes` | Generated IFC entity types (shared project, see `tools/Ara3D.IfcTypeGen`) |
-| `Ara3D.IfcLoader` | STEP parsing and web-ifc geometry |
-| `Ara3D.Ifc.Mesher` | Pure C# tessellation |
+| `Ara3D.Ifc.Entities` | The entity model over a STEP document; portable (net8.0) |
+| `Ara3D.IfcLoader` | `IfcFile`: the entity model plus web-ifc geometry (native) |
+| `Ara3D.Ifc.Mesher` | Pure C# tessellation; portable (net8.0) |
 | `Ara3D.Ifc.Editing` | Byte-exact property-set patching |
 | `Ara3D.Ifc.Bos` | IFC to BOS conversion |
 | `Ara3D.Ifc.Conventions` | Portable (net8.0) IFC rules shared by the IFC and Fragments readers: hidden classes, parameter and relation names, material sets |

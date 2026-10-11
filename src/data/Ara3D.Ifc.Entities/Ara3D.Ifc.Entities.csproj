@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Ara3D.IfcLoader</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Description>The IFC entity model over a STEP document: IfcEntity, IfcEntityResolver, schema detection, string decoding, occurrence-to-type relations, and the generated IfcTypes. Portable: no native code.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Ara3D.IO.StepParser" Version="$(Ara3DSdkVersion)" />
+    <PackageReference Include="Ara3D.Utils" Version="$(Ara3DSdkVersion)" />
+    <ProjectReference Include="..\Ara3D.Ifc.Conventions\Ara3D.Ifc.Conventions.csproj" />
+  </ItemGroup>
+
+  <Import Project="..\Ara3D.IfcTypes\Ara3D.IfcTypes.projitems" Label="Shared" />
+</Project>
