@@ -23,7 +23,8 @@ One pipeline, read top to bottom:
 | `GeometryDispatcher.cs` | One IFC geometry entity to one builder below, by entity name |
 | `SweptSolids.cs` | Extrusions, revolutions, swept disks, ribbons |
 | `ProfileBuilder.cs` | Profile definitions (rectangles, circles, I and L shapes, arbitrary and composite) to a `PolygonWithHoles` |
-| `CurveEvaluator.cs` | Curves (polylines, conics, trimmed, composite, B-spline control polygons) to point lists |
+| `CurveEvaluator.cs` | Curves to point lists: dispatch by entity name, and ring cleaning |
+| `PolyCurves.cs`, `Conics.cs`, `TrimmedCurves.cs`, `CompositeCurves.cs`, `BSplineCurves.cs` | One curve family each: polylines and indexed polycurves; circles, ellipses and lines; trimmed curves; composite curves and their joins; B-spline control polygons |
 | `Brep.cs` | Faceted and advanced breps, face-based and shell-based surface models, single faces: each a set of faces |
 | `FaceSetBuilder.cs` | Triangulates a set of faces into one welded mesh, dropping and recording faces it cannot |
 | `FaceBounds.cs` | A face's bounds (polyloops, edge loops, curve-bounded planes) to 3D rings |
