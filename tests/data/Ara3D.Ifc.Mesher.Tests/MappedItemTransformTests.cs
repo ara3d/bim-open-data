@@ -55,7 +55,7 @@ public sealed class MappedItemTransformTests
         var origin = Placements.ReadAxis2Placement3D(ctx, ctx.GetEntity(4));
         var target = Placements.ReadCartesianTransformationOperator3D(ctx, ctx.GetEntity(14));
         var expected = target * origin.Matrix;
-        Assert.That(Frobenius(transform, expected), Is.LessThan(1e-3));
+        Assert.That(MatrixNorms.Frobenius(transform - expected), Is.LessThan(1e-3));
     }
 
     [Test]
@@ -110,7 +110,7 @@ public sealed class MappedItemTransformTests
         var origin = Placements.ReadAxis2Placement3D(ctx, ctx.GetEntity(8));
         var target = Placements.ReadCartesianTransformationOperator3D(ctx, ctx.GetEntity(11));
         var expected = target * origin.Matrix;
-        Assert.That(Frobenius(transform, expected), Is.LessThan(1e-3));
+        Assert.That(MatrixNorms.Frobenius(transform - expected), Is.LessThan(1e-3));
     }
 
     [Test]
@@ -193,17 +193,5 @@ public sealed class MappedItemTransformTests
         var derivedY = derived.Outer.Average(p => (double)p.Y.Value);
         Assert.That(parentY, Is.EqualTo(1.0).Within(1e-3), "parent ring centered at y=+1");
         Assert.That(derivedY, Is.EqualTo(-parentY).Within(1e-3), "mirrored ring centered at y=-1");
-    }
-
-    /// <summary>The Frobenius norm of the difference of two matrices: the square root of the sum of
-    /// the squared differences of their 16 elements.</summary>
-    static double Frobenius(Matrix4x4 a, Matrix4x4 b)
-    {
-        double Sq(float x, float y) => ((double)x - y) * ((double)x - y);
-        return Math.Sqrt(
-            Sq(a.M11, b.M11) + Sq(a.M12, b.M12) + Sq(a.M13, b.M13) + Sq(a.M14, b.M14) +
-            Sq(a.M21, b.M21) + Sq(a.M22, b.M22) + Sq(a.M23, b.M23) + Sq(a.M24, b.M24) +
-            Sq(a.M31, b.M31) + Sq(a.M32, b.M32) + Sq(a.M33, b.M33) + Sq(a.M34, b.M34) +
-            Sq(a.M41, b.M41) + Sq(a.M42, b.M42) + Sq(a.M43, b.M43) + Sq(a.M44, b.M44));
     }
 }

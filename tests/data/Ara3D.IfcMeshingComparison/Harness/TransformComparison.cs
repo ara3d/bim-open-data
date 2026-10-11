@@ -1,5 +1,6 @@
 using System.Text;
 using Ara3D.Geometry;
+using Ara3D.Ifc.Mesher.Tests;
 using Ara3D.Ifc.Mesher;
 using Ara3D.Models;
 using Ara3D.Utils;
@@ -65,7 +66,7 @@ public static class TransformComparison
 {
     public static MatrixDelta CompareMatrices(Matrix4x4 candidate, Matrix4x4 oracle)
     {
-        var fro = FrobeniusNorm(candidate - oracle);
+        var fro = MatrixNorms.Frobenius(candidate - oracle);
         var tCand = candidate.Translation;
         var tOracle = oracle.Translation;
         var translation = (tCand - tOracle).Length();
@@ -392,16 +393,6 @@ public static class TransformComparison
         var maxTri = Math.Max(cand.Tri, oracle.Tri);
         var triScore = maxTri == 0 ? 1.0 : (double)Math.Min(cand.Tri, oracle.Tri) / maxTri;
         return 0.7 * distanceScore + 0.3 * triScore;
-    }
-
-    static double FrobeniusNorm(Matrix4x4 m)
-    {
-        double sum = 0;
-        sum += m.M11 * m.M11 + m.M12 * m.M12 + m.M13 * m.M13 + m.M14 * m.M14;
-        sum += m.M21 * m.M21 + m.M22 * m.M22 + m.M23 * m.M23 + m.M24 * m.M24;
-        sum += m.M31 * m.M31 + m.M32 * m.M32 + m.M33 * m.M33 + m.M34 * m.M34;
-        sum += m.M41 * m.M41 + m.M42 * m.M42 + m.M43 * m.M43 + m.M44 * m.M44;
-        return Math.Sqrt(sum);
     }
 
     static Matrix4x4 ExtractRotation(Matrix4x4 m)
