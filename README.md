@@ -50,7 +50,7 @@ These are the 27 projects in `src/data`, grouped by what they do. Most target `n
 | `Ara3D.BimOpenSchema.IO.Bfast` | BFAST serialization of BOS data |
 | `Ara3D.BimOpenSchema.IO.Gltf` | BOS to binary glTF (`.glb`): one node per instance, entity index and GlobalId in node extras, y-up |
 | `Ara3D.BimOpenSchema.IO.Usd` | BOS to an OpenUSD `.usda` stage: instanced meshes, UsdPreviewSurface materials, element data as `bim:` attributes, no native USD dependency |
-| `Ara3D.BimOpenSchema.IO.Bcf` | BCF 3.0 issue files from a table of GlobalIds, with viewpoints framed on BOS geometry |
+| `Ara3D.BimOpenSchema.IO.Bcf` | BCF 3.0 issue files from a table of GlobalIds, with viewpoints framed on BOS geometry; and a reader that turns a BCF back into an issues table |
 | `Ara3D.BimOpenSchema.IO.Fragments` | That Open Fragments 2 (`.frag`) to BOS: entities, properties, relations, triangulated geometry |
 | `Ara3D.BimOpenSchema.DuckDb` | Loading BOS into DuckDB, views, queries, and table helpers |
 | `Ara3D.BimOpenSchema.Harmonizer` | Canonical names and SI units across models from different tools |

@@ -1,7 +1,7 @@
 # Ara3D.BimOpenSchema.IO.Bcf
 
 Writes BCF 3.0 (BIM Collaboration Format, buildingSMART's issue-exchange format)
-from a table of issues, so the failing rows of a rule check, an IDS verdict
+from a table of issues, and reads a BCF back into one,, so the failing rows of a rule check, an IDS verdict
 table, or any SQL result over a BIM Open Schema (BOS) model open as topics in
 Revit, Solibri, BIMcollab, and other BCF readers.
 
@@ -68,9 +68,20 @@ statuses, and priorities used), and one folder per topic named by its GUID, each
 with `markup.bcf` and possibly `viewpoint.bcfv`. Folder entries are written as
 the BCF encoding guide asks.
 
+## Reading it back
+
+`BcfReader.ReadFile` (or `Read` over a stream) returns one `BcfTopicRecord` per
+topic: GUID, title, description, type, status, priority, author, creation date,
+the GlobalIds its viewpoints select (or, for a topic written without geometry,
+the ids listed at the end of its description), and whether it has a viewpoint.
+`ToTable` renders them as an issues table with the `IssueColumns` names, one row
+per topic and element, so a colleague's BCF comes back into a graph the same
+way a check's verdicts went out. BCF 2.1 markup has the same shape and reads
+too; comments, snapshots and cameras are not read.
+
 ## What it does not do
 
-- Read BCF, or talk to a BCF API server.
+- Talk to a BCF API server, or read comments, snapshots, or cameras.
 - Comments, snapshots (no renderer here), clipping planes, colouring,
   `project.bcfp`, `documents.xml`, labels, assignees, due dates, or the
   markup header naming the model file.
