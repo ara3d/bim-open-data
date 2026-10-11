@@ -20,7 +20,7 @@ public sealed record BcfTopicRecord(
     IReadOnlyList<string> GlobalIds,
     bool HasViewpoint);
 
-/// <summary>Reads a BCF container (3.0, and the same markup shape in 2.1) back into topics, and
+/// <summary>Reads a BCF container (3.0, or 2.1's markup) back into topics, and
 /// renders them as an issues table with the <see cref="IssueColumns"/> names, so a colleague's
 /// comments come back into a graph the same way a check's verdicts went out.</summary>
 public static class BcfReader
@@ -34,7 +34,9 @@ public static class BcfReader
     public static IReadOnlyList<BcfTopicRecord> Read(Stream stream)
     {
         using var zip = new ZipArchive(stream, ZipArchiveMode.Read, leaveOpen: true);
-        var entries = zip.Entries.ToDictionary(e => e.FullName.Replace('\\', '/'), e => e);
+        var entries = new Dictionary<string, ZipArchiveEntry>();
+        foreach (var entry in zip.Entries)
+            entries[entry.FullName.Replace('\\', '/')] = entry;
         return entries.Keys
             .Where(name => name.EndsWith("/" + BcfTopic.MarkupFile, StringComparison.OrdinalIgnoreCase))
             .Order(StringComparer.Ordinal)
@@ -78,12 +80,7 @@ public static class BcfReader
         var markup = Load(entries[markupName]);
         var topic = markup.Root?.Element(Name(markup, "Topic"))
             ?? throw new InvalidDataException($"{markupName} has no Topic element");
-        var viewpointFiles = topic.Element(Name(markup, "Viewpoints"))?
-            .Elements(Name(markup, "ViewPoint"))
-            .Select(v => (string?)v.Element(Name(markup, "Viewpoint")))
-            .Where(f => !string.IsNullOrEmpty(f))
-            .Select(f => folder + f!)
-            .ToList() ?? [];
+        var viewpointFiles = ViewpointFiles(markup, topic).Select(f => folder + f).ToList();
         var description = Text(topic, markup, "Description");
         var globalIds = viewpointFiles
             .Where(entries.ContainsKey)
@@ -91,7 +88,7 @@ public static class BcfReader
             .Distinct()
             .ToList();
         if (globalIds.Count == 0)
-            globalIds = DescribedIds(description);
+            (description, globalIds) = DescribedIds(description);
         return new(
             (string?)topic.Attribute("Guid") ?? folder.TrimEnd('/'),
             Text(topic, markup, "Title"),
@@ -105,6 +102,17 @@ public static class BcfReader
             viewpointFiles.Count > 0);
     }
 
+    /// <summary>The viewpoint file names a markup lists. BCF 3.0 puts them under
+    /// <c>Topic/Viewpoints/ViewPoint/Viewpoint</c>; BCF 2.1 puts one <c>Viewpoints</c> element per
+    /// viewpoint beside the topic, each with a <c>Viewpoint</c> child. Both are read.</summary>
+    private static IEnumerable<string> ViewpointFiles(XDocument markup, XElement topic)
+        => (topic.Element(Name(markup, "Viewpoints"))?.Elements(Name(markup, "ViewPoint")) ?? [])
+            .Concat(markup.Root?.Elements(Name(markup, "Viewpoints")) ?? [])
+            .Select(v => (string?)v.Element(Name(markup, "Viewpoint")))
+            .Where(f => !string.IsNullOrEmpty(f))
+            .Select(f => f!)
+            .Distinct();
+
     /// <summary>The components a viewpoint selects: the IfcGuid attribute, else the AuthoringToolId element.</summary>
     private static IEnumerable<string> SelectedIds(XDocument viewpoint)
         => viewpoint.Descendants(Name(viewpoint, "Selection"))
@@ -112,18 +120,23 @@ public static class BcfReader
             .Select(c => (string?)c.Attribute("IfcGuid") ?? (string?)c.Element(Name(viewpoint, "AuthoringToolId")) ?? "")
             .Where(id => id.Length > 0);
 
-    /// <summary>The GlobalIds <see cref="BcfTopic"/> appends to a description when a topic has no viewpoint.</summary>
-    private static List<string> DescribedIds(string description)
+    /// <summary>The GlobalIds <see cref="BcfTopic"/> appends to a description when a topic has no
+    /// viewpoint, and the description with that list removed, so writing the topic again does
+    /// not list them twice. The list runs to the end of its line; text after it stays.</summary>
+    private static (string Description, List<string> GlobalIds) DescribedIds(string description)
     {
         const string marker = "): ";
         var start = description.LastIndexOf("Elements (no viewpoint", StringComparison.Ordinal);
         if (start < 0)
-            return [];
-        var list = description[start..];
-        var colon = list.IndexOf(marker, StringComparison.Ordinal);
-        return colon < 0
-            ? []
-            : list[(colon + marker.Length)..].Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList();
+            return (description, []);
+        var end = description.IndexOf('\n', start);
+        var line = end < 0 ? description[start..] : description[start..end];
+        var colon = line.IndexOf(marker, StringComparison.Ordinal);
+        if (colon < 0)
+            return (description, []);
+        var ids = line[(colon + marker.Length)..].Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList();
+        var rest = (description[..start] + (end < 0 ? "" : description[end..])).Trim();
+        return (rest, ids);
     }
 
     private static string Text(XElement topic, XDocument document, string element)

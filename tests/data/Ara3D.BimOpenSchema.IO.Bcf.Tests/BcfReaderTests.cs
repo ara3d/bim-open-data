@@ -35,7 +35,7 @@ public sealed class BcfReaderTests
         {
             Assert.That(narrow.GlobalIds, Is.EqualTo(Issues[0].GlobalIds));
             Assert.That(narrow.HasViewpoint, Is.False);
-            Assert.That(narrow.Description, Does.StartWith("Leaf under 850 mm"));
+            Assert.That(narrow.Description, Is.EqualTo("Leaf under 850 mm"));
             Assert.That(narrow.Status, Is.EqualTo("Open"));
             Assert.That(narrow.Priority, Is.EqualTo("High"));
             Assert.That(narrow.Type, Is.EqualTo("Issue"));
@@ -77,6 +77,70 @@ public sealed class BcfReaderTests
         var note = Enumerable.Range(0, 4).Single(r => (string?)table[1, r] == "Model-level note");
         Assert.That(table[0, note], Is.EqualTo(""));
         Assert.That(table[8, 0], Is.EqualTo("2026-10-10T12:00:00Z"));
+    }
+
+    [Test]
+    public void WithoutGeometry_TheDescriptionComesBackWithoutTheIdList()
+    {
+        var topics = RoundTrip().ToDictionary(t => t.Title);
+        Assert.That(topics["Doors too narrow"].Description, Is.EqualTo("Leaf under 850 mm"));
+        Assert.That(topics["Missing fire rating"].Description, Is.EqualTo(""));
+    }
+
+    /// <summary>A hand-written BCF 2.1 container, the shape Solibri and Revit write: the
+    /// viewpoint list sits beside the topic, not inside it.</summary>
+    [Test]
+    public void Bcf21_ViewpointsBesideTheTopic_AreRead()
+    {
+        const string markup = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <Markup>
+              <Topic Guid="4f7d2c1e-0000-4000-8000-000000000021" TopicType="Issue" TopicStatus="Open">
+                <Title>Clash at level 2</Title>
+                <CreationDate>2026-10-01T09:30:00Z</CreationDate>
+                <CreationAuthor>solibri@example.com</CreationAuthor>
+              </Topic>
+              <Viewpoints Guid="4f7d2c1e-0000-4000-8000-000000000022">
+                <Viewpoint>viewpoint.bcfv</Viewpoint>
+                <Snapshot>snapshot.png</Snapshot>
+              </Viewpoints>
+            </Markup>
+            """;
+        const string viewpoint = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <VisualizationInfo Guid="4f7d2c1e-0000-4000-8000-000000000022">
+              <Components>
+                <Selection>
+                  <Component IfcGuid="1aj$VJZFn2TxepZUBcKp$i" />
+                  <Component IfcGuid="1s1jVhK8z0pgKYcr9jt781" />
+                </Selection>
+              </Components>
+            </VisualizationInfo>
+            """;
+        using var stream = new MemoryStream();
+        using (var zip = new System.IO.Compression.ZipArchive(stream, System.IO.Compression.ZipArchiveMode.Create, leaveOpen: true))
+        {
+            Add(zip, "bcf.version", "<?xml version=\"1.0\"?><Version VersionId=\"2.1\"><DetailedVersion>2.1</DetailedVersion></Version>");
+            Add(zip, "4f7d2c1e-0000-4000-8000-000000000021\\markup.bcf", markup);
+            Add(zip, "4f7d2c1e-0000-4000-8000-000000000021\\viewpoint.bcfv", viewpoint);
+        }
+        stream.Position = 0;
+        Assert.That(BcfReader.Version(stream), Is.EqualTo("2.1"));
+        stream.Position = 0;
+        var topic = BcfReader.Read(stream).Single();
+        Assert.Multiple(() =>
+        {
+            Assert.That(topic.Title, Is.EqualTo("Clash at level 2"));
+            Assert.That(topic.GlobalIds, Is.EqualTo(new[] { "1aj$VJZFn2TxepZUBcKp$i", "1s1jVhK8z0pgKYcr9jt781" }));
+            Assert.That(topic.HasViewpoint, Is.True);
+            Assert.That(topic.Author, Is.EqualTo("solibri@example.com"));
+        });
+    }
+
+    private static void Add(System.IO.Compression.ZipArchive zip, string name, string text)
+    {
+        using var entry = zip.CreateEntry(name).Open();
+        entry.Write(System.Text.Encoding.UTF8.GetBytes(text.Trim()));
     }
 
     [Test]
