@@ -18,11 +18,11 @@ One pipeline, read top to bottom:
 | File | Does |
 |---|---|
 | `IfcMesher.cs` | Entry point; wraps a build in an `IfcMeshingResult` |
-| `ModelAssembler.cs` | Walks the products, collects their parts, carves openings, dedups meshes into a `Model3D` |
+| `ModelAssembler.cs`, `MeshDedup.cs`, `AggregatedVoidHosts.cs` | Walks the products, collects their parts, carves openings, dedups meshes into a `Model3D`; void hosts without their own representation get the carved union of their aggregated children |
 | `GeometryPartCollector.cs` | Representation items of one product to placed parts, following mapped items |
 | `GeometryDispatcher.cs` | One IFC geometry entity to one builder below, by entity name |
-| `SweptSolids.cs` | Extrusions, revolutions, swept disks, ribbons |
-| `ProfileBuilder.cs` | Profile definitions (rectangles, circles, I and L shapes, arbitrary and composite) to a `PolygonWithHoles` |
+| `SweptSolids.cs`, `Revolutions.cs`, `SweptDisks.cs`, `DirectrixSweeps.cs`, `SweepRings.cs` | Extrusions and ribbons, revolutions, swept disks, sweeps along a directrix |
+| `ProfileBuilder.cs`, `BasicProfiles.cs`, `SteelProfiles.cs`, `ProfilePoints.cs` | Profile definitions to a `PolygonWithHoles`: arbitrary and composite curves, rectangles and circles, the steel sections |
 | `CurveEvaluator.cs` | Curves to point lists: dispatch by entity name, and ring cleaning |
 | `PolyCurves.cs`, `Conics.cs`, `TrimmedCurves.cs`, `CompositeCurves.cs`, `BSplineCurves.cs` | One curve family each: polylines and indexed polycurves; circles, ellipses and lines; trimmed curves; composite curves and their joins; B-spline control polygons |
 | `Brep.cs` | Faceted and advanced breps, face-based and shell-based surface models, single faces: each a set of faces |
