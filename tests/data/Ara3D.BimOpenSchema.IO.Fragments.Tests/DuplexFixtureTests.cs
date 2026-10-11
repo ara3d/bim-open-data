@@ -172,16 +172,16 @@ public class DuplexFixtureTests
         => Enumerable.Range(0, d.Geometry.InstanceEntityIndex.Length).Sum(i => (long)d.Geometry.Triangles(i).Count());
 
     private static Dictionary<string, (Vector3 Min, Vector3 Max)> BoxesByGlobalId(BimData d)
-        => d.Geometry.EntityBoxes().ToDictionary(kv => d.GlobalId(kv.Key), kv => kv.Value);
+        => d.Geometry.EntityBoxes().ToDictionary(kv => d.GlobalId(kv.Key) ?? $"#{kv.Key}", kv => kv.Value);
 
     /// <summary>Triangles drawn and signed volume of every instance, summed by IFC class.</summary>
     private static Dictionary<string, (long Triangles, double Volume)> PerClass(BimData d)
         => Enumerable.Range(0, d.Geometry.InstanceEntityIndex.Length)
-            .GroupBy(i => d.Category(d.Geometry.InstanceEntityIndex[i]))
+            .GroupBy(i => d.Category(d.Geometry.InstanceEntityIndex[i]) ?? "(no category)")
             .ToDictionary(g => g.Key, g => (g.Sum(i => (long)d.Geometry.Triangles(i).Count()), g.Sum(d.Geometry.SignedVolume)));
 
-    private static Dictionary<string, string> GlobalIds(BimData d)
+    private static Dictionary<string, string?> GlobalIds(BimData d)
         => Enumerable.Range(0, d.Entities.Length)
-            .Where(i => d.GlobalId(i) != "")
-            .ToDictionary(d.GlobalId, d.Category);
+            .Where(i => d.GlobalId(i) != null)
+            .ToDictionary(i => d.GlobalId(i)!, d.Category);
 }

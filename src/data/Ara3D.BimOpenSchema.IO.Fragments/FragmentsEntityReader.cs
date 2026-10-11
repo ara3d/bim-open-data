@@ -57,16 +57,17 @@ internal sealed class FragmentsEntityReader
     {
         var categories = new Dictionary<string, EntityIndex>(StringComparer.Ordinal);
         foreach (var category in _items.Categories.Where(c => c != null).Distinct(StringComparer.Ordinal))
-            categories.Add(category!, _bdb.AddEntity(-1, "", _doc, category!, BimDataBuilder.InvalidEntityIndex, BimDataBuilder.InvalidEntityIndex));
+            categories.Add(category!, _bdb.AddEntity(-1, null, _doc, category!, BimDataBuilder.InvalidEntityIndex, BimDataBuilder.InvalidEntityIndex));
 
         // Types come first in no particular order, so every entity is added before any type link is set.
+        // A missing GlobalId or Name stays null, which BOS stores as -1 (absent).
         for (var i = 0; i < _items.Count; i++)
             _entityOfItem[i] = _bdb.AddEntity();
         for (var i = 0; i < _items.Count; i++)
         {
             var category = _items.Categories[i] is { } c ? categories[c] : BimDataBuilder.InvalidEntityIndex;
             var type = typeOfItem[i] >= 0 ? _entityOfItem[typeOfItem[i]] : BimDataBuilder.InvalidEntityIndex;
-            _bdb.UpdateEntity(_entityOfItem[i], _items.LocalIds[i], _items.GlobalIds[i] ?? "", _doc, NameOf(i) ?? "", category, type);
+            _bdb.UpdateEntity(_entityOfItem[i], _items.LocalIds[i], _items.GlobalIds[i], _doc, NameOf(i), category, type);
         }
     }
 

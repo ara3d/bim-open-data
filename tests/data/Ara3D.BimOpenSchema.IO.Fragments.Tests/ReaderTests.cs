@@ -79,7 +79,8 @@ public class ReaderTests
         Assert.Multiple(() =>
         {
             Assert.That((d.GlobalId(wall), d.Name(wall), d.Category(wall)), Is.EqualTo(("wall-guid", "Wall A", "IFCWALL")));
-            Assert.That(d.GlobalId(property), Is.Empty, "BOS writes an entity without a GlobalId as the empty string");
+            Assert.That(d.Entities[property].GlobalId, Is.EqualTo(BimDataBuilder.InvalidStringIndex), "an entity without a GlobalId stores -1 (absent), not \"\"");
+            Assert.That(d.GlobalId(property), Is.Null);
             Assert.That(d.Documents, Has.Length.EqualTo(1));
             Assert.That(d.Entities.Count(e => e.Document != d.Entities[wall].Document), Is.Zero);
         });
@@ -156,7 +157,7 @@ public class ReaderTests
         };
         var d = Read(model);
         var flagOf = Enumerable.Range(0, d.Geometry.InstanceFlags.Length)
-            .ToDictionary(i => d.Category(d.Geometry.InstanceEntityIndex[i]), i => d.Geometry.InstanceFlags[i]);
+            .ToDictionary(i => d.Category(d.Geometry.InstanceEntityIndex[i])!, i => d.Geometry.InstanceFlags[i]);
         Assert.That(flagOf, Is.EquivalentTo(new Dictionary<string, byte> { ["IFCSPACE"] = 1, ["IFCWALL"] = 0 }));
     }
 
@@ -187,11 +188,11 @@ public class ReaderTests
         => Enumerable.Range(0, d.Geometry.InstanceFlags.Length).Count(i => IsHidden(d.Geometry, i));
 
     /// <summary>(category, GlobalId) of each entity with a hidden instance.</summary>
-    private static HashSet<(string, string)> HiddenEntities(BimData d) => InstanceEntities(d, hidden: true);
+    private static HashSet<(string?, string?)> HiddenEntities(BimData d) => InstanceEntities(d, hidden: true);
 
-    private static HashSet<(string, string)> VisibleEntities(BimData d) => InstanceEntities(d, hidden: false);
+    private static HashSet<(string?, string?)> VisibleEntities(BimData d) => InstanceEntities(d, hidden: false);
 
-    private static HashSet<(string, string)> InstanceEntities(BimData d, bool hidden)
+    private static HashSet<(string?, string?)> InstanceEntities(BimData d, bool hidden)
         => Enumerable.Range(0, d.Geometry.InstanceEntityIndex.Length)
             .Where(i => IsHidden(d.Geometry, i) == hidden)
             .Select(i => d.Geometry.InstanceEntityIndex[i])
