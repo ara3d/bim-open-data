@@ -21,7 +21,6 @@ public sealed class ComparisonTests
     {
         void Log(string message) => TestContext.WriteLine(message);
 
-        TestDataManager.EnsureLocalIfcCopied(Log);
         WebIfcBfastOracle.GenerateAll(TestFiles.AllKnownFiles(), Log);
     }
 

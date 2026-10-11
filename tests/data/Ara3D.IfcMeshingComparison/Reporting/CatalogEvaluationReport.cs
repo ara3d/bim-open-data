@@ -289,7 +289,7 @@ public static class CatalogEvaluationReport
 
     static List<EntityWorkPriority> RankWorkPriorities(IReadOnlyList<CatalogFileEvaluation> files)
     {
-        var backlog = GeometryCoverage.KnownItems.ToDictionary(i => i.EntityName);
+        var coverage = GeometryCoverage.KnownItems.ToDictionary(i => i.EntityName);
         var agg = new Dictionary<string, (int catalog, int files, int oracleOnly, long triLoss, int unsupported)>(
             StringComparer.Ordinal);
 
@@ -311,9 +311,9 @@ public static class CatalogEvaluationReport
         return agg
             .Select(kv =>
             {
-                var known = backlog.GetValueOrDefault(kv.Key);
+                var known = coverage.GetValueOrDefault(kv.Key);
                 var support = known?.Support ?? GeometryCreationSupport.Planned;
-                var notes = known?.Notes ?? "Not in geometry backlog; needs triage.";
+                var notes = known?.Notes ?? "Not in the coverage table; needs triage.";
                 var priorityScore =
                     kv.Value.catalog +
                     kv.Value.oracleOnly * 50 +
@@ -361,7 +361,7 @@ public static class CatalogEvaluationReport
     static string FormatMarkdown(CatalogEvaluationDocument document)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("# Studio Data Catalog Evaluation");
+        sb.AppendLine("# Corpus evaluation");
         sb.AppendLine();
         sb.AppendLine($"Generated: {document.GeneratedUtc:yyyy-MM-dd HH:mm:ss} UTC");
         sb.AppendLine($"Catalog: {document.CatalogName}");

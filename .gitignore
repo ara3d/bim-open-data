@@ -462,8 +462,5 @@ obj/
 artifacts/
 node_modules/
 
-# Local reference data for the meshing comparison (generated BFAST oracles and reports; see its README)
-tests/data/Ara3D.IfcMeshingComparison/data/
-
 # The BOS explorer, built from site-src/ by the Pages workflow (see README, "Web page")
 site/explorer/

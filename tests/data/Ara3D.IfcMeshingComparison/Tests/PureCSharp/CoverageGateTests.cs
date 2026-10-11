@@ -36,7 +36,7 @@ public sealed class CoverageGateTests
             .OrderBy(n => n, StringComparer.Ordinal)
             .ToList();
         Assert.That(missing, Is.Empty,
-            "Supported backlog items lack [GeometryCoverage] and are not exempt: " + string.Join(", ", missing));
+            "Supported coverage items lack [GeometryCoverage] and are not exempt: " + string.Join(", ", missing));
     }
 
     [Test]
@@ -50,7 +50,7 @@ public sealed class CoverageGateTests
             .OrderBy(n => n, StringComparer.Ordinal)
             .ToList();
         Assert.That(unknown, Is.Empty,
-            "[GeometryCoverage] names not in backlog: " + string.Join(", ", unknown));
+            "[GeometryCoverage] names not in the coverage table: " + string.Join(", ", unknown));
     }
 
     static HashSet<string> DiscoverGeometryCoverageEntities()

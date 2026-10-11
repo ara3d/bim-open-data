@@ -15,9 +15,7 @@ public sealed class WpOracleRegenTests
 {
     static FilePath SchependomlaanPath()
     {
-        var p = TestFiles.LocalIfcDir.RelativeFile("schependomlaan.ifc");
-        if (!p.Exists())
-            p = new FilePath(@"C:\Users\cdigg\git\3d-format-shootout\data\git-repo-copies\web-ifc\schependomlaan.ifc");
+        var p = TestFiles.Schependomlaan;
         return p;
     }
 

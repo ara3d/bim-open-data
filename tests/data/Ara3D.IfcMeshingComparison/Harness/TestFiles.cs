@@ -1,26 +1,31 @@
 using Ara3D.IfcLoader;
 using Ara3D.Utils;
+using BimOpenData.TestSupport;
 
 namespace Ara3D.IfcMeshingComparison.Harness;
 
-/// <summary>Catalog of IFC test file folders with named accessors.</summary>
+/// <summary>
+/// Where the comparison finds its model files and puts what it writes. Models come from the
+/// repository's <c>data/</c> folder (filled by <c>data/get-test-data.ps1</c>) and from the folders
+/// named in <c>ARA3D_IFC_TEST_DIRS</c> (separated by <c>;</c>); a test whose file is absent is
+/// ignored, not failed. Everything the harness writes goes under <c>artifacts/ifc-mesher/</c>,
+/// which git ignores, never beside an input file.
+/// </summary>
 public static class TestFiles
 {
-    static readonly DirectoryPath ProjectRoot = new DirectoryPath(AppContext.BaseDirectory)
-        .GetParent()
-        .GetParent()
-        .GetParent();
+    public const string ExtraFoldersVariable = "ARA3D_IFC_TEST_DIRS";
 
-    /// <summary>Corpus root: the studio monorepo (AGENTS.md + ara3d-sdk + data) or a repository that takes the SDK through deps.json (deps/ara3d-sdk + data), whichever ancestor is found first.</summary>
-    public static readonly DirectoryPath StudioRoot = FindStudioRoot();
+    public static readonly DirectoryPath RepositoryDataDir = new(RepoPaths.Data());
 
-    public static readonly DirectoryPath LocalIfcDir = ProjectRoot.RelativeFolder("data", "ifc");
-    public static readonly DirectoryPath WebIfcBfastDir = ProjectRoot.RelativeFolder("data", "bfast", "webifc");
-    public static readonly DirectoryPath ReportsDir = ProjectRoot.RelativeFolder("data", "reports");
-    public static readonly DirectoryPath TempReportsDir = StudioRoot.RelativeFolder(".temp", "ifc-mesher");
+    public static readonly DirectoryPath ArtifactsDir = new(RepoPaths.Artifacts("ifc-mesher"));
 
-    /// <summary>IFC corpus at the monorepo root (<c>studio/data/</c>).</summary>
-    public static readonly DirectoryPath StudioDataDir = StudioRoot.RelativeFolder("data");
+    /// <summary>Web-ifc tessellations of the corpus, generated once per file and kept as the oracle.</summary>
+    public static readonly DirectoryPath WebIfcBfastDir = ArtifactsDir.RelativeFolder("oracles");
+
+    public static readonly DirectoryPath ReportsDir = ArtifactsDir.RelativeFolder("reports");
+
+    /// <summary>Meshes and probes a test writes, named after the model file they came from.</summary>
+    public static readonly DirectoryPath ProbesDir = ArtifactsDir.RelativeFolder("probes");
 
     public static FilePath Example => ResolveIfc("example.ifc");
     public static FilePath IfcOpenHouse => ResolveIfc("IfcOpenHouse_IFC4.ifc");
@@ -36,18 +41,13 @@ public static class TestFiles
     public static FilePath Duplex => ResolveIfc("duplex.ifc");
     public static FilePath OfficeA => ResolveIfc("Office_A_20110811.ifc");
     public static FilePath Schependomlaan => ResolveIfc("schependomlaan.ifc");
+    public static FilePath DigitalHub => ResolveIfc("FM_ARC_DigitalHub.ifc");
+    public static FilePath Primark => ResolveIfc("20210221PRIMARK.ifc");
+    public static FilePath C20Institute => ResolveIfc("C20-Institute-Var-2.ifc");
+    public static FilePath Ac11Institute => ResolveIfc("231110AC11-Institute-Var-2-IFC.ifc");
 
     public static IEnumerable<FilePath> QuickComparisonFiles()
         => new[] { IfcOpenHouse, Example, SteelPlates };
-
-    public static IEnumerable<FilePath> StudioDataFiles()
-    {
-        if (!StudioDataDir.Exists())
-            yield break;
-
-        foreach (var file in Directory.EnumerateFiles(StudioDataDir, "*.ifc", SearchOption.TopDirectoryOnly))
-            yield return new FilePath(file);
-    }
 
     /// <summary>Resolves an IFC by file name, or Ignores the test if missing.</summary>
     public static FilePath ResolveOrIgnore(string fileName)
@@ -58,6 +58,8 @@ public static class TestFiles
         return path;
     }
 
+    /// <summary>The first search folder holding <paramref name="fileName"/>, else its path under
+    /// the repository's <c>data/</c>, which then does not exist.</summary>
     public static FilePath ResolveIfc(string fileName)
     {
         foreach (var folder in SearchFolders())
@@ -66,14 +68,13 @@ public static class TestFiles
             if (candidate.Exists())
                 return candidate;
         }
-        return LocalIfcDir.RelativeFile(fileName);
+        return RepositoryDataDir.RelativeFile(fileName);
     }
 
-    static IEnumerable<DirectoryPath> SearchFolders()
+    public static IEnumerable<DirectoryPath> SearchFolders()
     {
-        yield return LocalIfcDir;
-        yield return StudioDataDir;
-        var extra = Environment.GetEnvironmentVariable("ARA3D_IFC_TEST_DIRS");
+        yield return RepositoryDataDir;
+        var extra = Environment.GetEnvironmentVariable(ExtraFoldersVariable);
         if (string.IsNullOrWhiteSpace(extra))
             yield break;
         foreach (var part in extra.Split([';', Path.PathSeparator], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
@@ -83,6 +84,7 @@ public static class TestFiles
         }
     }
 
+    /// <summary>Every <c>.ifc</c> in the search folders, one per file name, the first folder winning.</summary>
     public static IEnumerable<FilePath> AllKnownFiles()
     {
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -99,10 +101,21 @@ public static class TestFiles
         }
     }
 
+    public static string DescribeSearchFolders()
+        => string.Join("; ", SearchFolders().Select(f => f.ToString())) + $" (data/ and {ExtraFoldersVariable})";
+
     public static void RequireExists(FilePath path)
     {
         if (!path.Exists())
             Assert.Ignore($"Missing IFC test file: {path}");
+    }
+
+    /// <summary>A path under <see cref="ProbesDir"/> for a file derived from <paramref name="ifcPath"/>,
+    /// with the folder created.</summary>
+    public static FilePath ProbePath(FilePath ifcPath, string suffix)
+    {
+        ProbesDir.Create();
+        return ProbesDir.RelativeFile(ifcPath.GetFileNameWithoutExtension() + suffix);
     }
 
     public static IfcFile LoadStep(FilePath path)
@@ -115,19 +128,5 @@ public static class TestFiles
     {
         RequireExists(path);
         return new IfcFile(path, includeGeometry: true);
-    }
-
-    static DirectoryPath FindStudioRoot()
-    {
-        foreach (var dir in new DirectoryPath(AppContext.BaseDirectory).GetSelfAndAncestors())
-        {
-            if (!Directory.Exists(Path.Combine(dir, "data")))
-                continue;
-            var isStudio = File.Exists(Path.Combine(dir, "AGENTS.md")) && Directory.Exists(Path.Combine(dir, "ara3d-sdk"));
-            var isToolkit = Directory.Exists(Path.Combine(dir, "deps", "ara3d-sdk"));
-            if (isStudio || isToolkit)
-                return dir;
-        }
-        return ProjectRoot.GetParent().GetParent().GetParent();
     }
 }

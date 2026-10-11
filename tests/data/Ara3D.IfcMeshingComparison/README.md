@@ -1,69 +1,42 @@
 # Ara3D.IfcMeshingComparison
 
-Single home for IFC meshing tests, backend comparison, and reporting.
+Tests of `Ara3D.Ifc.Mesher`, the pure C# IFC mesher, and its comparison against web-ifc's tessellation of the same files. NUnit drives both; the comparison runs are `[Explicit]`, chosen by name or category.
 
 ## Backends
 
-| Name | Source | Description |
-|------|--------|-------------|
-| **WebIfcDll** | `IfcFile(includeGeometry:true).ToModel3D()` | Native web-ifc DLL tessellation (oracle) |
-| **Approach1** | `Ara3D.Ifc.Mesher.Approach1` | Modular pure C# mesher (`GeometryDispatcher` + `ModelAssembler`) |
+| Name | Source | Role |
+|---|---|---|
+| `WebIfcDll` | `IfcFile(includeGeometry: true).ToModel3D()` | The native web-ifc tessellation, used as the oracle |
+| `Ara3D.Ifc.Mesher` | `ModelAssembler.BuildModel(file.EntityResolver)` | The mesher under test |
 
-`Tests/Native/IfcMeshingTests` validates the native web-ifc path (geometry enumeration, buffer checks, `ToModel3D`).
+`Tests/Native/IfcMeshingTests` checks the web-ifc path itself (geometry enumeration, buffers, `ToModel3D`).
 
-## Test layout
+## Layout
 
 ```
 Tests/
-  Native/           WebIfc validation tests
-  PureCSharp/       Unit, integration, and golden micro-IFC tests for Approach1
-  Comparison/       Backend smoke tests and cross-backend comparison runners
-  Support/          Shared helpers (MicroIfc, OracleComparison, MeshTestAssert)
-Harness/            Test file catalog, BFAST oracles, geometry comparison utilities
-Meshers/            IMeshingBackend implementations
-Reporting/          Markdown report generation
+  Native/        web-ifc checks
+  PureCSharp/    the mesher: micro-IFC fixtures that assert exact meshes, and corpus tests over model files
+  Comparison/    backend smoke tests, the parity scorecard, and the per-model comparison runs
+  Support/       MicroIfc (a STEP snippet to a MeshingContext), MeshTestAssert, GeometryCoverageAttribute
+Harness/         TestFiles (where models are and outputs go), the web-ifc BFAST oracle, ModelComparer and its metrics
+Meshers/         IMeshingBackend and the two backends
+Reporting/       Markdown and JSON reports of a comparison run
 ```
 
-Meshing implementation lives in `wip/Ara3D.Ifc.Mesher/Approach1`.
+## Model files
 
-## Data layout (gitignored)
+`Harness/TestFiles.cs` looks for a model by file name in the repository's `data/` (filled by `data/get-test-data.ps1`) and then in each folder named by the `ARA3D_IFC_TEST_DIRS` environment variable (separated by `;`). A test whose file is absent is ignored, not failed, so the default gate passes with no models at all. The quick comparison set is `IfcOpenHouse_IFC4.ifc`, `example.ifc`, and `steelplates.ifc`.
 
-```
-data/ifc/              — local IFC copies (from external corpora)
-data/bfast/webifc/     — WebIfc BFAST oracle files
-data/reports/          — generated markdown reports
-```
+## Outputs
 
-## Populate data
+Everything the harness writes goes under `artifacts/ifc-mesher/`, which git ignores: `oracles/` (web-ifc BFAST tessellations, generated once per model and reused), `reports/` (comparison and coverage reports, oracle maps), and `probes/` (meshes a test exports, named after the model). Nothing is written beside a model file.
 
-```bat
-dotnet test ara3d-sdk\tests\Ara3D.IfcMeshingComparison --filter "GenerateWebIfcBfastOracles"
-```
+## Running it
 
-## Run comparisons
-
-Quick comparison (IfcOpenHouse, example, steelplates):
-
-```bat
-dotnet test ara3d-sdk\tests\Ara3D.IfcMeshingComparison --filter "RunQuickComparison"
-```
-
-Full catalog comparison:
-
-```bat
-dotnet test ara3d-sdk\tests\Ara3D.IfcMeshingComparison --filter "RunFullComparison"
-```
-
-Reports write to `data/reports/comparison_{timestamp}.md` and `data/reports/capabilities.md`.
-
-## Fast tests (no data required)
-
-```bat
-dotnet test ara3d-sdk\tests\Ara3D.IfcMeshingComparison --filter "Category!=Slow&Category!=Explicit"
-```
-
-Golden micro-IFC tests:
-
-```bat
-dotnet test ara3d-sdk\tests\Ara3D.IfcMeshingComparison --filter "FullyQualifiedName~GoldenMeshTests"
+```powershell
+dotnet test tests/data/Ara3D.IfcMeshingComparison -c Release                              # the gate: fast tests, no models needed
+$env:ARA3D_IFC_TEST_DIRS = 'C:\models'; dotnet test tests/data/Ara3D.IfcMeshingComparison -c Release   # with a corpus
+dotnet test tests/data/Ara3D.IfcMeshingComparison -c Release --filter "Category=IfcMesherParity"       # the parity scorecard
+dotnet test tests/data/Ara3D.IfcMeshingComparison -c Release --filter "Name~RunFullComparison"         # every model against web-ifc, with reports
 ```

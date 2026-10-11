@@ -368,7 +368,7 @@ public sealed class ModelBuildTests
     [Category("Slow")]
     public void AiscSculpture_MappedBrepCoverage()
     {
-        var ifcPath = new FilePath(@"c:\Users\cdigg\git\studio\data\171210AISC_Sculpture_brep.ifc");
+        var ifcPath = TestFiles.AiscSculptureBrep;
         TestFiles.RequireExists(ifcPath);
 
         using var file = new IfcFile(ifcPath, includeGeometry: false);

@@ -50,7 +50,7 @@ public sealed class WpSchependomlaanTriageTests
     [Category("Slow")]
     public void Schependomlaan_MaxDelta_TriageDump()
     {
-        var ifcPath = TestFiles.LocalIfcDir.RelativeFile("schependomlaan.ifc");
+        var ifcPath = TestFiles.Schependomlaan;
         TestFiles.RequireExists(ifcPath);
 
         var candidate = ModelComparer.LoadCandidate(ifcPath);
@@ -80,7 +80,7 @@ public sealed class WpSchependomlaanTriageTests
     [Category("Slow")]
     public void Schependomlaan_PlacementVsShape_BboxSplit()
     {
-        var ifcPath = TestFiles.LocalIfcDir.RelativeFile("schependomlaan.ifc");
+        var ifcPath = TestFiles.Schependomlaan;
         TestFiles.RequireExists(ifcPath);
 
         var candidate = ModelComparer.LoadCandidate(ifcPath);

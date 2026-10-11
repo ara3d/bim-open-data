@@ -33,7 +33,7 @@ public sealed class WpPlacementTests
     [Explicit("Diagnose placement for worst schependomlaan entities")]
     public void Schependomlaan_WorstEntities_PlacementDiagnosis()
     {
-        var ifcPath = TestFiles.LocalIfcDir.RelativeFile("schependomlaan.ifc");
+        var ifcPath = TestFiles.Schependomlaan;
         TestFiles.RequireExists(ifcPath);
 
         var candidate = ModelComparer.LoadCandidate(ifcPath);
@@ -267,7 +267,7 @@ public sealed class WpPlacementTests
     [Category("Slow")]
     public void Schependomlaan_PlacementGate()
     {
-        var ifcPath = TestFiles.LocalIfcDir.RelativeFile("schependomlaan.ifc");
+        var ifcPath = TestFiles.Schependomlaan;
         TestFiles.RequireExists(ifcPath);
 
         var candidate = ModelComparer.LoadCandidate(ifcPath);

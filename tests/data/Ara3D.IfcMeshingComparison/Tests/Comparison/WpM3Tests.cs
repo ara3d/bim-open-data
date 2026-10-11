@@ -87,7 +87,7 @@ public sealed class WpM3Tests
     [Category("Slow")]
     public void Tier2DiagnosticsDigitalHub()
     {
-        var ifcPath = new FilePath(@"c:\Users\cdigg\git\studio\data\FM_ARC_DigitalHub.ifc");
+        var ifcPath = TestFiles.DigitalHub;
         TestFiles.RequireExists(ifcPath);
         using var stepFile = new IfcFile(ifcPath, includeGeometry: false);
         var candidate = ModelComparer.LoadCandidate(ifcPath);

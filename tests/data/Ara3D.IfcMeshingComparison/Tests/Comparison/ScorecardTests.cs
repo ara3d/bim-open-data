@@ -289,7 +289,7 @@ public sealed class ScorecardTests
     [Category("Slow")]
     public void ScoreDigitalHubStretch()
     {
-        var ifcPath = new FilePath(@"c:\Users\cdigg\git\studio\data\FM_ARC_DigitalHub.ifc");
+        var ifcPath = TestFiles.DigitalHub;
         TestFiles.RequireExists(ifcPath);
 
         var bfastPath = WebIfcBfastOracle.OraclePath(ifcPath);
@@ -305,7 +305,7 @@ public sealed class ScorecardTests
     [Category("Slow")]
     public void ScoreAiscSculptureStretch()
     {
-        var ifcPath = new FilePath(@"c:\Users\cdigg\git\studio\data\171210AISC_Sculpture_brep.ifc");
+        var ifcPath = TestFiles.AiscSculptureBrep;
         TestFiles.RequireExists(ifcPath);
 
         var bfastPath = WebIfcBfastOracle.OraclePath(ifcPath);

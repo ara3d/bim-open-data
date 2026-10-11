@@ -11,14 +11,14 @@ namespace Ara3D.IfcMeshingComparison.Tests.PureCSharp;
 public sealed class TransformComparisonTests
 {
     static FilePath MesherBfastPath(FilePath ifcPath)
-        => ifcPath.ChangeExtension(".bfast");
+        => TestFiles.ProbePath(ifcPath, ".bfast");
 
     [Test]
     [Explicit("Meshes schependomlaan and compares instance transforms to web-ifc oracle")]
     [Category("Slow")]
     public void Schependomlaan_TransformDeltas_vsOracle()
     {
-        var ifcPath = TestFiles.LocalIfcDir.RelativeFile("schependomlaan.ifc");
+        var ifcPath = TestFiles.Schependomlaan;
         TestFiles.RequireExists(ifcPath);
 
         var bfastOraclePath = WebIfcBfastOracle.OraclePath(ifcPath);
@@ -54,7 +54,7 @@ public sealed class TransformComparisonTests
     [Category("Slow")]
     public void Schependomlaan_BfastRoundTrip_PreservesTransforms()
     {
-        var ifcPath = TestFiles.LocalIfcDir.RelativeFile("schependomlaan.ifc");
+        var ifcPath = TestFiles.Schependomlaan;
         TestFiles.RequireExists(ifcPath);
 
         var backend = new IfcMesherBackend();

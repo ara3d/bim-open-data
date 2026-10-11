@@ -26,15 +26,15 @@ public sealed class CorpusBuildCoverageTests
             .Select(r => $"{r.Entity}: unsupported={r.UnsupportedCount}")
             .ToList();
         Assert.That(violations, Is.Empty,
-            "Supported backlog types recorded Unsupported on quick files:\n" + string.Join("\n", violations));
+            "Supported coverage types recorded Unsupported on quick files:\n" + string.Join("\n", violations));
     }
 
     [Test]
     [Category("Slow")]
-    [Explicit("Full studio/data corpus geometry coverage scan")]
-    public void Corpus_StudioData_WriteCoverageReport()
+    [Explicit("Full corpus geometry coverage scan")]
+    public void Corpus_WriteCoverageReport()
     {
-        var files = TestFiles.StudioDataFiles().Concat(TestFiles.QuickComparisonFiles()).Distinct().ToList();
+        var files = TestFiles.AllKnownFiles().Concat(TestFiles.QuickComparisonFiles()).Distinct().ToList();
         Assume.That(files, Is.Not.Empty, "No IFC corpus files found");
         var rows = ScanFiles(files);
         WriteReport(rows, "geometry_coverage.json");

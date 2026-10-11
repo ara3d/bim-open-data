@@ -7,23 +7,23 @@ namespace Ara3D.IfcMeshingComparison.Tests.Comparison;
 [TestFixture]
 public sealed class DataCatalogEvaluationTests
 {
-    static FilePath JsonReportPath => TestFiles.ReportsDir.RelativeFile("studio_catalog_evaluation.json");
-    static FilePath MarkdownReportPath => TestFiles.ReportsDir.RelativeFile("studio_catalog_evaluation.md");
+    static FilePath JsonReportPath => TestFiles.ReportsDir.RelativeFile("catalog_evaluation.json");
+    static FilePath MarkdownReportPath => TestFiles.ReportsDir.RelativeFile("catalog_evaluation.md");
 
     [Test]
-    [Explicit("Meshes the whole studio data catalog (about 90 s) and regenerates its evaluation reports")]
+    [Explicit("Meshes every IFC in the corpus (about 90 s) and regenerates its evaluation reports")]
     [Category("IfcMesherCatalog")]
     [Category("Slow")]
-    public void EvaluateStudioDataCatalog()
+    public void EvaluateCorpus()
     {
-        var files = TestFiles.StudioDataFiles().ToList();
+        var files = TestFiles.AllKnownFiles().ToList();
         if (files.Count == 0)
-            Assert.Ignore($"No IFC files found in {TestFiles.StudioDataDir}");
+            Assert.Ignore($"No IFC files found in {TestFiles.DescribeSearchFolders()}");
 
         void Log(string message) => TestContext.WriteLine(message);
-        Log($"Evaluating {files.Count} files from {TestFiles.StudioDataDir}");
+        Log($"Evaluating {files.Count} files from {TestFiles.DescribeSearchFolders()}");
 
-        var document = CatalogEvaluationReport.Run(files, "studio-data", Log);
+        var document = CatalogEvaluationReport.Run(files, "corpus", Log);
         var jsonPath = CatalogEvaluationReport.WriteJson(document, JsonReportPath);
         var mdPath = CatalogEvaluationReport.WriteMarkdown(document, MarkdownReportPath);
 
@@ -43,7 +43,7 @@ public sealed class DataCatalogEvaluationTests
     static void PrintSummary(CatalogEvaluationDocument document)
     {
         TestContext.WriteLine("");
-        TestContext.WriteLine("=== Studio Data Catalog Summary ===");
+        TestContext.WriteLine("=== Corpus summary ===");
         TestContext.WriteLine(
             "| File | Parity | Inst c/o | Tris c/o | Oracle-only |");
         foreach (var file in document.Files.OrderByDescending(f => f.Comparison?.ParityScore ?? -1))

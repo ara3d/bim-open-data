@@ -10,7 +10,7 @@ namespace Ara3D.IfcMeshingComparison.Tests.Support;
 /// </summary>
 public static class DigitalHubComparison
 {
-    public static FilePath Ifc => new(@"c:\Users\cdigg\git\studio\data\FM_ARC_DigitalHub.ifc");
+    public static FilePath Ifc => TestFiles.DigitalHub;
 
     static readonly Lazy<ModelComparisonResult> result = new(() =>
     {

@@ -115,7 +115,7 @@ public sealed class MeshIndexDiagnosticTests
                 continue;
             }
 
-            var bfastPath = ifcPath.ChangeExtension(".catalog-index-probe.bfast");
+            var bfastPath = TestFiles.ProbePath(ifcPath, ".catalog-index-probe.bfast");
             using (var renderData = new RenderModelData(3))
             {
                 renderData.Update(model);
@@ -173,7 +173,7 @@ public sealed class MeshIndexDiagnosticTests
         Assert.That(result.Success, Is.True, string.Join("; ", result.Errors));
 
         var model = result.Model!;
-        var bfastPath = ifcPath.ChangeExtension(".candidate.bfast");
+        var bfastPath = TestFiles.ProbePath(ifcPath, ".candidate.bfast");
         using (var renderData = new RenderModelData(3))
         {
             renderData.Update(model);

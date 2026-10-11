@@ -10,8 +10,8 @@ namespace Ara3D.IfcMeshingComparison.Tests.PureCSharp;
 [TestFixture]
 public sealed class WpW4Tests
 {
-  static FilePath C20Institute => new(@"C:\Users\cdigg\git\studio\data\C20-Institute-Var-2.ifc");
-  static FilePath Ac11Institute => new(@"C:\Users\cdigg\git\studio\data\231110AC11-Institute-Var-2-IFC.ifc");
+  static FilePath C20Institute => TestFiles.C20Institute;
+  static FilePath Ac11Institute => TestFiles.Ac11Institute;
 
   [Test]
   public void MeshesThinInstituteHelixTriangleShellFace()

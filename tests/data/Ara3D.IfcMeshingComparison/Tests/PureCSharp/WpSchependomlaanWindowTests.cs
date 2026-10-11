@@ -17,9 +17,7 @@ public sealed class WpSchependomlaanWindowTests
     [Category("Slow")]
     public void Schependomlaan_Window948940_PlacementDiagnosis()
     {
-        var ifcPath = TestFiles.LocalIfcDir.RelativeFile("schependomlaan.ifc");
-        if (!ifcPath.Exists())
-            ifcPath = new FilePath(@"C:\Users\cdigg\git\3d-format-shootout\data\git-repo-copies\web-ifc\schependomlaan.ifc");
+        var ifcPath = TestFiles.Schependomlaan;
         TestFiles.RequireExists(ifcPath);
 
         const int entityId = 948940;

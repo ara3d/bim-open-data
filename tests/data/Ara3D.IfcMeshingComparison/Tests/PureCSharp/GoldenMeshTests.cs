@@ -3,6 +3,7 @@ using Ara3D.IfcTypes;
 using Ara3D.IfcTypes.Ifc4;
 using Ara3D.Ifc.Mesher;
 using Ara3D.IfcLoader;
+using Ara3D.IfcMeshingComparison.Harness;
 using Ara3D.IfcMeshingComparison.Tests.Support;
 using Ara3D.Utils;
 
@@ -1214,7 +1215,7 @@ public sealed class GoldenMeshTests
     [Category("Slow")]
     public void DigitalHub_BicycleProxyAdvancedBrep_Builds()
     {
-        var ifcPath = new FilePath(@"c:\Users\cdigg\git\studio\data\FM_ARC_DigitalHub.ifc");
+        var ifcPath = TestFiles.DigitalHub;
         if (!ifcPath.Exists())
             Assert.Ignore($"Missing IFC test file: {ifcPath}");
 
@@ -1673,14 +1674,10 @@ public sealed class GoldenMeshTests
     }
 
     [Test]
-    [Explicit("Exploratory scanner for building the geometry creation backlog from local IFC corpora.")]
+    [Explicit("Exploratory scanner: counts the geometry entities a local IFC corpus uses against the coverage table.")]
     public void ScanExternalIfcSamplesForGeometryCoverage()
     {
-        var files = new[]
-        {
-            new FilePath(@"C:\Users\cdigg\git\ifc-sharp\engine_web-ifc\tests\ifcfiles\public\example.ifc"),
-            new FilePath(@"C:\Users\cdigg\git\3d-format-shootout\data\git-repo-copies\speckle\ifcs\steelplates.ifc"),
-        };
+        var files = new[] { TestFiles.Example, TestFiles.SteelPlates };
 
         var encountered = GeometryCoverage.Scan(files);
 

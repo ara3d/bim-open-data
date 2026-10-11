@@ -8,16 +8,15 @@ namespace Ara3D.IfcMeshingComparison.Tests.PureCSharp;
 [TestFixture]
 public sealed class ExportBfastFromMesherTests
 {
-    static FilePath BfastPath(FilePath ifcPath) => ifcPath.ChangeExtension(".bfast");
+    static FilePath BfastPath(FilePath ifcPath) => TestFiles.ProbePath(ifcPath, ".bfast");
 
     [Test]
-    [Explicit("Meshes each project IFC with the pure C# mesher and writes a BFAST next to the input")]
+    [Explicit("Meshes each project IFC with the pure C# mesher and writes a BFAST under artifacts/ifc-mesher/probes")]
     [Category("Slow")]
     public void ExportMesherBfastAlongsideEachIfc()
     {
         void Log(string message) => TestContext.WriteLine(message);
 
-        TestDataManager.EnsureLocalIfcCopied(Log);
 
         var backend = new IfcMesherBackend();
         var files = TestFiles.AllKnownFiles().ToList();

@@ -13,7 +13,7 @@ namespace Ara3D.IfcMeshingComparison.Tests.PureCSharp;
 [TestFixture]
 public sealed class WpPrimarkResidualTests
 {
-    static FilePath PrimarkIfc => new(@"c:\Users\cdigg\git\studio\data\20210221PRIMARK.ifc");
+    static FilePath PrimarkIfc => TestFiles.Primark;
 
     [Test]
     [Explicit("Classify remaining PRIMARK oracle-only accessories by geometry path")]

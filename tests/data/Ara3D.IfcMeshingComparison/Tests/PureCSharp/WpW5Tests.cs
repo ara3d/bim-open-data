@@ -11,7 +11,7 @@ namespace Ara3D.IfcMeshingComparison.Tests.PureCSharp;
 [TestFixture]
 public sealed class WpW5Tests
 {
-    static FilePath PrimarkIfc => new(@"c:\Users\cdigg\git\studio\data\20210221PRIMARK.ifc");
+    static FilePath PrimarkIfc => TestFiles.Primark;
 
     [Test]
     [Explicit("WP-W5 diagnosis: PRIMARK oracle-only products")]
@@ -66,7 +66,7 @@ public sealed class WpW5Tests
     }
 
     /// <summary>
-    /// Catalog baseline (studio_catalog_evaluation.json): #92859 is top oracle-only IFCDISCRETEACCESSORY (644 tris).
+    /// Catalog baseline (catalog_evaluation.json): #92859 is top oracle-only IFCDISCRETEACCESSORY (644 tris).
     /// Profile #92854 is a multi-segment IFCCOMPOSITECURVE with trimmed arcs + DISCONTINUOUS closure.
     /// Fails today; gate for WP-W4 CurveEvaluator composite-curve fix.
     /// </summary>
