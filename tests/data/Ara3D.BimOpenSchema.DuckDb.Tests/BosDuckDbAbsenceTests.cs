@@ -24,6 +24,7 @@ public sealed class BosDuckDbAbsenceTests
         bdb.AddParameter(wall, "", "Mark", null, "Identity");
         bdb.AddParameter(wall, new Point(1.5f, 2f, -3f), "Where", "m", "Geometry");
         bdb.AddParameter(wall, (PointIndex)(-1), "Nowhere", "m", "Geometry");
+        bdb.AddParameter(wall, "x", "Blank", "", "");
         bdb.AddRelation(wall, bare, RelationType.ContainedIn);
         return bdb.Build();
     }
@@ -79,6 +80,13 @@ public sealed class BosDuckDbAbsenceTests
             Assert.That(rows[1][0], Is.EqualTo("Where"));
             Assert.That(rows[1][1], Is.EqualTo("Point { X = 1.5, Y = 2.0, Z = -3.0 }"));
         });
+    }
+
+    [Test]
+    public void EmptyUnitsAndGroup_ReadAsNull()
+    {
+        var row = _conn.Query("SELECT Units, ParameterGroup, Value FROM ParameterText WHERE Name = 'Blank'").Rows.Single();
+        Assert.That((row[0], row[1], row[2]), Is.EqualTo(((object?)null, (object?)null, "x")));
     }
 
     [Test]

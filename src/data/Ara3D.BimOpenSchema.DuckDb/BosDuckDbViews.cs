@@ -11,7 +11,7 @@ namespace Ara3D.BimOpenSchema.DuckDb;
 /// <para>Every join is a LEFT JOIN, so an index of -1 (absent, as the specification defines it)
 /// gives NULL and keeps its row. A GlobalId or an entity name stored as "" by files written before
 /// -1 meant absent also reads as NULL; a String parameter value of "" stays "". A Point parameter shows as <c>Point { X = 1, Y = 2, Z = 3 }</c>, the text the C# readers give
-    /// the Point record; an absent point (-1) is NULL.</para></summary>
+    /// the Point record; Units and ParameterGroup of "" read as NULL like the other text columns; an absent point (-1) is NULL.</para></summary>
 public static class BosDuckDbViews
 {
     // Braces cannot appear literally in the interpolated raw string of ParameterText.
@@ -41,8 +41,8 @@ public static class BosDuckDbViews
 
         conn.Execute($"""
             CREATE OR REPLACE VIEW ParameterText AS
-            SELECT p.Entity AS EntityIndex, dn.Strings AS Name, dg.Strings AS ParameterGroup,
-                   du.Strings AS Units, {EnumCase("d.Type", Enum.GetValues<ParameterType>())} AS ValueType,
+            SELECT p.Entity AS EntityIndex, dn.Strings AS Name, NULLIF(dg.Strings, '') AS ParameterGroup,
+                   NULLIF(du.Strings, '') AS Units, {EnumCase("d.Type", Enum.GetValues<ParameterType>())} AS ValueType,
                    CASE d.Type
                        WHEN {(int)ParameterType.String} THEN sv.Strings
                        WHEN {(int)ParameterType.Number} THEN CAST(nv.Numbers AS VARCHAR)
