@@ -18,9 +18,8 @@ public class ParquetColumn<T> : IReadOnlyList<T>, IDataColumn, IDataTable
 
     public ParquetColumn(DataColumn column)
     {
-        Values = column.Data as T[];
-        if (Values == null)
-            throw new Exception($"Column has type {column.Data.GetType()} not {typeof(T[])}");
+        Values = column.Data as T[]
+            ?? throw new Exception($"Column has type {column.Data.GetType()} not {typeof(T[])}");
         _adapter = new ReadOnlyListSingleColumnDataAdapter<T>(column.Field.Name, Values);
     }
 
@@ -29,7 +28,7 @@ public class ParquetColumn<T> : IReadOnlyList<T>, IDataColumn, IDataTable
     public int ColumnIndex => _adapter.ColumnIndex;
     public IDataDescriptor Descriptor => _adapter.Descriptor;
     public int Count => Values.Length;
-    object IDataColumn.this[int n] => Values[n];
+    object IDataColumn.this[int n] => Values[n]!;
     public Array AsArray() => Values;
     public T this[int index] => Values[index];
     public string Name => _adapter.Name;

@@ -104,9 +104,9 @@ namespace Ara3D.BimOpenSchema
 
         public EntityModel Get(EntityIndex ei) => ei < 0 ? null : Entities[(int)ei];
         public DescriptorModel Get(DescriptorIndex di) => di < 0 ? null : Descriptors[(int)di];
-        public Point Get(PointIndex pi) => Data.Get(pi);
+        public Point? Get(PointIndex pi) => Data.Get(pi);
         public string Get(StringIndex si) => Data.Get(si);
-        public float Get(NumberIndex ni) => Data.Get(ni);
+        public float? Get(NumberIndex ni) => Data.Get(ni);
 
         public void AddParameter(EntityIndex ei, ParameterModel pm)
         {
@@ -126,7 +126,7 @@ namespace Ara3D.BimOpenSchema
                 ParameterType.String => Get((StringIndex)value),
                 ParameterType.Number => Get((NumberIndex)value),
                 ParameterType.Entity => Get((EntityIndex)value),
-                ParameterType.Point => Get((PointIndex)value).ToString(),
+                ParameterType.Point => Get((PointIndex)value)?.ToString(),
                 _ => null
             };
         }

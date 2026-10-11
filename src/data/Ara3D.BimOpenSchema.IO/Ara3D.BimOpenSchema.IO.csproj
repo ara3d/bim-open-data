@@ -3,6 +3,7 @@
   <PropertyGroup>
     <PackageId>Ara3D.BimOpenSchema.IO</PackageId>
     <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Description>Reading and writing BIM Open Schema archives: Parquet tables in a zip.</Description>
   </PropertyGroup>

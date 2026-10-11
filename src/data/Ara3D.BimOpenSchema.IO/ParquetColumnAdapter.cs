@@ -19,6 +19,6 @@ public class ParquetColumnAdapter : IDataColumnWithValues
     public int ColumnIndex { get; }
     public IDataDescriptor Descriptor { get; }
     public int Count { get; }
-    public object this[int n] => Column.Data.GetValue(n);
+    public object this[int n] => Column.Data.GetValue(n)!;
     public Array Values => Column.Data;
 }

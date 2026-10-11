@@ -21,9 +21,10 @@ namespace Ara3D.BimOpenSchema;
 /// index buffers are trusted. Table sizes are the shortest column of each table.
 /// </para>
 /// <para>
-/// Absence: a GlobalId, name, or label is null when its string index is negative, out of
-/// range, or names an empty string (converters store an unset value as "" today; index -1 is
-/// the planned form). A typed parameter value is null when the value is missing, never 0.
+/// Absence: a GlobalId, name, or label is null when its string index is -1 (absent, as the
+/// specification defines it), out of range, or names an empty string (files written before
+/// -1 meant absent store an unset value as ""). A typed parameter value is null when the
+/// value is missing, never 0.
 /// </para>
 /// <para>
 /// Cost: the constructor is one pass over the Instances table and keeps one byte per
@@ -283,12 +284,12 @@ public sealed class BosScene
     /// <summary>The string, or null when the index is negative or out of range. An empty
     /// string is returned as "": for a parameter value, empty is a value.</summary>
     public string? Text(StringIndex index)
-        => (uint)index < (uint)Data.Strings.Length ? Data.Strings[(int)index] : null;
+        => Data.Get(index);
 
     /// <summary>The string, or null when it is missing or empty: for identity fields (GlobalId,
-    /// names, titles, units), which converters store as "" when unset.</summary>
+    /// names, titles, units), which older files store as "" when unset.</summary>
     public string? Label(StringIndex index)
-        => Text(index) is { Length: > 0 } s ? s : null;
+        => Data.Label(index);
 
     //== Parameters and relations
 

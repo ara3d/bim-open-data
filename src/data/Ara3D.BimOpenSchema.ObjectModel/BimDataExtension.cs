@@ -16,47 +16,57 @@ public static class BimDataExtension
     public const DescriptorIndex InvalidDescriptorIndex = (DescriptorIndex)(-1);
 
     //==
+    // Table lookups. Each returns null when the index is -1 (absent, as the specification
+    // defines it) or outside its table, never a default row, 0, or "".
 
-    public static string Get(this IBimData self, StringIndex index) 
-        => self.Strings[(int)index];
+    /// <summary>The string, or null when absent. "" is a stored value and is returned as "".</summary>
+    public static string? Get(this IBimData self, StringIndex index)
+        => (uint)index < (uint)self.Strings.Length ? self.Strings[(int)index] : null;
 
-    public static Entity? Get(this IBimData self, EntityIndex index) 
-        => index < 0 ? null : self.Entities[(int)index];
+    /// <summary>The string, or null when absent or empty. For GlobalIds, names, and titles,
+    /// which files written before index -1 meant absent store as "" when unset.</summary>
+    public static string? Label(this IBimData self, StringIndex index)
+        => self.Get(index) is { Length: > 0 } s ? s : null;
 
-    public static Document? Get(this IBimData self, DocumentIndex index) 
-        => index < 0 ? null : self.Documents[(int)index];
+    public static Entity? Get(this IBimData self, EntityIndex index)
+        => (uint)index < (uint)self.Entities.Length ? self.Entities[(int)index] : null;
 
-    public static Point Get(this IBimData self, PointIndex index) 
-        => index < 0 ? default : self.Points[(int)index];
+    public static Document? Get(this IBimData self, DocumentIndex index)
+        => (uint)index < (uint)self.Documents.Length ? self.Documents[(int)index] : null;
 
-    public static float Get(this IBimData self, NumberIndex index)
-        => index < 0 ? default : self.Numbers[(int)index];
+    public static Point? Get(this IBimData self, PointIndex index)
+        => (uint)index < (uint)self.Points.Length ? self.Points[(int)index] : null;
 
-    public static Parameter Get(this IBimData self, ParameterIndex index)
-        => index < 0 ? default : self.Parameters[(int)index];
-    
-    public static EntityRelation Get(this IBimData self, RelationIndex index) 
-        => index < 0 ? default : self.Relations[(int)index];
+    public static float? Get(this IBimData self, NumberIndex index)
+        => (uint)index < (uint)self.Numbers.Length ? self.Numbers[(int)index] : null;
 
-    public static ParameterDescriptor? Get(this IBimData self, DescriptorIndex index) 
-        => index < 0 ? null : self.Descriptors[(int)index];
+    public static Parameter? Get(this IBimData self, ParameterIndex index)
+        => (uint)index < (uint)self.Parameters.Length ? self.Parameters[(int)index] : null;
 
-    public static string EntityName(this IBimData self, EntityIndex index)
-        => index >= 0 ? self.GetEntityName(self.Get(index)) : "null";
+    public static EntityRelation? Get(this IBimData self, RelationIndex index)
+        => (uint)index < (uint)self.Relations.Length ? self.Relations[(int)index] : null;
 
-    public static string GetEntityName(this IBimData self, Entity? e)
-        => e != null ? self.Get(e.Value.Name) : "null";
+    public static ParameterDescriptor? Get(this IBimData self, DescriptorIndex index)
+        => (uint)index < (uint)self.Descriptors.Length ? self.Descriptors[(int)index] : null;
 
-    public static string GetCategoryName(this IBimData self, EntityIndex index)
+    /// <summary>The entity's name, or null when the entity or its name is absent.</summary>
+    public static string? EntityName(this IBimData self, EntityIndex index)
+        => self.GetEntityName(self.Get(index));
+
+    public static string? GetEntityName(this IBimData self, Entity? e)
+        => e != null ? self.Label(e.Value.Name) : null;
+
+    public static string? GetCategoryName(this IBimData self, EntityIndex index)
         => self.GetCategoryName(self.Get(index));
 
-    public static string GetCategoryName(this IBimData self, Entity? e)
-        => e != null ? self.GetEntityName(self.Get(e.Value.Category)) : "null";
+    public static string? GetCategoryName(this IBimData self, Entity? e)
+        => e != null ? self.GetEntityName(self.Get(e.Value.Category)) : null;
 
+    /// <summary>"name[index]", or "[index]" when the entity has no name.</summary>
     public static string GetEntityLabel(this IBimData self, EntityIndex index)
         => $"{self.EntityName(index)}[{index}]";
 
-    public static IEnumerable<EntityIndex> EntityIndices(this IBimData self) 
+    public static IEnumerable<EntityIndex> EntityIndices(this IBimData self)
         => Enumerable.Range(0, self.Entities.Length).Select(i => (EntityIndex)i);
 
     public static IEnumerable<DocumentIndex> DocumentIndices(this IBimData self)
@@ -87,7 +97,8 @@ public static class BimDataExtension
     public static long GetNumParameters(this IBimData self)
         => self.Parameters.Length;
 
-    public static T[] ReadTable<T>(this IDataSet set, Func<IDataRow, T> f, string name)
+    /// <summary>The table's rows, or null when the set has no table of that name.</summary>
+    public static T[]? ReadTable<T>(this IDataSet set, Func<IDataRow, T> f, string name)
     {
         var table = set.GetTable(name);
         if (table == null)
@@ -158,18 +169,21 @@ public static class BimDataExtension
 
     public static IEnumerable<EntityIndex> GetCategories(this IBimData self)
         => self.Entities.Select(e => e.Category).Distinct();
-    
+
+    /// <summary>The distinct categories' names, sorted; absent names are left out.</summary>
     public static IEnumerable<string> GetCategoryNames(this IBimData self)
-        => self.GetCategories().Select(self.EntityName).OrderBy(x => x);
+        => self.GetCategories().Select(self.EntityName).OfType<string>().OrderBy(x => x);
 
     public static IEnumerable<EntityIndex> GetTypes(this IBimData self)
         => self.Entities.Select(e => e.Type).Distinct();
 
+    /// <summary>The distinct types' names, sorted; absent names are left out.</summary>
     public static IEnumerable<string> GetTypeNames(this IBimData self)
-        => self.GetTypes().Select(self.EntityName).OrderBy(x => x);
+        => self.GetTypes().Select(self.EntityName).OfType<string>().OrderBy(x => x);
 
+    /// <summary>The descriptors' names, sorted; absent names are left out.</summary>
     public static IEnumerable<string> GetDescriptorNames(this IBimData self)
-        => self.Descriptors.Select(x => self.Get(x.Name)).OrderBy(x => x);
+        => self.Descriptors.Select(x => self.Get(x.Name)).OfType<string>().OrderBy(x => x);
 
     public static string GetDiagnosticString(this IBimData self, Diagnostic d)
         => $"[{d.Type}] {d.Message}";
@@ -178,12 +192,13 @@ public static class BimDataExtension
         => self.Diagnostics.Select(self.GetDiagnosticString);
 
     //==
-    // Entity and EntityIndex helpers 
+    // Entity and EntityIndex helpers
 
-    public static string Name(this IBimData self, Entity? entity)
-        => entity.HasValue ? self.Get(entity.Value.Name) : "";
+    /// <summary>The entity's name, or null when the entity or its name is absent.</summary>
+    public static string? Name(this IBimData self, Entity? entity)
+        => self.GetEntityName(entity);
 
-    public static string Name(this IBimData self, EntityIndex index)
+    public static string? Name(this IBimData self, EntityIndex index)
         => self.Name(self.Get(index));
 
     public static EntityIndex CategoryIndex(this IBimData self, EntityIndex index)
@@ -192,7 +207,7 @@ public static class BimDataExtension
     public static Entity? Category(this IBimData self, EntityIndex index)
         => self.Get(self.CategoryIndex(index));
 
-    public static string CategoryName(this IBimData self, EntityIndex index)
+    public static string? CategoryName(this IBimData self, EntityIndex index)
         => self.Name(self.Category(index));
 
     public static EntityIndex TypeIndex(this IBimData self, Entity? entity)
@@ -207,7 +222,7 @@ public static class BimDataExtension
     public static Entity? Type(this IBimData self, Entity? entity)
         => entity.HasValue ? self.Type(entity.Value) : null;
 
-    public static string TypeName(this IBimData self, EntityIndex index)
+    public static string? TypeName(this IBimData self, EntityIndex index)
         => self.Name(self.Type(index));
 
     public static int DocumentIndex(this IBimData self, EntityIndex index)
@@ -219,19 +234,19 @@ public static class BimDataExtension
     public static Entity? Entity(this IBimData self, InstanceStruct inst)
         => self.Get((EntityIndex)inst.EntityIndex);
 
-    public static string Name(this IBimData self, InstanceStruct inst)
+    public static string? Name(this IBimData self, InstanceStruct inst)
         => self.Name(self.Entity(inst));
 
     public static Entity? Category(this IBimData self, InstanceStruct inst)
         => self.Category((EntityIndex)inst.EntityIndex);
 
-    public static string CategoryName(this IBimData self, InstanceStruct inst)
+    public static string? CategoryName(this IBimData self, InstanceStruct inst)
         => self.Name(self.Category(inst));
 
     public static Entity? Type(this IBimData self, InstanceStruct inst)
         => self.Type(self.Entity(inst));
 
-    public static string TypeName(this IBimData self, InstanceStruct inst)
+    public static string? TypeName(this IBimData self, InstanceStruct inst)
         => self.Name(self.Type(inst));
 
     public static DocumentIndex DocumentIndex(this IBimData self, InstanceStruct inst)
@@ -252,27 +267,24 @@ public static class BimDataExtension
     public static ParameterDescriptor? Descriptor(this IBimData self, Parameter p)
         => self.Get(p.Descriptor);
 
-    public static string ParameterName(this IBimData self, Parameter p)
+    public static string? ParameterName(this IBimData self, Parameter p)
         => self.Get(self.Descriptor(p)?.Name ?? InvalidStringIndex);
 
-    public static string ParameterValue(this IBimData self, Parameter p)
+    /// <summary>The value as text, or null when the descriptor or the value is absent.
+    /// A String value of "" is returned as "": it is a value. An Entity value is the
+    /// referenced entity's name.</summary>
+    public static string? ParameterValue(this IBimData self, Parameter p)
     {
         var desc = self.Descriptor(p);
-        if (!desc.HasValue) return "";
-        switch (desc.Value.Type)
+        if (!desc.HasValue) return null;
+        return desc.Value.Type switch
         {
-            case ParameterType.Int: 
-                return p.Value.ToString(); 
-            case ParameterType.Number:
-                return p.Value < 0 ? "" : self.Get((NumberIndex)p.Value).ToString();
-            case ParameterType.Entity:
-                return self.EntityName((EntityIndex)p.Value);
-            case ParameterType.String:
-                return self.Get((StringIndex)p.Value);
-            case ParameterType.Point:
-                return self.Get((PointIndex)p.Value).ToString();
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
+            ParameterType.Int => p.Value.ToString(),
+            ParameterType.Number => self.Get((NumberIndex)p.Value)?.ToString(),
+            ParameterType.Entity => self.EntityName((EntityIndex)p.Value),
+            ParameterType.String => self.Get((StringIndex)p.Value),
+            ParameterType.Point => self.Get((PointIndex)p.Value)?.ToString(),
+            _ => throw new ArgumentOutOfRangeException(nameof(p), desc.Value.Type, "Unknown parameter type"),
+        };
     }
 }

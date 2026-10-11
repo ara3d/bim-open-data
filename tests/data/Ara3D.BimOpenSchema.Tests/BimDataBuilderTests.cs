@@ -9,7 +9,7 @@ public static class BimDataBuilderTests
         var bdb = new BimDataBuilder();
         bdb.Manifest.GeneratorApplication = "Test";
         var doc = bdb.AddDocument("doc", "path");
-        var cat = bdb.AddEntity(-1, "", doc, "Walls", BimDataBuilder.InvalidEntityIndex, BimDataBuilder.InvalidEntityIndex);
+        var cat = bdb.AddEntity(-1, null, doc, "Walls", BimDataBuilder.InvalidEntityIndex, BimDataBuilder.InvalidEntityIndex);
         var e = bdb.AddEntity(1, "guid-1", doc, "Wall 1", cat, BimDataBuilder.InvalidEntityIndex);
         bdb.AddParameter(e, 42.5, "Area", "squareFeet", "Dimensions");
         bdb.AddParameter(e, "hello", "Comment", "", "Text");

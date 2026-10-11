@@ -299,14 +299,14 @@ public static class ParquetUtils
         => Task.Run(() => fp.ReadBimGeometryFromParquetZipAsync()).GetAwaiter().GetResult();
 
     /// <summary>Reads every table of the archive into a <see cref="BimData"/>.</summary>
-    public static Task<BimData> ReadBimDataFromParquetZipAsync(this FilePath zipPath, ILogger logger = null)
+    public static Task<BimData> ReadBimDataFromParquetZipAsync(this FilePath zipPath, ILogger? logger = null)
         => zipPath.ReadBimDataFromParquetZipAsync(BosTables.All, logger);
 
     /// <summary>Reads only the tables named in <paramref name="tables"/>, plus the tables their rows
     /// index into (see <see cref="WithReferencedTables"/>). A table that is not read comes back
     /// empty (an empty array, or an empty <see cref="BimGeometry"/>), never invented, and its
     /// archive entry is not even copied out of the zip.</summary>
-    public static async Task<BimData> ReadBimDataFromParquetZipAsync(this FilePath zipPath, BosTables tables, ILogger logger = null)
+    public static async Task<BimData> ReadBimDataFromParquetZipAsync(this FilePath zipPath, BosTables tables, ILogger? logger = null)
     {
         var geometryTables = new List<IDataTable>();
 
@@ -345,7 +345,7 @@ public static class ParquetUtils
         // Older BOS files store parameters in per-type tables instead of the unified
         // "Parameters" table. Each task fills its own slot; they are merged after the reads.
         var legacyParams = new Parameter[LegacyParameterTableNames.Length][];
-        (int Entity, int Descriptor, float Value)[] legacySingles = null;
+        (int Entity, int Descriptor, float Value)[]? legacySingles = null;
 
         async Task ReadOneAsync(int i)
         {
@@ -437,7 +437,7 @@ public static class ParquetUtils
     private static void MergeLegacyParameters(
         BimData data,
         Parameter[][] legacyParams,
-        (int Entity, int Descriptor, float Value)[] legacySingles)
+        (int Entity, int Descriptor, float Value)[]? legacySingles)
     {
         if (legacySingles == null && legacyParams.All(x => x == null))
             return;
@@ -500,7 +500,7 @@ public static class ParquetUtils
     static float F32(object value) => Convert.ToSingle(value);
 
 
-    public static Func<Stream, BimData, Task> GetTableCtor(string name)
+    public static Func<Stream, BimData, Task>? GetTableCtor(string name)
     {
         switch (name)
         {
@@ -620,7 +620,7 @@ public static class ParquetUtils
             parquetCompressionLevel,
             zipCompressionLevel);
 
-        bdb.Geometry.WriteParquetToZip(
+        bdb.Geometry?.WriteParquetToZip(
             zip,
             parquetCompressionMethod,
             parquetCompressionLevel,

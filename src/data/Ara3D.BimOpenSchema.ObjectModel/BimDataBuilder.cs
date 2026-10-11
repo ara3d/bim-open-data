@@ -4,7 +4,12 @@ using System.Diagnostics;
 
 namespace Ara3D.BimOpenSchema;
 
-// This is a helper class for incrementally constructing a BIMData object without repeating objects. 
+/// <summary>
+/// Builds a BimData incrementally, storing each string, number, point, document, and
+/// descriptor once. A null string (a GlobalId, a name, a title, units, a group, a message)
+/// is stored as index -1, which the specification defines as absent; "" is a real value
+/// and is interned like any other string.
+/// </summary>
 public class BimDataBuilder 
 {
     public Manifest Manifest { get; set; } = new();
@@ -44,11 +49,11 @@ public class BimDataBuilder
     }
 
 
-    public string Get(StringIndex index) => _strings[(int)index];
+    public string? Get(StringIndex index) => (uint)index < (uint)_strings.Count ? _strings[(int)index] : null;
     public Entity Get(EntityIndex index) => _entities[(int)index];
     public Document Get(DocumentIndex index) => _documents[(int)index];
-    public Point Get(PointIndex index) => _points[(int)index];
-    public float Get(NumberIndex index) => _numbers[(int)index];
+    public Point? Get(PointIndex index) => (uint)index < (uint)_points.Count ? _points[(int)index] : null;
+    public float? Get(NumberIndex index) => (uint)index < (uint)_numbers.Count ? _numbers[(int)index] : null;
     public Parameter Get(ParameterIndex index) => _parameters[(int)index];
     public EntityRelation Get(RelationIndex index) => _relations[(int)index];
     public ParameterDescriptor Get(DescriptorIndex index) => _descriptors[(int)index];
@@ -64,11 +69,10 @@ public class BimDataBuilder
     public IReadOnlyList<Diagnostic> Diagnostics => _diagnostics;
 
     // TODO: it is very awkward that this is not a BimGeometryBuilder
-    public BimGeometry Geometry { get; set; }
+    public BimGeometry? Geometry { get; set; }
 
-    private int Add<T>(Dictionary<T, int> d, List<T> list, T val)
+    private int Add<T>(Dictionary<T, int> d, List<T> list, T val) where T : notnull
     {
-        Debug.Assert(val != null);
         if (d.TryGetValue(val, out var index))
             return index;
         // The new index must come from the list, not the dictionary: AddBimData appends
@@ -88,7 +92,9 @@ public class BimDataBuilder
     public const DescriptorIndex InvalidDescriptorIndex = (DescriptorIndex)(-1);
     public const NumberIndex InvalidNumberIndex = (NumberIndex)(-1);
 
-    public EntityIndex AddEntity(long localId, string globalId, DocumentIndex d, string name, EntityIndex category, EntityIndex type)
+    /// <summary>Adds an entity. A null <paramref name="globalId"/> or <paramref name="name"/> is
+    /// stored as -1 (absent); pass -1 as <paramref name="localId"/> when it has no local id.</summary>
+    public EntityIndex AddEntity(long localId, string? globalId, DocumentIndex d, string? name, EntityIndex category, EntityIndex type)
     {
         _entities.Add(new(localId, AddString(globalId), d, AddString(name), category, type));
         return (EntityIndex)(_entities.Count - 1);
@@ -100,20 +106,22 @@ public class BimDataBuilder
         return (EntityIndex)(_entities.Count - 1);
     }
 
-    public void UpdateEntity(EntityIndex index, long localId, string globalId, DocumentIndex d, string name, EntityIndex category, EntityIndex type)
+    /// <summary>Replaces an entity made by <see cref="AddEntity()"/>; null is absent, as in AddEntity.</summary>
+    public void UpdateEntity(EntityIndex index, long localId, string? globalId, DocumentIndex d, string? name, EntityIndex category, EntityIndex type)
         => _entities[(int)index] = new(localId, AddString(globalId), d, AddString(name), category, type);
 
-    public DocumentIndex AddDocument(string title, string pathName)
+    public DocumentIndex AddDocument(string? title, string? pathName)
         => (DocumentIndex)Add(_documentLookup, _documents, new(AddString(title), AddString(pathName)));
 
     public PointIndex AddPoint(Point p)
         => (PointIndex)Add(_pointLookup, _points, p);
 
-    public DescriptorIndex AddDescriptor(string name, string units, string group, ParameterType pt)
+    public DescriptorIndex AddDescriptor(string name, string? units, string? group, ParameterType pt)
         => (DescriptorIndex)Add(_descriptorLookup, _descriptors, new(AddString(name), AddString(units), AddString(group), pt));
 
-    public StringIndex AddString(string name)
-        => (StringIndex)Add(_stringLookup, _strings, name ?? "");
+    /// <summary>The index of the string, added if new; -1 (absent) for null.</summary>
+    public StringIndex AddString(string? s)
+        => s is null ? InvalidStringIndex : (StringIndex)Add(_stringLookup, _strings, s);
 
     public NumberIndex AddNumber(double val)
         => (NumberIndex)Add(_numberLookup, _numbers, (float)val);
@@ -127,8 +135,13 @@ public class BimDataBuilder
     public void AddParameter(EntityIndex e, EntityIndex val, DescriptorIndex d)
         => _parameters.Add(new(e, d, (int)val));
 
-    public void AddParameter(EntityIndex e, string val, DescriptorIndex d)
-        => _parameters.Add(new(e, d, (int)AddString(val)));
+    /// <summary>Adds a String parameter. A null value adds no row: a parameter without a
+    /// value is absent, and "" is a value.</summary>
+    public void AddParameter(EntityIndex e, string? val, DescriptorIndex d)
+    {
+        if (val is not null)
+            _parameters.Add(new(e, d, (int)AddString(val)));
+    }
 
     public void AddParameter(EntityIndex e, PointIndex pi, DescriptorIndex d)
         => _parameters.Add(new(e, d, (int)pi));
@@ -136,25 +149,25 @@ public class BimDataBuilder
     public void AddParameter(EntityIndex e, Point p, DescriptorIndex d)
         => _parameters.Add(new(e, d, (int)AddPoint(p)));
 
-    public void AddParameter(EntityIndex e, double val, string name, string units, string group)
+    public void AddParameter(EntityIndex e, double val, string name, string? units, string? group)
         => AddParameter(e, val, AddDescriptor(name, units, group, ParameterType.Number));
 
-    public void AddParameter(EntityIndex e, int val, string name, string units, string group)
+    public void AddParameter(EntityIndex e, int val, string name, string? units, string? group)
         => AddParameter(e, val, AddDescriptor(name, units, group, ParameterType.Int));
 
-    public void AddParameter(EntityIndex e, EntityIndex val, string name, string units, string group)
+    public void AddParameter(EntityIndex e, EntityIndex val, string name, string? units, string? group)
         => AddParameter(e, val, AddDescriptor(name, units, group, ParameterType.Entity));
 
-    public void AddParameter(EntityIndex e, string val, string name, string units, string group)
+    public void AddParameter(EntityIndex e, string? val, string name, string? units, string? group)
         => AddParameter(e, val, AddDescriptor(name, units, group, ParameterType.String));
 
-    public void AddParameter(EntityIndex e, Point p, string name, string units, string group)
+    public void AddParameter(EntityIndex e, Point p, string name, string? units, string? group)
         => AddParameter(e, p, AddDescriptor(name, units, group, ParameterType.Point));
 
-    public void AddParameter(EntityIndex e, PointIndex pi, string name, string units, string group)
+    public void AddParameter(EntityIndex e, PointIndex pi, string name, string? units, string? group)
         => AddParameter(e, pi, AddDescriptor(name, units, group, ParameterType.Point));
 
-    public void AddDiagnostic(DiagnosticType type, string msg, DocumentIndex di, EntityIndex e)
+    public void AddDiagnostic(DiagnosticType type, string? msg, DocumentIndex di, EntityIndex e)
         => _diagnostics.Add(new(type, di, e, AddString(msg)));
 
     /// <summary>
@@ -171,7 +184,7 @@ public class BimDataBuilder
     public void AddBimData(IBimData bd)
         => AddBimData(bd, null, null, preserveDocuments: true);
 
-    private void AddBimData(IBimData bd, string title, string path, bool preserveDocuments)
+    private void AddBimData(IBimData bd, string? title, string? path, bool preserveDocuments)
     {
         var numEntities = _entities.Count;
         var numPoints = _points.Count;

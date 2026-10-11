@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
     <Description>Builders, accessors, and a navigable object model over BIM Open Schema data.</Description>
   </PropertyGroup>
 

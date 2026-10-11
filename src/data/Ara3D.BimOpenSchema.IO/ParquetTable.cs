@@ -14,7 +14,7 @@ public class ParquetTable<T> : IReadOnlyList<T>, IDataTable
     public string Name { get; }
     public IReadOnlyList<IDataRow> Rows { get;  }
     public IReadOnlyList<IDataColumn> Columns { get; }
-    public object this[int column, int row] => _parquetColumns[column].Data.GetValue(row);
+    public object this[int column, int row] => _parquetColumns[column].Data.GetValue(row)!;
     private IReadOnlyList<Parquet.Data.DataColumn> _parquetColumns { get; }
     private Func<object[], T> _ctor;
 
@@ -42,7 +42,7 @@ public class ParquetTable<T> : IReadOnlyList<T>, IDataTable
         {
             var vals = new object[_parquetColumns.Count];
             for (int i = 0; i < _parquetColumns.Count; i++)
-                vals[i] = _parquetColumns[i].Data.GetValue(n);
+                vals[i] = _parquetColumns[i].Data.GetValue(n)!;
             return _ctor(vals);
         }
     }
