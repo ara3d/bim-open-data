@@ -110,9 +110,10 @@ writer does for those two columns.
   there, as with Ara3D.Ifc.Bos.
 - **Shells** (class `SHELL`) are planar polygons: each profile is an outer
   loop of point indices, each hole names its profile by `profile_id`; a `BIG`
-  shell keeps 32-bit indices in `big_profiles` and `big_holes`. `ShellMesher`
+  shell keeps 32-bit indices in `big_profiles` and `big_holes`. Ara3D.Geometry's
+  `ShellMesher` (in ara3d-sdk since 566f24d, shared with Ara3D.Ifc.Mesher)
   projects each profile onto the coordinate plane its Newell normal is most
-  aligned with, triangulates it with holes by `Earcut` (a port of
+  aligned with, triangulates it with holes by Ara3D.Geometry's `Earcut` (a port of
   mapbox/earcut 3.0.1, ISC, the library That Open's viewer uses), and winds
   every triangle to face the way the profile's loop does.
 - **Circle extrusions** (class `CIRCLE_EXTRUSION`, reinforcement bars) are
