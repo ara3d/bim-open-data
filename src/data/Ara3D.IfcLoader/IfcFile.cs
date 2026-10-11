@@ -28,7 +28,7 @@ public class IfcFile : IDisposable
         if (Document == null)
             throw new Exception($"Could not load Document from {fp}");
 
-        Schema = SchemaOf(Document);
+        Schema = IfcSchemas.Of(Document);
 
         logger?.Log($"Retrieving schema"); 
         EntityResolver = new(Document);
@@ -40,10 +40,6 @@ public class IfcFile : IDisposable
         if (includeGeometry)
             LoadGeometryData(logger);
     }
-
-    /// <summary>The schema the document's header names: IFC4X3, IFC4, else IFC2X3.</summary>
-    public static IfcSchema SchemaOf(StepDocument document)
-        => IfcSchemas.Of(document);
 
     public (double X, double Y, double Z) GetSitePlacement()
     {
