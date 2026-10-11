@@ -11,9 +11,16 @@ namespace Ara3D.Ids;
 /// <see cref="Verdict.InfoNotAvailable"/> and a warning, never a pass.</summary>
 public static class IdsEvaluator
 {
-    public static IdsReport Evaluate(Xids ids, IdsModel model)
+    /// <summary>Evaluates a loaded document; the loader's warnings (a facet it skipped, say)
+    /// come first in the report's warnings, because a skipped facet is a requirement nobody checked.</summary>
+    public static IdsReport Evaluate(IdsDocument document, IdsModel model)
+        => Evaluate(document.Ids, model, document.Warnings);
+
+    public static IdsReport Evaluate(Xids ids, IdsModel model, IReadOnlyList<string>? loaderWarnings = null)
     {
         var warnings = new IdsWarnings();
+        foreach (var warning in loaderWarnings ?? [])
+            warnings.Add(warning);
         var verdicts = new List<IdsVerdict>();
         foreach (var specification in ids.AllSpecifications())
             Evaluate(specification, model, verdicts, warnings);

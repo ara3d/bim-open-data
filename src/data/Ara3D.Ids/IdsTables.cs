@@ -28,6 +28,9 @@ public static class IdsTables
     /// <summary>One row per specification, before any model is read: CheckId, CheckTitle,
     /// IfcVersion, Cardinality, Applicability, Requirements, and Supported (false when a facet
     /// would give InfoNotAvailable).</summary>
+    public static IDataTable Specifications(IdsDocument document, string name = "specifications")
+        => Specifications(document.Ids, name);
+
     public static IDataTable Specifications(Xids ids, string name = "specifications")
     {
         var specs = ids.AllSpecifications().ToList();

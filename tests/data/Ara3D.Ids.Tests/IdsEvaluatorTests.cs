@@ -177,6 +177,15 @@ public sealed class IdsEvaluatorTests
     }
 
     [Test]
+    public void MisspelledFacet_IsReportedAsAWarning_NotAPass()
+    {
+        // The loader skips an element it does not know and logs it; the report must carry that.
+        var report = Run(Entity("IFCWALL"), "<proprety><propertySet><simpleValue>Pset_WallCommon</simpleValue></propertySet><baseName><simpleValue>FireRating</simpleValue></baseName></proprety>");
+        Assert.That(report.Warnings, Has.Exactly(1).Contains("proprety").IgnoreCase);
+        Assert.That(ByGlobalId(report)[Wall2].Verdict, Is.EqualTo(Verdict.Pass), "no requirement survived; the warning is the signal");
+    }
+
+    [Test]
     public void Rows_CarryTheSpecificationNameDescriptionAndFacets()
     {
         var ids = IdsFile.Parse(Document(Specification("DC-W1", Entity("IFCDOOR"), Attribute("OverallWidth", AtLeast(0.85)),
