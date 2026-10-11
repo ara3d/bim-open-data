@@ -24,7 +24,10 @@ One pipeline, read top to bottom:
 | `SweptSolids.cs` | Extrusions, revolutions, swept disks, ribbons |
 | `ProfileBuilder.cs` | Profile definitions (rectangles, circles, I and L shapes, arbitrary and composite) to a `PolygonWithHoles` |
 | `CurveEvaluator.cs` | Curves (polylines, conics, trimmed, composite, B-spline control polygons) to point lists |
-| `Brep.cs` | Faceted and advanced breps, face sets and shells, with planar, cylindrical, revolved and B-spline face surfaces |
+| `Brep.cs` | Faceted and advanced breps, face-based and shell-based surface models, single faces: each a set of faces |
+| `FaceSetBuilder.cs` | Triangulates a set of faces into one welded mesh, dropping and recording faces it cannot |
+| `FaceBounds.cs` | A face's bounds (polyloops, edge loops, curve-bounded planes) to 3D rings |
+| `SurfaceMap.cs`, `PlanarMap.cs`, `CylinderMap.cs`, `RevolutionMap.cs`, `BSplineSurfaceMap.cs` | Projection of a face ring to 2D for triangulation and back onto its surface: a plane, a cylinder, a surface of revolution, or a B-spline surface |
 | `Tessellated.cs` | Triangulated and polygonal face sets |
 | `Booleans.cs` | Half-space clipping, including polygonal-bounded half-spaces |
 | `OpeningCarver.cs` | `IfcRelVoidsElement` openings carved from convex hosts, with reveal caps |
