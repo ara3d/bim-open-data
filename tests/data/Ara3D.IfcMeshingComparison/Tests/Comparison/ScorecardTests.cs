@@ -13,7 +13,7 @@ public sealed class ScorecardTests
 
     [Test]
     [Category("IfcMesherParity")]
-    [Explicit("Writes bench/ifc-mesher/scorecard.json; run with --filter Category=IfcMesherParity")]
+    [Explicit("Writes bench/ifc-mesher/scorecard.json; run with --filter FullyQualifiedName~ScoreQuickComparisonFiles")]
     public void ScoreQuickComparisonFiles()
     {
         WebIfcBfastOracle.GenerateAll(TestFiles.QuickComparisonFiles(), TestContext.WriteLine);
