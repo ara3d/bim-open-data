@@ -75,6 +75,43 @@ public sealed class BSplineCurveTests
     }
 
     [Test]
+    [GeometryCoverage("IFCRATIONALBSPLINECURVEWITHKNOTS")]
+    public void RationalCircleProfile_ExtrudesToTheUnitCircleBounds()
+    {
+        // Four rational quarter arcs: nine control points, weights 1 and sqrt(2)/2 alternating.
+        using var model = MicroIfc.Parse(string.Join(Environment.NewLine,
+            "#1=IFCCARTESIANPOINT((1.,0.));",
+            "#2=IFCCARTESIANPOINT((1.,1.));",
+            "#3=IFCCARTESIANPOINT((0.,1.));",
+            "#4=IFCCARTESIANPOINT((-1.,1.));",
+            "#5=IFCCARTESIANPOINT((-1.,0.));",
+            "#6=IFCCARTESIANPOINT((-1.,-1.));",
+            "#7=IFCCARTESIANPOINT((0.,-1.));",
+            "#8=IFCCARTESIANPOINT((1.,-1.));",
+            "#9=IFCRATIONALBSPLINECURVEWITHKNOTS(2,(#1,#2,#3,#4,#5,#6,#7,#8,#1),.UNSPECIFIED.,.T.,.F.,"
+                + "(3,2,2,2,3),(0.,0.25,0.5,0.75,1.),.UNSPECIFIED.,"
+                + "(1.,0.7071067811865476,1.,0.7071067811865476,1.,0.7071067811865476,1.,0.7071067811865476,1.));",
+            "#10=IFCARBITRARYCLOSEDPROFILEDEF(.AREA.,'Circle',#9);",
+            "#11=IFCDIRECTION((0.,0.,1.));",
+            "#12=IFCEXTRUDEDAREASOLID(#10,$,#11,2.);"));
+
+        var mesh = GeometryDispatcher.TryBuild(model.Context, model.Entity(12));
+
+        Assert.That(mesh, Is.Not.Null, string.Join("; ", model.Context.Diagnostics.Messages.TakeLast(3)));
+        var points = mesh!.Value.Points;
+        Assert.Multiple(() =>
+        {
+            Assert.That(points.Min(p => p.X.Value), Is.EqualTo(-1f).Within(1e-4f));
+            Assert.That(points.Max(p => p.X.Value), Is.EqualTo(1f).Within(1e-4f));
+            Assert.That(points.Min(p => p.Y.Value), Is.EqualTo(-1f).Within(1e-4f));
+            Assert.That(points.Max(p => p.Y.Value), Is.EqualTo(1f).Within(1e-4f));
+            Assert.That(points.Max(p => p.Z.Value), Is.EqualTo(2f).Within(1e-5f));
+            Assert.That(points.Where(p => p.Z.Value == 0f).Max(p => p.X.Value * p.X.Value + p.Y.Value * p.Y.Value),
+                Is.EqualTo(1f).Within(1e-3f));
+        });
+    }
+
+    [Test]
     public void RationalEntity_QuarterCircle_ReadsWeightsAndKnots()
     {
         using var model = MicroIfc.Parse("""

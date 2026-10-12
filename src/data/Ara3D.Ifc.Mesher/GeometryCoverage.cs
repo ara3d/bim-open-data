@@ -100,7 +100,7 @@ public static class GeometryCoverage
         new("IFCARCINDEX", GeometryCreationSupport.Partial, "Indexed polycurve arc indices sampled as arcs."),
         new("IFCBSPLINECURVE", GeometryCreationSupport.Supported, "Clamped uniform knots; sampled by control-polygon turning.", "BSplineCurve_Plain"),
         new("IFCBSPLINECURVEWITHKNOTS", GeometryCreationSupport.Supported, "Evaluated from degree, knots and multiplicities.", "BSplineCurve_Knots"),
-        new("IFCRATIONALBSPLINECURVEWITHKNOTS", GeometryCreationSupport.Partial, "Evaluated with weights and knots by BSplineCurves; CurveEvaluator and SweptSolids do not yet dispatch this entity name."),
+        new("IFCRATIONALBSPLINECURVEWITHKNOTS", GeometryCreationSupport.Supported, "Evaluated with weights, knots and multiplicities.", "BSplineCurve_Rational"),
         new("IFCINDEXEDPOLYGONALFACE", GeometryCreationSupport.Partial, "Indexed polygon face fan-triangulated from one-based CoordIndex."),
         new("IFCINDEXEDPOLYGONALFACEWITHVOIDS", GeometryCreationSupport.Partial, "Outer and inner CoordIndex rings; planar XY triangulation."),
     ];

@@ -35,7 +35,7 @@ public static class CurveEvaluator
             "IFCLINE" => Conics.EvaluateLine2D(ctx, curve),
             "IFCTRIMMEDCURVE" => TrimmedCurves.Evaluate2D(ctx, curve),
             "IFCCOMPOSITECURVE" => CompositeCurves.Evaluate2D(ctx, curve),
-            "IFCBSPLINECURVEWITHKNOTS" or "IFCBSPLINECURVE" => BSplineCurves.Evaluate2D(ctx, curve),
+            "IFCBSPLINECURVEWITHKNOTS" or "IFCRATIONALBSPLINECURVEWITHKNOTS" or "IFCBSPLINECURVE" => BSplineCurves.Evaluate2D(ctx, curve),
             _ => throw new NotSupportedException($"Unsupported 2D curve {curve.GetEntityName()} #{curve.Id}"),
         };
 
@@ -57,7 +57,7 @@ public static class CurveEvaluator
             "IFCLINE" => Conics.EvaluateLine3D(ctx, curve),
             "IFCTRIMMEDCURVE" => TrimmedCurves.Evaluate3D(ctx, curve),
             "IFCCOMPOSITECURVE" => CompositeCurves.Evaluate3D(ctx, curve),
-            "IFCBSPLINECURVEWITHKNOTS" or "IFCBSPLINECURVE" => BSplineCurves.Evaluate3D(ctx, curve),
+            "IFCBSPLINECURVEWITHKNOTS" or "IFCRATIONALBSPLINECURVEWITHKNOTS" or "IFCBSPLINECURVE" => BSplineCurves.Evaluate3D(ctx, curve),
             _ => throw new NotSupportedException($"Unsupported 3D curve {curve.GetEntityName()} #{curve.Id}"),
         };
         ctx.Diagnostics.RecordSupported(curve.GetEntityName());
