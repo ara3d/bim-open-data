@@ -91,19 +91,25 @@ internal static class IdsFacets
             : FacetMatch.No($"PredefinedType '{predefined?.Token}' is not {facet.PredefinedType!.Short()}");
     }
 
-    /// <summary>Raised once per report whenever a property facet is evaluated, until TKT-237
-    /// (bim-open-toolkit) brings type-object property sets into BOS.</summary>
-    internal const string TypePropertySetsWarning =
-        "property sets on type objects are not in BOS yet, so a value an occurrence inherits from its type is not seen (TKT-237)";
+    /// <summary>Raised once per report when an occurrence names a type object the model cannot
+    /// find by name, so a property it lacks gives InfoNotAvailable.</summary>
+    internal const string UnresolvedTypeWarning =
+        "an occurrence's type object cannot be told from its name in the entities table, so a property it might inherit gives InfoNotAvailable; a TypeIndex column (the type's EntityIndex) removes the doubt";
 
+    /// <summary>Reads the entity's own values and those it inherits from its type. When it names a
+    /// type that cannot be found and carries no matching value itself, the answer cannot be told.</summary>
     private static FacetMatch MatchProperty(IfcPropertyFacet facet, IdsEntity entity, double? lengthToMetre, IdsWarnings warnings)
     {
-        warnings.Add(TypePropertySetsWarning);
         var candidates = entity.Properties
             .Where(v => Satisfies(facet.PropertySetName, v.Group, ignoreCase: false)
                 && Satisfies(facet.PropertyName, v.Name, ignoreCase: false) && v.IsPresent)
             .ToList();
         var subject = $"{facet.PropertySetName?.Short()}.{facet.PropertyName?.Short()}";
+        if (candidates.Count == 0 && entity.TypeUnresolved is { } unresolved)
+        {
+            warnings.Add(UnresolvedTypeWarning);
+            return FacetMatch.Unsupported($"no {subject} of its own, and {unresolved}");
+        }
         if (candidates.Count == 0)
             return FacetMatch.Absent($"no {subject}");
         var expected = ExpectedKind(facet.DataType, warnings);

@@ -10,6 +10,10 @@ namespace Ara3D.Ids.Tests;
 /// LongName is the entity name and whose IFC Name is the room number. Enumerations are stored
 /// as the converter stores them, with their dots. The model records no length unit; the wall's
 /// quantity states its unit, "m", in the Units column.
+/// <para>Both doors are of the door type "Door Type A" (named in the Type column, as the
+/// <c>EntityText</c> view names it), which carries Pset_DoorCommon.FireRating = EI60 and an
+/// OperationType attribute: door D1 overrides the fire rating with its own EI30, door D2 has
+/// none of its own.</para>
 /// <para>The relations, as the IFC converter writes them: wall W1 HasMaterial a layer set whose two
 /// layers each HasMaterial a material, "Concrete" and "Insulation"; door D1 HasMaterial "Wood";
 /// both doors are ContainedIn the storey "Level 1", which is MemberOf (IfcRelAggregates) the
@@ -17,7 +21,8 @@ namespace Ara3D.Ids.Tests;
 /// relations out, <see cref="BuildWithRelations"/> gives them.</para></summary>
 internal static class IdsTestModel
 {
-    public const string Door1 = "D1", Door2 = "D2", Wall1 = "W1", Wall2 = "W2", Window = "X1", Space = "S1";
+    public const string Door1 = "D1", Door2 = "D2", Wall1 = "W1", Wall2 = "W2", Window = "X1", Space = "S1", DoorType = "DT1";
+    public const string DoorTypeName = "Door Type A";
 
     public static IdsModel Build()
         => IdsModel.FromTables(Entities(), Parameters());
@@ -28,19 +33,20 @@ internal static class IdsTestModel
     public static IDataTable Entities()
     {
         var b = new DataTableBuilder("entities");
-        b.AddColumn(new object?[] { 0L, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 12L, 13L, 14L }, "EntityIndex", typeof(long));
-        b.AddColumn(new object?[] { Door1, Door2, Wall1, Wall2, Window, Space, null, null, null, null, null, null, null, "L1", "B1" }, "GlobalId", typeof(string));
+        b.AddColumn(new object?[] { 0L, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 12L, 13L, 14L, 15L }, "EntityIndex", typeof(long));
+        b.AddColumn(new object?[] { Door1, Door2, Wall1, Wall2, Window, Space, null, null, null, null, null, null, null, "L1", "B1", DoorType }, "GlobalId", typeof(string));
         b.AddColumn(new object?[]
         {
             "Door 1", "Door 2", "Wall 1", "Wall 2", "Window 1", "Kitchen", "IFCDOOR",
-            "Wall Set", null, null, "Concrete", "Insulation", "Wood", "Level 1", "Building",
+            "Wall Set", null, null, "Concrete", "Insulation", "Wood", "Level 1", "Building", DoorTypeName,
         }, "Name", typeof(string));
         b.AddColumn(new object?[]
         {
             "IFCDOOR", "IFCDOOR", "IFCWALL", "IFCWALL", "IFCWINDOW", "IFCSPACE", null,
             "IFCMATERIALLAYERSET", "IFCMATERIALLAYER", "IFCMATERIALLAYER", "IFCMATERIAL", "IFCMATERIAL", "IFCMATERIAL",
-            "IFCBUILDINGSTOREY", "IFCBUILDING",
+            "IFCBUILDINGSTOREY", "IFCBUILDING", "IFCDOORTYPE",
         }, "Category", typeof(string));
+        b.AddColumn(new object?[] { DoorTypeName, DoorTypeName, null, null, null, null, null, null, null, null, null, null, null, null, null, null }, "Type", typeof(string));
         return b.Build();
     }
 
@@ -60,6 +66,8 @@ internal static class IdsTestModel
             (3, "FireRating", "Pset_WallCommon", "String", null),
             (3, "LoadBearing", "Pset_WallCommon", "String", ".F."),
             (5, "Ifc:Room:Number", "IFCSPACE", "String", "101"),
+            (15, "FireRating", "Pset_DoorCommon", "String", "EI60"),
+            (15, "Ifc:OperationType", "IFCDOORTYPE", "String", ".SINGLE_SWING_LEFT."),
         };
         var b = new DataTableBuilder("parameters");
         b.AddColumn(rows.Select(r => (object?)r.Entity).ToArray(), "EntityIndex", typeof(long));

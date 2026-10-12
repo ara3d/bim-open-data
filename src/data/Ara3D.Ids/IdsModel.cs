@@ -65,7 +65,11 @@ public enum IdsValueKind
 
 /// <summary>An entity with its parameters. BOS stores IFC property-set values under the set's
 /// name and IFC attributes as parameters named <c>Ifc:{attribute}</c> grouped under the entity's
-/// class; GlobalId and Name live on the entity itself and are exposed as attributes too.</summary>
+/// class; GlobalId and Name live on the entity itself and are exposed as attributes too.
+/// <para>An occurrence's type object (a door type, an IFC2x3 door style) keeps its own property
+/// sets as parameters on the type entity (see <c>IfcTypeObjects</c> in Ara3D.Ifc.Conventions), so
+/// <see cref="Properties"/> adds the type's values to the occurrence's own, as IDS 1.0 and
+/// ifctester do. Attributes are not inherited: PredefinedType is the occurrence's own.</para></summary>
 public sealed record IdsEntity(
     long EntityIndex,
     string GlobalId,
@@ -73,11 +77,48 @@ public sealed record IdsEntity(
     string Category,
     IReadOnlyList<IdsValue> Values)
 {
+    /// <summary>The BOS entity index of the type object (<c>Entity.Type</c>), or -1 when the entity
+    /// has none or the source gives only the type's name.</summary>
+    public long TypeIndex { get; init; } = -1;
+
+    /// <summary>The type object's name, as the <c>EntityText</c> view's <c>Type</c> column gives
+    /// it; "" when the entity has none.</summary>
+    public string TypeName { get; init; } = "";
+
+    /// <summary>Resolves <see cref="Type"/>; null for an entity built outside
+    /// <see cref="IdsModel.FromBimData"/> and <see cref="IdsModel.FromTables"/>, which has no type.</summary>
+    internal IdsTypeObjects? TypeObjects { get; init; }
+
+    public bool HasType
+        => TypeIndex >= 0 || TypeName.Length > 0;
+
+    /// <summary>The type object, or null when the entity has none or it cannot be told (see
+    /// <see cref="TypeUnresolved"/>).</summary>
+    public IdsEntity? Type
+        => TypeObjects?.Of(this);
+
+    /// <summary>Why the entity names a type that cannot be found, or null.</summary>
+    internal string? TypeUnresolved
+        => TypeObjects?.Unresolved(this);
+
     public bool IsAttribute(IdsValue value)
         => value.Group == Category && value.Name.StartsWith(IfcParameterNames.Prefix, StringComparison.Ordinal);
 
-    public IEnumerable<IdsValue> Properties
+    /// <summary>The property values the entity itself carries, without its type's.</summary>
+    public IEnumerable<IdsValue> OwnProperties
         => Values.Where(v => !IsAttribute(v));
+
+    /// <summary>The entity's own property values, then its type's for each set and property name
+    /// the entity does not carry. The entity's row wins even when its value is empty, as an IFC
+    /// <c>$</c> on the occurrence overrides the type in ifctester.</summary>
+    public IEnumerable<IdsValue> Properties
+        => Type is { } type ? Inherit(OwnProperties.ToList(), type.OwnProperties) : OwnProperties;
+
+    private static IEnumerable<IdsValue> Inherit(IReadOnlyList<IdsValue> own, IEnumerable<IdsValue> inherited)
+    {
+        var stated = own.Select(v => (v.Group, v.Name)).ToHashSet();
+        return own.Concat(inherited.Where(v => !stated.Contains((v.Group, v.Name))));
+    }
 
     /// <summary>Every attribute BOS carries for the entity, keyed by the IFC attribute name.</summary>
     public IEnumerable<(string Name, IdsValue Value)> Attributes
@@ -146,7 +187,7 @@ public sealed class IdsModel
     public double? LengthToMetre { get; }
 
     /// <summary>Every entity whose category is a row (the class entity), with its parameters in
-    /// table order, and the document's relations. Values are rendered as the DuckDB text views render them: an entity value by
+    /// table order and its <c>Entity.Type</c>, and the document's relations. Values are rendered as the DuckDB text views render them: an entity value by
     /// its name, a point as text, an absent string or number as "".</summary>
     public static IdsModel FromBimData(IBimData data)
     {
@@ -162,22 +203,32 @@ public sealed class IdsModel
             list.Add(value);
         }
 
+        IdsModel? model = null;
+        var types = new IdsTypeObjects(() => model!);
         var entities = new List<IdsEntity>();
         for (var i = 0; i < data.Entities.Length; i++)
         {
             var e = data.Entities[i];
             if ((uint)e.Category >= (uint)data.Entities.Length)
                 continue;
+            var hasType = (uint)e.Type < (uint)data.Entities.Length && (int)e.Type != i;
             entities.Add(new(i, Text(data, e.GlobalId), Text(data, e.Name), Text(data, data.Entities[(int)e.Category].Name),
-                values.TryGetValue(i, out var list) ? list : []));
+                values.TryGetValue(i, out var list) ? list : [])
+            {
+                TypeIndex = hasType ? (int)e.Type : -1,
+                TypeName = hasType ? Text(data, data.Entities[(int)e.Type].Name) : "",
+                TypeObjects = types,
+            });
         }
 
         var relations = data.Relations;
-        return new(entities, () => IdsRelations.FromBimData(relations));
+        return model = new(entities, () => IdsRelations.FromBimData(relations));
     }
 
     /// <summary>From the text tables: <c>EntityIndex</c>, <c>GlobalId</c>, <c>Name</c>,
-    /// <c>Category</c>; and <c>EntityIndex</c>, <c>Name</c>, <c>ParameterGroup</c>,
+    /// <c>Category</c>, and optionally <c>Type</c> (the type object's name, as the
+    /// <c>EntityText</c> view gives it) and <c>TypeIndex</c> (the type's EntityIndex, which no view
+    /// has yet; when present it is used instead of the name, see <see cref="IdsTypeObjects"/>); and <c>EntityIndex</c>, <c>Name</c>, <c>ParameterGroup</c>,
     /// <c>ValueType</c>, <c>Value</c>, and optionally <c>Units</c> (the <c>ParameterText</c> view
     /// has it); and, optionally, the relations in the <c>RelationText</c> shape (see
     /// <see cref="IdsRelations.FromTable"/>). Column names match case-insensitively. Rows without a
@@ -205,6 +256,10 @@ public sealed class IdsModel
         var eGlobalId = IdsTableColumns.Required(entities, "GlobalId");
         var eName = IdsTableColumns.Required(entities, "Name");
         var eCategory = IdsTableColumns.Required(entities, "Category");
+        var eType = IdsTableColumns.Optional(entities, "Type");
+        var eTypeIndex = IdsTableColumns.Optional(entities, "TypeIndex");
+        IdsModel? model = null;
+        var types = new IdsTypeObjects(() => model!);
         var result = new List<IdsEntity>();
         for (var row = 0; row < entities.Rows.Count; row++)
         {
@@ -213,10 +268,15 @@ public sealed class IdsModel
                 continue;
             var index = IdsTableColumns.Index(entities, eIndex, row);
             result.Add(new(index, IdsTableColumns.Text(entities, eGlobalId, row), IdsTableColumns.Text(entities, eName, row), category,
-                values.TryGetValue(index, out var list) ? list : []));
+                values.TryGetValue(index, out var list) ? list : [])
+            {
+                TypeIndex = eTypeIndex < 0 ? -1 : IdsTableColumns.Index(entities, eTypeIndex, row),
+                TypeName = eType < 0 ? "" : IdsTableColumns.Text(entities, eType, row),
+                TypeObjects = types,
+            });
         }
 
-        return new(result, relations is null ? null : () => IdsRelations.FromTable(relations));
+        return model = new(result, relations is null ? null : () => IdsRelations.FromTable(relations));
     }
 
     private static string Text(IBimData data, StringIndex index)

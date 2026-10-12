@@ -58,14 +58,6 @@ public sealed class IdsEvaluatorTests
     }
 
     [Test]
-    public void PropertyFacet_WarnsOnceThatTypePropertySetsAreNotSeen()
-    {
-        var report = Run(Entity("IFCWALL"), Property("Pset_WallCommon", "FireRating") + Property("Pset_WallCommon", "LoadBearing"));
-        Assert.That(report.Warnings, Is.EqualTo(new[] { IdsFacets.TypePropertySetsWarning }));
-        Assert.That(Run(Entity("IFCWALL")).Warnings, Is.Empty, "no property facet, no warning");
-    }
-
-    [Test]
     public void PropertyFacet_ValueEnumerationAndPattern()
     {
         Assert.That(ByGlobalId(Run(Entity("IFCWALL"), Property("Pset_WallCommon", "FireRating", Enumeration("REI60", "REI90"))))[Wall1].Verdict,
@@ -108,8 +100,7 @@ public sealed class IdsEvaluatorTests
     {
         var report = Run(Entity("IFCWALL"), Property("Pset_WallCommon", "FireRating", dataType: "IFCWIDGET"));
         Assert.That(ByGlobalId(report)[Wall1].Verdict, Is.EqualTo(Verdict.Pass));
-        Assert.That(report.Warnings, Has.Exactly(1).Contains("IFCWIDGET"));
-        Assert.That(report.Warnings, Has.Count.EqualTo(2), "plus the type property set warning");
+        Assert.That(report.Warnings, Is.EqualTo(new[] { "dataType IFCWIDGET is not checked: BOS does not record it" }));
     }
 
     [Test]

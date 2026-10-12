@@ -28,6 +28,17 @@ public sealed class DuplexIdsTests
         Assert.That(report.Verdicts.Select(v => v.GlobalId), Is.Unique);
     }
 
+    /// <summary>Every Duplex door is of an IFCDOORSTYLE, and the styles carry no property values
+    /// (their only HasPropertySets member is an empty lining), so a door inherits nothing.</summary>
+    [Test]
+    public void DoorStyles_AreFoundAndAddNothing()
+    {
+        var doors = Duplex.Value.Entities.Where(e => e.Category == "IFCDOOR").ToList();
+        Assert.That(doors, Has.Count.EqualTo(14));
+        Assert.That(doors.Select(d => d.Type?.Category), Has.All.EqualTo("IFCDOORSTYLE"));
+        Assert.That(doors.Select(d => d.Properties.Count() == d.OwnProperties.Count()), Has.All.True);
+    }
+
     [Test]
     public void NrcAnalytics_TheUnenrichedDuplexFailsEveryElement()
     {
