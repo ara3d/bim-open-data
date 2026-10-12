@@ -40,7 +40,7 @@ public static partial class ColumnKinds
         "Doors to pass from the start room; absent when the room cannot be reached.", ColumnRole.Measure);
 
     public static readonly ColumnKind Distance = new("Distance", ColumnScalarType.Number,
-        "Straight-line distance to the nearest candidate row, in the model's length unit.", ColumnRole.Measure);
+        "A distance in the model's length unit: to the nearest candidate row in bim.nearest, from the plan centre in bim.orientation.", ColumnRole.Measure);
 
     private static IReadOnlyList<ColumnKind> RoomKinds =>
     [

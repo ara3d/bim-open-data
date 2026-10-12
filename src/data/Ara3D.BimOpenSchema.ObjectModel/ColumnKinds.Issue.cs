@@ -33,8 +33,27 @@ public static partial class ColumnKinds
     public static readonly ColumnKind Reason = new(IssueColumns.Reason, ColumnScalarType.Text,
         "Why the entity got its verdict.", ColumnRole.Label);
 
+    public static readonly ColumnKind TopicGuid = new("TopicGuid", ColumnScalarType.Text,
+        "The BCF topic's guid.", ColumnRole.Key);
+
+    public static readonly ColumnKind Author = new("Author", ColumnScalarType.Text,
+        "Who created the BCF topic.", ColumnRole.Label);
+
+    public static readonly ColumnKind CreationDate = new("CreationDate", ColumnScalarType.Text,
+        "When the BCF topic was created, as UTC ISO text (yyyy-MM-ddTHH:mm:ssZ); empty when the file gives none.", ColumnRole.Measure);
+
+    public static readonly ColumnKind AuthoringToolId = new("AuthoringToolId", ColumnScalarType.Text,
+        "An id the authoring tool gave the entity (a Revit UniqueId), set when a BCF names a component only by it; GlobalId is then empty.", ColumnRole.Key);
+
+    public static readonly ColumnKind Elements = new("Elements", ColumnScalarType.Integer,
+        "How many elements a BCF topic selects.", ColumnRole.Measure);
+
+    public static readonly ColumnKind GlobalIds = new("GlobalIds", ColumnScalarType.Text,
+        "The GlobalIds of a BCF topic's elements, comma-separated.", ColumnRole.Label);
+
     private static IReadOnlyList<ColumnKind> IssueKinds =>
     [
         Title, Description, Status, Priority, CheckId, Verdict, CheckTitle, Citation, Reason,
+        TopicGuid, Author, CreationDate, AuthoringToolId, Elements, GlobalIds,
     ];
 }

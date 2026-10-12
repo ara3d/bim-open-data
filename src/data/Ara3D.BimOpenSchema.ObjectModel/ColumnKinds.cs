@@ -22,7 +22,8 @@ public static partial class ColumnKinds
 
     // A static constructor runs after every field initializer, whichever file declares it.
     static ColumnKinds()
-        => All = [.. ElementKinds, .. BoundsKinds, .. RoomKinds, .. ParameterKinds, .. IssueKinds];
+        => All = [.. ElementKinds, .. BoundsKinds, .. RoomKinds, .. ParameterKinds, .. IssueKinds,
+            .. OrientationKinds, .. ScheduleKinds, .. CheckKinds];
 
     /// <summary>The kind with this name, ignoring case, or null.</summary>
     public static ColumnKind? Find(string name)
