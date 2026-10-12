@@ -6,10 +6,11 @@ using Ara3D.Ifc.Conventions;
 namespace Ara3D.Ids;
 
 /// <summary>One parameter of an entity, as the BOS text views show it: the set (or, for an IFC
-/// attribute, the entity's class), the name, the stored type, and the value as text. An empty
-/// text is absent: IDS treats "not provided" and "" alike, and BOS stores an IFC <c>$</c>
-/// property value as an empty string.</summary>
-public sealed record IdsValue(string Group, string Name, ParameterType Type, string Text)
+/// attribute, the entity's class), the name, the stored type, the value as text, and the
+/// descriptor's units ("" when it states none; the IFC converter states none). An empty text is
+/// absent: IDS treats "not provided" and "" alike, and BOS stores an IFC <c>$</c> property value
+/// as an empty string.</summary>
+public sealed record IdsValue(string Group, string Name, ParameterType Type, string Text, string Units = "")
 {
     public bool IsPresent
         => Text.Length > 0;
@@ -116,8 +117,8 @@ public sealed class IdsModel
     public IReadOnlyList<IdsEntity> Entities { get; }
 
     /// <summary>Metres per model length unit, from the project's <c>Ifc:LengthUnitToMetre</c>
-    /// row; null when the model records none. IDS values are in SI, and the evaluator compares
-    /// numbers as stored, so a model not in metres gets a warning.</summary>
+    /// row; null when the model records none. IDS values are in SI, so the evaluator scales a
+    /// length, area or volume by this before comparing it (see <see cref="IdsUnits"/>).</summary>
     public double? LengthToMetre { get; }
 
     /// <summary>Every entity whose category is a row (the class entity), with its parameters in
@@ -131,7 +132,7 @@ public sealed class IdsModel
             if ((uint)p.Descriptor >= (uint)data.Descriptors.Length)
                 continue;
             var d = data.Descriptors[(int)p.Descriptor];
-            var value = new IdsValue(Text(data, d.Group), Text(data, d.Name), d.Type, ValueText(data, d.Type, p.Value));
+            var value = new IdsValue(Text(data, d.Group), Text(data, d.Name), d.Type, ValueText(data, d.Type, p.Value), Text(data, d.Units));
             if (!values.TryGetValue((int)p.Entity, out var list))
                 values[(int)p.Entity] = list = [];
             list.Add(value);
@@ -152,7 +153,8 @@ public sealed class IdsModel
 
     /// <summary>From the two text tables: <c>EntityIndex</c>, <c>GlobalId</c>, <c>Name</c>,
     /// <c>Category</c>; and <c>EntityIndex</c>, <c>Name</c>, <c>ParameterGroup</c>,
-    /// <c>ValueType</c>, <c>Value</c>. Column names match case-insensitively. Rows without a
+    /// <c>ValueType</c>, <c>Value</c>, and optionally <c>Units</c> (the <c>ParameterText</c> view
+    /// has it). Column names match case-insensitively. Rows without a
     /// category are left out; a parameter whose entity is not in the entities table is dropped.</summary>
     public static IdsModel FromTables(IDataTable entities, IDataTable parameters)
     {
@@ -162,13 +164,15 @@ public sealed class IdsModel
         var pGroup = Column(parameters, "ParameterGroup");
         var pType = Column(parameters, "ValueType");
         var pValue = Column(parameters, "Value");
+        var pUnits = OptionalColumn(parameters, "Units");
         for (var row = 0; row < parameters.Rows.Count; row++)
         {
             var index = Index(parameters, pIndex, row);
             var type = Enum.TryParse<ParameterType>(Cell(parameters, pType, row), out var t) ? t : ParameterType.String;
             if (!values.TryGetValue(index, out var list))
                 values[index] = list = [];
-            list.Add(new(Cell(parameters, pGroup, row), Cell(parameters, pName, row), type, Cell(parameters, pValue, row)));
+            list.Add(new(Cell(parameters, pGroup, row), Cell(parameters, pName, row), type, Cell(parameters, pValue, row),
+                pUnits < 0 ? "" : Cell(parameters, pUnits, row)));
         }
 
         var eIndex = Column(entities, "EntityIndex");
@@ -190,12 +194,18 @@ public sealed class IdsModel
     }
 
     private static int Column(IDataTable table, string name)
+        => OptionalColumn(table, name) is var i and >= 0
+            ? i
+            : throw new ArgumentException(
+                $"Table '{table.Name}' has no '{name}' column; its columns are {string.Join(", ", table.Columns.Select(c => c.Descriptor.Name))}");
+
+    /// <summary>The column's position, or -1 when the table has none by that name.</summary>
+    private static int OptionalColumn(IDataTable table, string name)
     {
         for (var i = 0; i < table.Columns.Count; i++)
             if (string.Equals(table.Columns[i].Descriptor.Name, name, StringComparison.OrdinalIgnoreCase))
                 return i;
-        throw new ArgumentException(
-            $"Table '{table.Name}' has no '{name}' column; its columns are {string.Join(", ", table.Columns.Select(c => c.Descriptor.Name))}");
+        return -1;
     }
 
     private static long Index(IDataTable table, int column, int row)

@@ -21,8 +21,6 @@ public static class IdsEvaluator
         var warnings = new IdsWarnings();
         foreach (var warning in loaderWarnings ?? [])
             warnings.Add(warning);
-        if (model.LengthToMetre is { } scale && Math.Abs(scale - 1) > 1e-9)
-            warnings.Add($"numbers are compared in the model's own units (1 length unit = {scale.ToString(System.Globalization.CultureInfo.InvariantCulture)} m); IDS values are in SI, so a bound on a length may not mean what it says");
         var verdicts = new List<IdsVerdict>();
         var index = 0;
         foreach (var specification in ids.AllSpecifications())
@@ -57,13 +55,13 @@ public static class IdsEvaluator
         if (applicability.Any(f => !IdsFacets.IsSupported(f)))
         {
             foreach (var facet in applicability.Where(f => !IdsFacets.IsSupported(f)))
-                IdsFacets.Match(facet, model.Entities.FirstOrDefault() ?? Empty, warnings);
+                IdsFacets.Match(facet, model.Entities.FirstOrDefault() ?? Empty, model.LengthToMetre, warnings);
             Row(null, Outcome.Unknown("the applicability uses a facet that is not evaluated over BOS"));
             return;
         }
 
         var applicable = model.Entities
-            .Where(e => applicability.All(f => IdsFacets.Match(f, e, warnings).Satisfied))
+            .Where(e => applicability.All(f => IdsFacets.Match(f, e, model.LengthToMetre, warnings).Satisfied))
             .ToList();
 
         if (IsProhibited(specification.Cardinality))
@@ -78,7 +76,7 @@ public static class IdsEvaluator
 
         foreach (var entity in applicable)
             Row(entity, requirements
-                .Select(f => Judge(f, RequirementCardinality(specification.Requirement, f), entity, warnings))
+                .Select(f => Judge(f, RequirementCardinality(specification.Requirement, f), entity, model.LengthToMetre, warnings))
                 .ToList()
                 .Combine());
     }
@@ -100,9 +98,9 @@ public static class IdsEvaluator
 
     /// <summary>One facet's outcome under its cardinality: expected means the facet must hold,
     /// prohibited that it must not, optional that it must hold only when its subject exists.</summary>
-    private static Outcome Judge(IFacet facet, Cardinality cardinality, IdsEntity entity, IdsWarnings warnings)
+    private static Outcome Judge(IFacet facet, Cardinality cardinality, IdsEntity entity, double? lengthToMetre, IdsWarnings warnings)
     {
-        var match = IdsFacets.Match(facet, entity, warnings);
+        var match = IdsFacets.Match(facet, entity, lengthToMetre, warnings);
         if (!match.Supported)
             return Outcome.Unknown(match.Reason);
         return cardinality switch

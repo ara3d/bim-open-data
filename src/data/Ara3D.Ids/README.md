@@ -17,8 +17,15 @@ Facets evaluated: entity (class, exact match; predefined type, with ObjectType
 standing in for USERDEFINED), property (set, name, value, and `dataType` at the
 level BOS records: number, logical, or text), and attribute. Classification,
 material, part-of and document facets give `InfoNotAvailable` with a warning.
-Numbers are compared in the model's own units; IDS values are in SI, so a model
-not in metres needs its lengths converted first.
+IDS values are in SI (metres, square metres, cubic metres), so `IdsUnits`
+converts a model's number before comparing it, when its unit can be told: a unit
+stated in the descriptor's Units column (`mm`, `ft`, `m2`), else an attribute
+listed in `IdsUnits.LengthAttributes` (OverallWidth, Elevation, LayerThickness
+and others; add a name there to extend it), else the property facet's
+`dataType` (IFCLENGTHMEASURE scales by the model's `Ifc:LengthUnitToMetre`,
+IFCAREAMEASURE by its square, IFCVOLUMEMEASURE by its cube). A number whose unit
+cannot be told is compared as stored, with a warning naming it, unless the model
+is in metres.
 
 Verdicts: `Pass`, `Fail`, `InfoNotAvailable`. A required specification that
 applies to no entity, and a prohibited one that applies to any, produce `Fail`.

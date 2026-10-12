@@ -8,7 +8,8 @@ namespace Ara3D.Ids.Tests;
 /// a predefined type, one USERDEFINED with an ObjectType), two walls (one with a fire rating and
 /// a length quantity, one with an empty fire rating and a logical), a window, and a space whose
 /// LongName is the entity name and whose IFC Name is the room number. Enumerations are stored
-/// as the converter stores them, with their dots.</summary>
+/// as the converter stores them, with their dots. The model records no length unit; the wall's
+/// quantity states its unit, "m", in the Units column.</summary>
 internal static class IdsTestModel
 {
     public const string Door1 = "D1", Door2 = "D2", Wall1 = "W1", Wall2 = "W2", Window = "X1", Space = "S1";
@@ -47,7 +48,7 @@ internal static class IdsTestModel
         b.AddColumn(rows.Select(r => (object?)r.Entity).ToArray(), "EntityIndex", typeof(long));
         b.AddColumn(rows.Select(r => (object?)r.Name).ToArray(), "Name", typeof(string));
         b.AddColumn(rows.Select(r => (object?)r.Group).ToArray(), "ParameterGroup", typeof(string));
-        b.AddColumn(rows.Select(r => (object?)(string?)null).ToArray(), "Units", typeof(string));
+        b.AddColumn(rows.Select(r => (object?)(r.Name == "Length" ? "m" : null)).ToArray(), "Units", typeof(string));
         b.AddColumn(rows.Select(r => (object?)r.Type).ToArray(), "ValueType", typeof(string));
         b.AddColumn(rows.Select(r => (object?)r.Value).ToArray(), "Value", typeof(string));
         return b.Build();

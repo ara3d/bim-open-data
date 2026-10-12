@@ -36,12 +36,14 @@ internal static class IdsFacets
     public static bool IsSupported(IFacet facet)
         => facet is IfcTypeFacet or IfcPropertyFacet or AttributeFacet;
 
-    public static FacetMatch Match(IFacet facet, IdsEntity entity, IdsWarnings warnings)
+    /// <summary>Numbers are compared in SI, as IDS states them: <paramref name="lengthToMetre"/>
+    /// is the model's metres per length unit, null when it records none (see <see cref="IdsUnits"/>).</summary>
+    public static FacetMatch Match(IFacet facet, IdsEntity entity, double? lengthToMetre, IdsWarnings warnings)
         => facet switch
         {
             IfcTypeFacet f => MatchType(f, entity, warnings),
-            IfcPropertyFacet f => MatchProperty(f, entity, warnings),
-            AttributeFacet f => MatchAttribute(f, entity),
+            IfcPropertyFacet f => MatchProperty(f, entity, lengthToMetre, warnings),
+            AttributeFacet f => MatchAttribute(f, entity, lengthToMetre, warnings),
             _ => FacetMatch.Unsupported(Unsupported(facet, warnings)),
         };
 
@@ -73,7 +75,7 @@ internal static class IdsFacets
     internal const string TypePropertySetsWarning =
         "property sets on type objects are not in BOS yet, so a value an occurrence inherits from its type is not seen (TKT-237)";
 
-    private static FacetMatch MatchProperty(IfcPropertyFacet facet, IdsEntity entity, IdsWarnings warnings)
+    private static FacetMatch MatchProperty(IfcPropertyFacet facet, IdsEntity entity, double? lengthToMetre, IdsWarnings warnings)
     {
         warnings.Add(TypePropertySetsWarning);
         var candidates = entity.Properties
@@ -84,17 +86,21 @@ internal static class IdsFacets
         if (candidates.Count == 0)
             return FacetMatch.Absent($"no {subject}");
         var expected = ExpectedKind(facet.DataType, warnings);
+        var power = IdsUnits.LengthPower(facet.DataType);
         foreach (var value in candidates)
         {
             if (expected is not IdsValueKind.Unknown && value.Kind != expected)
                 return FacetMatch.No($"{subject} = '{value.Text}' is {Describe(value.Kind)}, not {facet.DataType}");
-            if (!IsEmpty(facet.PropertyValue) && !Satisfies(facet.PropertyValue, value.Candidate, ignoreCase: false))
-                return FacetMatch.No($"{subject} = '{value.Text}' is not {facet.PropertyValue!.Short()}");
+            if (IsEmpty(facet.PropertyValue))
+                continue;
+            var candidate = IdsUnits.Candidate(value, power, lengthToMetre, $"{value.Group}.{value.Name}", warnings);
+            if (!Satisfies(facet.PropertyValue, candidate, ignoreCase: false))
+                return FacetMatch.No($"{subject} = {Shown(value, candidate)} is not {facet.PropertyValue!.Short()}");
         }
         return FacetMatch.Yes;
     }
 
-    private static FacetMatch MatchAttribute(AttributeFacet facet, IdsEntity entity)
+    private static FacetMatch MatchAttribute(AttributeFacet facet, IdsEntity entity, double? lengthToMetre, IdsWarnings warnings)
     {
         var candidates = entity.Attributes
             .Where(a => Satisfies(facet.AttributeName, a.Name, ignoreCase: false) && a.Value.IsPresent)
@@ -102,11 +108,22 @@ internal static class IdsFacets
         var subject = $"attribute {facet.AttributeName?.Short()}";
         if (candidates.Count == 0)
             return FacetMatch.Absent($"no {subject}");
+        if (IsEmpty(facet.AttributeValue))
+            return FacetMatch.Yes;
         foreach (var (name, value) in candidates)
-            if (!IsEmpty(facet.AttributeValue) && !Satisfies(facet.AttributeValue, value.Candidate, ignoreCase: false))
-                return FacetMatch.No($"{name} = '{value.Text}' is not {facet.AttributeValue!.Short()}");
+        {
+            var candidate = IdsUnits.Candidate(value, IdsUnits.AttributeLengthPower(name), lengthToMetre, $"attribute {name}", warnings);
+            if (!Satisfies(facet.AttributeValue, candidate, ignoreCase: false))
+                return FacetMatch.No($"{name} = {Shown(value, candidate)} is not {facet.AttributeValue!.Short()}");
+        }
         return FacetMatch.Yes;
     }
+
+    /// <summary>The stored text, and the SI number it was compared as when that differs.</summary>
+    private static string Shown(IdsValue value, object candidate)
+        => candidate is double number && !Equals(candidate, value.Candidate)
+            ? $"'{value.Text}' ({number.ToString("G6", System.Globalization.CultureInfo.InvariantCulture)} in SI)"
+            : $"'{value.Text}'";
 
     /// <summary>The kind an IDS <c>dataType</c> names. BOS keeps numbers, logicals and text apart
     /// but not IFC's measure types, so IFCLENGTHMEASURE and IFCAREAMEASURE both mean a number.</summary>

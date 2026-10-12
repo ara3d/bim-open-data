@@ -125,16 +125,6 @@ public sealed class IdsEvaluatorTests
     }
 
     [Test]
-    public void ModelNotInMetres_Warns()
-    {
-        var millimetres = new IdsModel(Model.Entities.Append(new IdsEntity(99, "P", "Project", "IFCPROJECT",
-            [new IdsValue("IFCPROJECT", "Ifc:LengthUnitToMetre", BimOpenSchema.ParameterType.Number, "0.001")])).ToList());
-        var report = IdsEvaluator.Evaluate(IdsFile.Parse(Document(Specification("S", Entity("IFCDOOR"), Attribute("OverallWidth", AtLeast(0.85))))), millimetres);
-        Assert.That(report.Warnings, Has.Exactly(1).Contains("0.001 m"));
-        Assert.That(IdsEvaluator.Evaluate(IdsFile.Parse(Document(Specification("S", Entity("IFCDOOR")))), Model).Warnings, Is.Empty, "the test model records no unit");
-    }
-
-    [Test]
     public void AttributeFacet_NameAndGlobalIdAreAttributes()
     {
         Assert.That(ByGlobalId(Run(Entity("IFCDOOR"), Attribute("Name", Pattern("Door .*")))).Values.Select(v => v.Verdict),
