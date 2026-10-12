@@ -8,7 +8,7 @@ public sealed class PolygonWithHoles
     public PolygonWithHoles(IReadOnlyList<Vector2> outer, IReadOnlyList<IReadOnlyList<Vector2>>? holes = null)
     {
         Outer = NormalizeOuter(outer);
-        Holes = (holes ?? []).Select(NormalizeHole).Where(h => h.Count >= 3).ToList();
+        Holes = MatchSingleHoleToOuter(Outer, (holes ?? []).Select(NormalizeHole).Where(h => h.Count >= 3).ToList());
     }
 
     public IReadOnlyList<Vector2> Outer { get; }
@@ -18,6 +18,19 @@ public sealed class PolygonWithHoles
     public double SignedArea => new SimplePolygon2D(Outer).SignedArea()
         + Holes.Sum(h => new SimplePolygon2D(h).SignedArea());
     public double Area => Math.Abs(SignedArea);
+
+    /// <summary>A lone hole with a different vertex count than the outer ring is resampled to the
+    /// outer ring's count (when neither ring crosses itself), so the cap triangles and the extrusion
+    /// walls built from <see cref="Holes"/> share their vertices whichever triangulation the cap uses.</summary>
+    static IReadOnlyList<IReadOnlyList<Vector2>> MatchSingleHoleToOuter(
+        IReadOnlyList<Vector2> outer, List<List<Vector2>> holes)
+    {
+        if (holes.Count != 1 || holes[0].Count == outer.Count || outer.Count < 3)
+            return holes.Cast<IReadOnlyList<Vector2>>().ToList();
+        if (HasSelfIntersection(outer) || HasSelfIntersection(holes[0]))
+            return holes.Cast<IReadOnlyList<Vector2>>().ToList();
+        return [ResampleClosedRing(holes[0], outer.Count)];
+    }
 
     /// <summary>The profile's triangles. A single hole is joined to the outer ring by a band of
     /// quads (its ring resampled to the outer ring's count) when it lies inside; otherwise earcut
@@ -63,8 +76,27 @@ public sealed class PolygonWithHoles
             return false;
 
         var innerRing = inner.Count == outer.Count ? inner : ResampleClosedRing(inner, outer.Count);
-        return TryTriangulateCongruentRing(outer, innerRing, out triangles);
+        if (TryTriangulateCongruentRing(outer, innerRing, out var band) && CoversRing(band, outer, inner))
+        {
+            triangles = band;
+            return true;
+        }
+        return false;
     }
+
+    /// <summary>True when the band's triangle areas add up to the area between the rings. Matching
+    /// vertices by index or by resampling twists the band when the rings differ in shape (an
+    /// outer and inner boundary made of arcs and lines), and the twisted band overlaps itself.</summary>
+    static bool CoversRing(IReadOnlyList<Triangle2D> band, IReadOnlyList<Vector2> outer, IReadOnlyList<Vector2> inner)
+    {
+        var expected = Math.Abs(new SimplePolygon2D(outer).SignedArea()) - Math.Abs(new SimplePolygon2D(inner).SignedArea());
+        var sum = band.Sum(t => Math.Abs(TriangleSignedArea(t)));
+        return Math.Abs(sum - expected) <= 1e-3 * Math.Abs(expected);
+    }
+
+    static double TriangleSignedArea(Triangle2D t)
+        => ((t.B.X.Value - t.A.X.Value) * (t.C.Y.Value - t.A.Y.Value)
+            - (t.C.X.Value - t.A.X.Value) * (t.B.Y.Value - t.A.Y.Value)) / 2.0;
 
     /// <summary>Resamples a closed ring to <paramref name="targetCount"/> vertices (arc-length).</summary>
     public static List<Vector2> ResampleClosedRing(IReadOnlyList<Vector2> ring, int targetCount)

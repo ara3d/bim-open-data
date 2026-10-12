@@ -275,5 +275,5 @@ public static class SweptSolids
     static bool IsCurveEntity(string entityName)
         => entityName is "IFCPOLYLINE" or "IFCINDEXEDPOLYCURVE" or "IFCCIRCLE" or "IFCELLIPSE"
             or "IFCLINE" or "IFCTRIMMEDCURVE" or "IFCCOMPOSITECURVE" or "IFCBSPLINECURVE"
-            or "IFCBSPLINECURVEWITHKNOTS";
+            or "IFCBSPLINECURVEWITHKNOTS" or "IFCRATIONALBSPLINECURVEWITHKNOTS";
 }

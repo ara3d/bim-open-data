@@ -145,4 +145,19 @@ public sealed class SweptSolidTests
         Assert.That(profile.Outer, Has.Count.EqualTo(32));
         Assert.That(profile.Triangulate(), Has.Count.EqualTo(30));
     }
+
+    /// <summary>The extrusion of the example.ifc square tube (TKT-65) holds only the wall material:
+    /// profile area 2133 times depth 1000, not the filled square's 9807 times 1000.</summary>
+    [Test]
+    [Ignore("TKT-65: fails until MeshHelpers.BuildExtrusionWithHoles stops passing reverse: true for holes; remove this line then")]
+    public void ExtrudedAreaSolid_ArbitraryProfileWithVoids_VolumeIsTheWall()
+    {
+        using var model = MicroIfc.Parse(
+            "#23=IFCDIRECTION((1.,0.));\n#90=IFCDIRECTION((0.,0.,1.));\n"
+            + "#91=IFCEXTRUDEDAREASOLID(#12509,$,#90,1000.);\n" + ProfileTests.SquareTubeProfile);
+
+        var mesh = SweptSolids.BuildExtrudedAreaSolid(model.Context, model.Entity(91));
+
+        Assert.That(Math.Abs(MeshHelpers.SignedVolume(mesh)), Is.EqualTo(2.1329e6).Within(1e5));
+    }
 }
