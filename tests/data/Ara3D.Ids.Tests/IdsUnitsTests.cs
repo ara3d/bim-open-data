@@ -11,19 +11,36 @@ public sealed class IdsUnitsTests
 {
     private const string Wall = "W1";
 
-    /// <summary>A project in millimetres, doors 900 and 800 wide, and a wall with a 5000 length
-    /// and an area of 2 square metres (2,000,000 square millimetres) in its quantity set.</summary>
-    private static readonly IdsModel Millimetres = new(
-    [
-        new(10, "P", "Project", "IFCPROJECT", [new("IFCPROJECT", "Ifc:LengthUnitToMetre", ParameterType.Number, "0.001")]),
-        Door(IdsTestModel.Door1, "900"),
-        Door(IdsTestModel.Door2, "800"),
-        new(13, Wall, "Wall", "IFCWALL",
+    /// <summary>A project in millimetres that records no area or volume unit, doors 900 and 800
+    /// wide, and a wall with a 5000 length, an area of 250 and a volume of 3 in its quantity set.</summary>
+    private static readonly IdsModel Millimetres = MillimetreModel();
+
+    /// <summary>The same project as a metric Revit export declares it: millimetres, square metres
+    /// and cubic metres, so the wall's area is 250 square metres and its volume 3 cubic metres.</summary>
+    private static readonly IdsModel MetricRevit = MillimetreModel(
+        new("IFCPROJECT", "Ifc:AreaUnitToSquareMetre", ParameterType.Number, "1"),
+        new("IFCPROJECT", "Ifc:VolumeUnitToCubicMetre", ParameterType.Number, "1"));
+
+    private static IdsModel MillimetreModel(params IdsValue[] areaAndVolumeUnits)
+        => new(
         [
-            new("Qto_WallBaseQuantities", "Length", ParameterType.Number, "5000"),
-            new("Qto_WallBaseQuantities", "NetSideArea", ParameterType.Number, "2000000"),
-        ]),
-    ]);
+            new(10, "P", "Project", "IFCPROJECT",
+                [new("IFCPROJECT", "Ifc:LengthUnitToMetre", ParameterType.Number, "0.001"), .. areaAndVolumeUnits]),
+            Door(IdsTestModel.Door1, "900"),
+            Door(IdsTestModel.Door2, "800"),
+            new(13, Wall, "Wall", "IFCWALL",
+            [
+                new("Qto_WallBaseQuantities", "Length", ParameterType.Number, "5000"),
+                new("Qto_WallBaseQuantities", "NetSideArea", ParameterType.Number, "250"),
+                new("Qto_WallBaseQuantities", "NetVolume", ParameterType.Number, "3"),
+            ]),
+        ]);
+
+    private static string Area(string constraint)
+        => Property("Qto_WallBaseQuantities", "NetSideArea", constraint, dataType: "IFCAREAMEASURE");
+
+    private static string Volume(string constraint)
+        => Property("Qto_WallBaseQuantities", "NetVolume", constraint, dataType: "IFCVOLUMEMEASURE");
 
     private static IdsEntity Door(string globalId, string width)
         => new(globalId == IdsTestModel.Door1 ? 11 : 12, globalId, globalId, "IFCDOOR",
@@ -61,12 +78,53 @@ public sealed class IdsUnitsTests
         Assert.That(report.Warnings, Has.None.Contains("not converted"));
     }
 
+    /// <summary>Scaled by the length unit squared, 250 square metres would be 0.00025 and pass
+    /// "at most 100".</summary>
     [Test]
-    public void AreaMeasure_ScalesByTheSquare()
+    public void AreaMeasure_UsesTheDeclaredAreaUnit_NotTheLengthUnitSquared()
     {
-        string Area(double atLeast) => Property("Qto_WallBaseQuantities", "NetSideArea", AtLeast(atLeast), dataType: "IFCAREAMEASURE");
-        Assert.That(VerdictOf(Run(Millimetres, Entity("IFCWALL"), Area(1.5)), Wall), Is.EqualTo(Verdict.Pass));
-        Assert.That(VerdictOf(Run(Millimetres, Entity("IFCWALL"), Area(2.5)), Wall), Is.EqualTo(Verdict.Fail));
+        var report = Run(MetricRevit, Entity("IFCWALL"), Area(AtMost(100)));
+        Assert.That(VerdictOf(report, Wall), Is.EqualTo(Verdict.Fail), "250 square metres is more than 100");
+        Assert.That(VerdictOf(Run(MetricRevit, Entity("IFCWALL"), Area(AtLeast(200))), Wall), Is.EqualTo(Verdict.Pass));
+        Assert.That(report.Warnings, Has.None.Contains("not converted"));
+    }
+
+    [Test]
+    public void AreaMeasure_ScalesByAPrefixedAreaUnit()
+    {
+        var squareMillimetres = MillimetreModel(new IdsValue("IFCPROJECT", "Ifc:AreaUnitToSquareMetre", ParameterType.Number, "1E-06"));
+        Assert.That(VerdictOf(Run(squareMillimetres, Entity("IFCWALL"), Area(AtMost(0.001))), Wall), Is.EqualTo(Verdict.Pass),
+            "250 square millimetres is 0.00025 square metres");
+    }
+
+    [Test]
+    public void VolumeMeasure_UsesTheDeclaredVolumeUnit()
+    {
+        Assert.That(VerdictOf(Run(MetricRevit, Entity("IFCWALL"), Volume(AtMost(2))), Wall), Is.EqualTo(Verdict.Fail), "3 cubic metres is more than 2");
+        Assert.That(VerdictOf(Run(MetricRevit, Entity("IFCWALL"), Volume(AtLeast(2))), Wall), Is.EqualTo(Verdict.Pass));
+    }
+
+    [Test]
+    public void AreaMeasure_OnAModelWithNoAreaUnit_IsComparedAsStored_AndWarns()
+    {
+        var report = Run(Millimetres, Entity("IFCWALL"), Area(AtMost(100)));
+        Assert.That(VerdictOf(report, Wall), Is.EqualTo(Verdict.Fail), "250 as stored is more than 100");
+        Assert.That(report.Warnings, Has.Exactly(1).Contains("Qto_WallBaseQuantities.NetSideArea").And.Contains("no area unit"));
+        var volume = Run(Millimetres, Entity("IFCWALL"), Volume(AtLeast(2)));
+        Assert.That(volume.Warnings, Has.Exactly(1).Contains("Qto_WallBaseQuantities.NetVolume").And.Contains("no volume unit"));
+    }
+
+    [Test]
+    public void AreaMeasure_OnAModelInMetresWithNoAreaUnit_IsSquareMetres()
+    {
+        var metres = new IdsModel(
+        [
+            new(10, "P", "Project", "IFCPROJECT", [new("IFCPROJECT", "Ifc:LengthUnitToMetre", ParameterType.Number, "1")]),
+            new(13, Wall, "Wall", "IFCWALL", [new("Qto_WallBaseQuantities", "NetSideArea", ParameterType.Number, "250")]),
+        ]);
+        var report = Run(metres, Entity("IFCWALL"), Area(AtMost(100)));
+        Assert.That(VerdictOf(report, Wall), Is.EqualTo(Verdict.Fail));
+        Assert.That(report.Warnings, Is.Empty);
     }
 
     [Test]

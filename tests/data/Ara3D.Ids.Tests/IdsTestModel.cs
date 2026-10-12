@@ -163,6 +163,9 @@ internal static class IdsXml
     public static string AtLeast(double value)
         => $"<xs:restriction base=\"xs:double\"><xs:minInclusive value=\"{value}\"/></xs:restriction>";
 
+    public static string AtMost(double value)
+        => $"<xs:restriction base=\"xs:double\"><xs:maxInclusive value=\"{value}\"/></xs:restriction>";
+
     private static string Attr(string name, string? value)
         => value is null ? "" : $" {name}=\"{value}\"";
 }

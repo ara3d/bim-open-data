@@ -4,13 +4,37 @@ using Ara3D.Ifc.Conventions;
 
 namespace Ara3D.Ids;
 
+/// <summary>A model's project units in SI, as the IFC converter records them on the project
+/// entity; each is null when the model records none. IFC declares the area and volume units
+/// apart from the length unit (a metric Revit export has millimetres and square metres), so an
+/// area is never scaled by the length unit squared.</summary>
+public sealed record IdsUnitScales(double? LengthToMetre, double? AreaToSquareMetre, double? VolumeToCubicMetre)
+{
+    /// <summary>SI per model unit for a power of length (1 a length, 2 an area, 3 a volume), or
+    /// null when the model records no such unit.</summary>
+    public double? ToSi(int power)
+        => power switch
+        {
+            1 => LengthToMetre,
+            2 => AreaToSquareMetre,
+            3 => VolumeToCubicMetre,
+            _ => null,
+        };
+
+    /// <summary>True when the length unit is the metre, so an undeclared area or volume unit and
+    /// a number of unknown measure are taken as SI.</summary>
+    public bool InMetres
+        => LengthToMetre is { } metres && Math.Abs(metres - 1) <= 1e-9;
+}
+
 /// <summary>Brings a model's numbers into the SI units IDS 1.0 writes its values in (metres,
 /// square metres, cubic metres) before a constraint compares them. A number is converted when
 /// its unit can be told: a unit stated on the parameter (the descriptor's Units column), else a
 /// length attribute in <see cref="LengthAttributes"/>, else the property facet's <c>dataType</c>,
-/// scaled by the model's metres per length unit. A number whose unit cannot be told is compared
-/// as stored, with a warning naming it, unless the model is in metres; so is a length on a model
-/// that records no length unit.</summary>
+/// scaled by the model's recorded length, area or volume unit (<see cref="IdsUnitScales"/>). A
+/// number whose unit cannot be told is compared as stored, with a warning naming it, unless the
+/// model is in metres; so is a length, area or volume on a model that records no unit of that
+/// kind and is not in metres.</summary>
 public static class IdsUnits
 {
     /// <summary>IFC attributes whose type is a length measure (IfcLengthMeasure,
@@ -40,7 +64,7 @@ public static class IdsUnits
 
     /// <summary>The power of length an IDS <c>dataType</c> carries: 1 for a length, 2 for an area,
     /// 3 for a volume, 0 for a plain number; null for any other measure (a mass, an angle), whose
-    /// unit the model's length unit does not tell.</summary>
+    /// unit the model's recorded units do not tell.</summary>
     public static int? LengthPower(string? dataType)
         => dataType?.Trim().ToUpperInvariant() switch
         {
@@ -65,22 +89,28 @@ public static class IdsUnits
     /// (<paramref name="power"/> is the facet's reading of it, null when it has none), otherwise
     /// the value as stored, with a warning naming <paramref name="subject"/> when the model is not
     /// known to be in metres. Text and logicals pass through.</summary>
-    internal static object Candidate(IdsValue value, int? power, double? lengthToMetre, string subject, IdsWarnings warnings)
+    internal static object Candidate(IdsValue value, int? power, IdsUnitScales units, string subject, IdsWarnings warnings)
     {
         if (value.Candidate is not double number)
             return value.Candidate;
         if (FromStatedUnits(number, value.Units) is { } stated)
             return stated;
-        if (power is 0 || lengthToMetre is { } one && Math.Abs(one - 1) <= 1e-9)
+        if (power is 0)
             return number;
-        if (lengthToMetre is { } metres && power is { } p)
-            return number * Math.Pow(metres, p);
-        warnings.Add(NotConverted(subject, lengthToMetre));
+        if (power is { } p && units.ToSi(p) is { } scale)
+            return number * scale;
+        if (units.InMetres)
+            return number;
+        warnings.Add(NotConverted(subject, power, units));
         return number;
     }
 
-    private static string NotConverted(string subject, double? lengthToMetre)
-        => $"{subject} is compared as stored, not converted to SI: " + (lengthToMetre is { } metres
-            ? $"its unit is not known (1 model length unit = {metres.ToString(CultureInfo.InvariantCulture)} m); a property facet's dataType (IFCLENGTHMEASURE, say) or a Units column would tell it"
-            : $"the model records no length unit ({IfcParameterNames.LengthUnitToMetre})");
+    private static string NotConverted(string subject, int? power, IdsUnitScales units)
+        => $"{subject} is compared as stored, not converted to SI: " + (power switch
+        {
+            2 => $"the model records no area unit ({IfcParameterNames.AreaUnitToSquareMetre}) and is not in metres; IFC declares the area unit apart from the length unit",
+            3 => $"the model records no volume unit ({IfcParameterNames.VolumeUnitToCubicMetre}) and is not in metres; IFC declares the volume unit apart from the length unit",
+            _ when units.LengthToMetre is null => $"the model records no length unit ({IfcParameterNames.LengthUnitToMetre})",
+            _ => $"its unit is not known (1 model length unit = {units.LengthToMetre.Value.ToString(CultureInfo.InvariantCulture)} m); a property facet's dataType (IFCLENGTHMEASURE, say) or a Units column would tell it",
+        });
 }

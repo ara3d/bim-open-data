@@ -165,11 +165,18 @@ public sealed class IdsModel
                 byIndex.TryAdd(entity.EntityIndex, entity);
             return byIndex;
         });
-        LengthToMetre = entities.SelectMany(e => e.Values)
-            .Where(v => v.Name == IfcParameterNames.LengthUnitToMetre)
+        Units = new(
+            RecordedNumber(entities, IfcParameterNames.LengthUnitToMetre),
+            RecordedNumber(entities, IfcParameterNames.AreaUnitToSquareMetre),
+            RecordedNumber(entities, IfcParameterNames.VolumeUnitToCubicMetre));
+    }
+
+    /// <summary>The first parameter of that name in the model, as a number; null when none.</summary>
+    private static double? RecordedNumber(IReadOnlyList<IdsEntity> entities, string name)
+        => entities.SelectMany(e => e.Values)
+            .Where(v => v.Name == name)
             .Select(v => double.TryParse(v.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out var d) ? d : (double?)null)
             .FirstOrDefault();
-    }
 
     public IReadOnlyList<IdsEntity> Entities { get; }
 
@@ -181,10 +188,11 @@ public sealed class IdsModel
     public IdsEntity? Entity(long entityIndex)
         => _byIndex.Value.GetValueOrDefault(entityIndex);
 
-    /// <summary>Metres per model length unit, from the project's <c>Ifc:LengthUnitToMetre</c>
-    /// row; null when the model records none. IDS values are in SI, so the evaluator scales a
-    /// length, area or volume by this before comparing it (see <see cref="IdsUnits"/>).</summary>
-    public double? LengthToMetre { get; }
+    /// <summary>The project's length, area and volume units in SI, from its
+    /// <c>Ifc:LengthUnitToMetre</c>, <c>Ifc:AreaUnitToSquareMetre</c> and
+    /// <c>Ifc:VolumeUnitToCubicMetre</c> rows. IDS values are in SI, so the evaluator scales a
+    /// length, area or volume by these before comparing it (see <see cref="IdsUnits"/>).</summary>
+    public IdsUnitScales Units { get; }
 
     /// <summary>Every entity whose category is a row (the class entity), with its parameters in
     /// table order and its <c>Entity.Type</c>, and the document's relations. Values are rendered as the DuckDB text views render them: an entity value by

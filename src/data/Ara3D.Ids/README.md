@@ -60,9 +60,11 @@ stated in the descriptor's Units column (`mm`, `ft`, `m2`), else an attribute
 listed in `IdsUnits.LengthAttributes` (OverallWidth, Elevation, LayerThickness
 and others; add a name there to extend it), else the property facet's
 `dataType` (IFCLENGTHMEASURE scales by the model's `Ifc:LengthUnitToMetre`,
-IFCAREAMEASURE by its square, IFCVOLUMEMEASURE by its cube). A number whose unit
-cannot be told is compared as stored, with a warning naming it, unless the model
-is in metres.
+IFCAREAMEASURE by its `Ifc:AreaUnitToSquareMetre`, IFCVOLUMEMEASURE by its
+`Ifc:VolumeUnitToCubicMetre`; IFC declares the three units apart, so a metric
+Revit export has millimetres and square metres). A number whose unit cannot be
+told, or an area or volume on a model that records no area or volume unit, is
+compared as stored, with a warning naming it, unless the model is in metres.
 
 Verdicts: `Pass`, `Fail`, `InfoNotAvailable`. A required specification that
 applies to no entity, and a prohibited one that applies to any, produce `Fail`.

@@ -52,8 +52,8 @@ internal static class IdsFacets
     public static string FacetName(IFacet facet)
         => facet.GetType().Name.Replace("Facet", "").Replace("Ifc", "").ToLowerInvariant();
 
-    /// <summary>Numbers are compared in SI, as IDS states them, using the model's metres per
-    /// length unit (see <see cref="IdsUnits"/>).</summary>
+    /// <summary>Numbers are compared in SI, as IDS states them, using the model's recorded
+    /// units (see <see cref="IdsUnits"/>).</summary>
     public static FacetMatch Match(IFacet facet, IdsEntity entity, IdsModel model, IdsWarnings warnings)
     {
         if (Unsupported(facet, model) is { } reason)
@@ -64,8 +64,8 @@ internal static class IdsFacets
         return facet switch
         {
             IfcTypeFacet f => MatchType(f, entity),
-            IfcPropertyFacet f => MatchProperty(f, entity, model.LengthToMetre, warnings),
-            AttributeFacet f => MatchAttribute(f, entity, model.LengthToMetre, warnings),
+            IfcPropertyFacet f => MatchProperty(f, entity, model.Units, warnings),
+            AttributeFacet f => MatchAttribute(f, entity, model.Units, warnings),
             MaterialFacet f => IdsRelationFacets.MatchMaterial(f, entity, model),
             PartOfFacet f => IdsRelationFacets.MatchPartOf(f, entity, model, warnings),
             _ => throw new InvalidOperationException($"no matcher for {facet.GetType().Name}"),
@@ -98,7 +98,7 @@ internal static class IdsFacets
 
     /// <summary>Reads the entity's own values and those it inherits from its type. When it names a
     /// type that cannot be found and carries no matching value itself, the answer cannot be told.</summary>
-    private static FacetMatch MatchProperty(IfcPropertyFacet facet, IdsEntity entity, double? lengthToMetre, IdsWarnings warnings)
+    private static FacetMatch MatchProperty(IfcPropertyFacet facet, IdsEntity entity, IdsUnitScales units, IdsWarnings warnings)
     {
         var candidates = entity.Properties
             .Where(v => Satisfies(facet.PropertySetName, v.Group, ignoreCase: false)
@@ -120,14 +120,14 @@ internal static class IdsFacets
                 return FacetMatch.No($"{subject} = '{value.Text}' is {Describe(value.Kind)}, not {facet.DataType}");
             if (IsEmpty(facet.PropertyValue))
                 continue;
-            var candidate = IdsUnits.Candidate(value, power, lengthToMetre, $"{value.Group}.{value.Name}", warnings);
+            var candidate = IdsUnits.Candidate(value, power, units, $"{value.Group}.{value.Name}", warnings);
             if (!Satisfies(facet.PropertyValue, candidate, ignoreCase: false))
                 return FacetMatch.No($"{subject} = {Shown(value, candidate)} is not {facet.PropertyValue!.Short()}");
         }
         return FacetMatch.Yes;
     }
 
-    private static FacetMatch MatchAttribute(AttributeFacet facet, IdsEntity entity, double? lengthToMetre, IdsWarnings warnings)
+    private static FacetMatch MatchAttribute(AttributeFacet facet, IdsEntity entity, IdsUnitScales units, IdsWarnings warnings)
     {
         var candidates = entity.Attributes
             .Where(a => Satisfies(facet.AttributeName, a.Name, ignoreCase: false) && a.Value.IsPresent)
@@ -139,7 +139,7 @@ internal static class IdsFacets
             return FacetMatch.Yes;
         foreach (var (name, value) in candidates)
         {
-            var candidate = IdsUnits.Candidate(value, IdsUnits.AttributeLengthPower(name), lengthToMetre, $"attribute {name}", warnings);
+            var candidate = IdsUnits.Candidate(value, IdsUnits.AttributeLengthPower(name), units, $"attribute {name}", warnings);
             if (!Satisfies(facet.AttributeValue, candidate, ignoreCase: false))
                 return FacetMatch.No($"{name} = {Shown(value, candidate)} is not {facet.AttributeValue!.Short()}");
         }
