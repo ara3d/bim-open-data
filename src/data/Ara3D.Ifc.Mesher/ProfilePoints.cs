@@ -21,23 +21,6 @@ internal static class ProfilePoints
         }).ToList());
     }
 
-    public static List<Vector2> SampleCircle(float radius, int segments)
-        => Enumerable.Range(0, segments).Select(i =>
-        {
-            var t = MathF.Tau * i / segments;
-            return new Vector2(MathF.Cos(t) * radius, MathF.Sin(t) * radius);
-        }).ToList();
-
-    /// <summary>Appends <paramref name="segments"/> + 1 points along the arc from angle a0 to a1.</summary>
-    public static void AddArc(List<Vector2> pts, Vector2 center, float r, float a0, float a1, int segments)
-    {
-        for (var i = 0; i <= segments; i++)
-        {
-            var a = a0 + (a1 - a0) * i / segments;
-            pts.Add(center + new Vector2(MathF.Cos(a), MathF.Sin(a)) * r);
-        }
-    }
-
     /// <summary>Drops consecutive points closer than 1e-5.</summary>
     public static List<Vector2> SimplifyPolygon(List<Vector2> points)
     {

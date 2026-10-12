@@ -28,7 +28,7 @@ public static class SweptDisks
                 outerR, innerR, ctx.CircleSegments);
 
         var frames = DirectrixSweeps.BuildParallelTransportFrames(path);
-        var circle = SampleCircleProfile(outerR, ctx.CircleSegments);
+        var circle = CircleSamples.Ring(outerR, ctx.CircleSegments);
 
         var meshes = new List<TriangleMesh3D>();
         for (var i = 0; i < frames.Count - 1; i++)
@@ -151,11 +151,4 @@ public static class SweptDisks
             }
         }
     }
-
-    static List<Vector2> SampleCircleProfile(float radius, int segments)
-        => Enumerable.Range(0, segments).Select(i =>
-        {
-            var t = MathF.Tau * i / segments;
-            return new Vector2(MathF.Cos(t) * radius, MathF.Sin(t) * radius);
-        }).ToList();
 }

@@ -33,13 +33,13 @@ internal static class SteelProfiles
     {
         r = Math.Min(r, Math.Min(tf, tw) / 2f);
         var pts = new List<Vector2> { new(-hw, -hd), new(hw, -hd), new(hw, -hd + tf) };
-        AddArc(pts, new Vector2(tw / 2 + r, -hd + tf + r), r, MathF.PI, 3 * MathF.PI / 2, arcSeg);
+        pts.AddRange(CircleSamples.Arc(new Vector2(tw / 2 + r, -hd + tf + r), r, MathF.PI, 3 * MathF.PI / 2, arcSeg));
         pts.Add(new(tw / 2, hd - tf));
-        AddArc(pts, new Vector2(tw / 2 + r, hd - tf - r), r, MathF.PI / 2, MathF.PI, arcSeg);
+        pts.AddRange(CircleSamples.Arc(new Vector2(tw / 2 + r, hd - tf - r), r, MathF.PI / 2, MathF.PI, arcSeg));
         pts.AddRange([new(hw, hd - tf), new(hw, hd), new(-hw, hd), new(-hw, hd - tf)]);
-        AddArc(pts, new Vector2(-tw / 2 - r, hd - tf - r), r, 0, MathF.PI / 2, arcSeg);
+        pts.AddRange(CircleSamples.Arc(new Vector2(-tw / 2 - r, hd - tf - r), r, 0, MathF.PI / 2, arcSeg));
         pts.Add(new(-tw / 2, -hd + tf));
-        AddArc(pts, new Vector2(-tw / 2 - r, -hd + tf + r), r, 3 * MathF.PI / 2, MathF.Tau, arcSeg);
+        pts.AddRange(CircleSamples.Arc(new Vector2(-tw / 2 - r, -hd + tf + r), r, 3 * MathF.PI / 2, MathF.Tau, arcSeg));
         pts.Add(new(-hw, -hd + tf));
         return pts;
     }

@@ -84,17 +84,17 @@ internal static class BasicProfiles
         var hx = x / 2f - r;
         var hy = y / 2f - r;
         var pts = new List<Vector2>();
-        AddArc(pts, new Vector2(hx, hy), r, 0, MathF.PI / 2, arcSeg);
-        AddArc(pts, new Vector2(-hx, hy), r, MathF.PI / 2, MathF.PI, arcSeg);
-        AddArc(pts, new Vector2(-hx, -hy), r, MathF.PI, 3 * MathF.PI / 2, arcSeg);
-        AddArc(pts, new Vector2(hx, -hy), r, 3 * MathF.PI / 2, MathF.Tau, arcSeg);
+        pts.AddRange(CircleSamples.Arc(new Vector2(hx, hy), r, 0, MathF.PI / 2, arcSeg));
+        pts.AddRange(CircleSamples.Arc(new Vector2(-hx, hy), r, MathF.PI / 2, MathF.PI, arcSeg));
+        pts.AddRange(CircleSamples.Arc(new Vector2(-hx, -hy), r, MathF.PI, 3 * MathF.PI / 2, arcSeg));
+        pts.AddRange(CircleSamples.Arc(new Vector2(hx, -hy), r, 3 * MathF.PI / 2, MathF.Tau, arcSeg));
         return pts;
     }
 
     public static PolygonWithHoles BuildCircle(MeshingContext ctx, IfcEntity profile)
     {
         var radius = ctx.ScaleLength(MeshHelpers.ReadNumber(profile, IfcCircleProfileDef.Instance.Radius));
-        var points = SampleCircle(radius, ctx.CircleSegments);
+        var points = CircleSamples.Ring(radius, ctx.CircleSegments);
         return ApplyPosition(ctx, profile, points);
     }
 
@@ -105,8 +105,8 @@ internal static class BasicProfiles
         var innerR = outerR - wall;
         if (innerR <= 1e-6f)
             throw new InvalidOperationException($"Invalid hollow circle profile #{profile.Id}: inner radius <= 0");
-        var outer = ApplyPosition(ctx, profile, SampleCircle(outerR, ctx.CircleSegments));
-        var inner = ApplyPosition(ctx, profile, SampleCircle(innerR, ctx.CircleSegments));
+        var outer = ApplyPosition(ctx, profile, CircleSamples.Ring(outerR, ctx.CircleSegments));
+        var inner = ApplyPosition(ctx, profile, CircleSamples.Ring(innerR, ctx.CircleSegments));
         return new PolygonWithHoles(outer.Outer, [inner.Outer]);
     }
 
