@@ -80,7 +80,7 @@ internal static partial class BcfXml
             foreach (var id in topic.GlobalIds)
             {
                 w.WriteStartElement("Component");
-                if (IfcGuid().IsMatch(id))
+                if (IsIfcGuid(id))
                     Attribute(w, "IfcGuid", id);
                 else
                     Element(w, "AuthoringToolId", id);
@@ -133,6 +133,9 @@ internal static partial class BcfXml
         }
         return result?.ToString() ?? value;
     }
+
+    /// <summary>True for IFC's 22-character GlobalId form; any other id is an authoring-tool id.</summary>
+    internal static bool IsIfcGuid(string id) => IfcGuid().IsMatch(id);
 
     [GeneratedRegex("^[0-9A-Za-z_$]{22}$")]
     private static partial Regex IfcGuid();

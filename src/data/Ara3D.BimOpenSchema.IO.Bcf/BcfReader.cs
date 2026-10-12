@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.IO.Compression;
-using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
 using Ara3D.DataTable;
@@ -37,7 +36,7 @@ public sealed record BcfContents(IReadOnlyList<BcfTopicRecord> Topics, IReadOnly
 /// comments come back into a graph the same way a check's verdicts went out. A part that cannot
 /// be read is skipped with a warning, so one bad viewpoint does not lose the other topics; only a
 /// file that is not a zip throws.</summary>
-public static partial class BcfReader
+public static class BcfReader
 {
     /// <summary>The issues-table column holding an id from a component's <c>AuthoringToolId</c>.</summary>
     public const string AuthoringToolIdColumn = "AuthoringToolId";
@@ -182,7 +181,7 @@ public static partial class BcfReader
             return (description, []);
         var ids = line[(colon + marker.Length)..]
             .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-            .Select(id => (Id: id, IsGlobalId: IfcGuid().IsMatch(id)))
+            .Select(id => (Id: id, IsGlobalId: BcfXml.IsIfcGuid(id)))
             .ToList();
         var rest = (description[..start] + (end < 0 ? "" : description[end..])).Trim();
         return (rest, ids);
@@ -214,9 +213,4 @@ public static partial class BcfReader
             return null;
         }
     }
-
-    /// <summary>IFC's 22-character GlobalId form. A copy of <c>BcfXml.IfcGuid</c>, which is private
-    /// to the writer; the two must agree.</summary>
-    [GeneratedRegex("^[0-9A-Za-z_$]{22}$")]
-    private static partial Regex IfcGuid();
 }
