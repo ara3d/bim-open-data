@@ -1,4 +1,6 @@
+using System.Text.Json;
 using Ara3D.Geometry;
+using Ara3D.Ifc.Mesher;
 using Ara3D.IfcLoader;
 using Ara3D.IfcMeshingComparison.Harness;
 using Ara3D.IfcMeshingComparison.Tests.Support;
@@ -14,15 +16,29 @@ public sealed class ParityGates
 {
     [Test]
     [Category("IfcMesherParity")]
-    public void QuickFiles_ParityAtLeast085()
+    public void QuickFiles_ParityAtLeastCommittedFloor()
     {
+        var floors = Ratchets.Load().ParityFloors;
         foreach (var ifcPath in TestFiles.QuickComparisonFiles())
         {
             TestFiles.RequireExists(ifcPath);
+            var name = ifcPath.GetFileName();
+            Assert.That(floors.TryGetValue(name, out var floor), Is.True, $"{name} has no floor in ratchets.json");
             var result = ModelComparer.CompareFile(ifcPath);
-            TestContext.WriteLine($"{ifcPath.GetFileName()}: parity={result.ParityScore:F3}");
-            Assert.That(result.ParityScore, Is.GreaterThanOrEqualTo(0.85), ifcPath.GetFileName());
+            TestContext.WriteLine(
+                $"{name}: parity={result.ParityScore:F3} floor={floor:F3} margin={result.ParityScore - floor:F3}");
+            Assert.That(result.ParityScore, Is.GreaterThanOrEqualTo(floor), name);
         }
+    }
+
+    [Test]
+    [Category("IfcMesherParity")]
+    public void SupportedCoverageCount_AtLeastCommittedFloor()
+    {
+        var floor = Ratchets.Load().SupportedCoverageCount;
+        var count = GeometryCoverage.KnownItems.Count(i => i.Support == GeometryCreationSupport.Supported);
+        TestContext.WriteLine($"supported rows={count} floor={floor}");
+        Assert.That(count, Is.GreaterThanOrEqualTo(floor));
     }
 
     [Test]
@@ -104,5 +120,18 @@ public sealed class ParityGates
         Assert.That(summary.PairedInstanceCount, Is.GreaterThan(0));
         Assert.That(summary.MeanBoundsCenterDistance, Is.LessThan(2.0),
             "duplex control mean world-space center offset should stay modest");
+    }
+}
+
+/// <summary>The committed floors in <c>bench/ifc-mesher/ratchets.json</c>.</summary>
+public readonly record struct Ratchets(
+    IReadOnlyDictionary<string, double> ParityFloors,
+    int SupportedCoverageCount)
+{
+    public static Ratchets Load()
+    {
+        var path = TestFiles.BenchDir.RelativeFile("ratchets.json");
+        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        return JsonSerializer.Deserialize<Ratchets>(File.ReadAllText(path), options);
     }
 }
