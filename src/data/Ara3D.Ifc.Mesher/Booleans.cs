@@ -44,7 +44,7 @@ public static class Booleans
         if (second.GetEntityName() == "IFCHALFSPACESOLID")
         {
             ctx.Diagnostics.RecordApproximate("IFCBOOLEANRESULT", "Planar half-space difference clipping");
-            return ClipByHalfSpace(ctx, mesh.Value, second, first);
+            return ClipByHalfSpace(ctx, mesh.Value, second);
         }
 
         ctx.Diagnostics.RecordUnsupported("IFCBOOLEANRESULT", $"Difference with {second.GetEntityName()} not supported");
@@ -52,32 +52,20 @@ public static class Booleans
     }
 
     /// <summary>
-    /// Which side of the base plane the difference keeps. IFC: AgreementFlag TRUE means the plane normal points
-    /// away from the half-space material, so the material (removed) lies on the negative side and the positive
-    /// side stays. web-ifc agrees on AC20-FZK-Haus's oblique roof planes (#67536, #75347).
-    /// Axis-aligned normals dominated by Z keep the older inverted reading, which the micro-IFC clip tests
-    /// (GoldenMeshTests, CutOracleTests) still assert; those tests are the open question, not the maths.
+    /// Which side of the base plane the difference keeps. IFC4 IfcHalfSpaceSolid.AgreementFlag: "TRUE if the
+    /// normal to the base surface points away from the material of the half space". The material is what a
+    /// difference removes, so TRUE keeps the positive side (the side the normal points to) and FALSE keeps the
+    /// negative side. One rule for every normal: web-ifc agrees on the FZK-Haus roof planes (oblique) and the
+    /// Mini Project, dental_clinic and steelplates horizontal ones (TKT-188, CorpusClipTests).
     /// </summary>
-    static bool KeepsPositiveSide(Vector3 normal, bool agreement)
-    {
-        var n = normal.Normalize;
-        var zAxisAligned = MathF.Abs(n.Z) >= 0.999f;
-        return zAxisAligned ? !agreement : agreement;
-    }
+    static bool KeepsPositiveSide(bool agreement) => agreement;
 
     public static TriangleMesh3D ClipByHalfSpace(MeshingContext ctx, TriangleMesh3D mesh, IfcEntity halfSpace)
-        => ClipByHalfSpace(ctx, mesh, halfSpace, firstOperand: null);
-
-    public static TriangleMesh3D ClipByHalfSpace(
-        MeshingContext ctx,
-        TriangleMesh3D mesh,
-        IfcEntity halfSpace,
-        IfcEntity? firstOperand)
     {
         ctx.Diagnostics.RecordSupported("IFCHALFSPACESOLID");
         var agreement = halfSpace.GetString(IfcHalfSpaceSolid.Instance.AgreementFlag.Index).Contains(".T.");
-        var plane = ResolveClipPlane(ctx, halfSpace, firstOperand, agreement);
-        var keepPositiveSide = KeepsPositiveSide(plane.Normal, agreement);
+        var plane = ReadHalfSpacePlane(ctx, halfSpace);
+        var keepPositiveSide = KeepsPositiveSide(agreement);
 
         var points = new List<Point3D>();
         var faces = new List<Integer3>();
@@ -109,7 +97,7 @@ public static class Booleans
 
         var agreement = halfSpace.GetString(IfcHalfSpaceSolid.Instance.AgreementFlag.Index).Contains(".T.");
         var plane = ReadHalfSpacePlane(ctx, halfSpace);
-        var keepPositiveSide = KeepsPositiveSide(plane.Normal, agreement);
+        var keepPositiveSide = KeepsPositiveSide(agreement);
 
         // Position frame + 2D polygonal boundary (bounding-prism cross-section, in the frame's XY plane).
         var positionFrame = Placements.ReadAxis2Placement3D(ctx,
@@ -212,68 +200,6 @@ public static class Booleans
                 inside = !inside;
         }
         return inside;
-    }
-
-    static Plane ResolveClipPlane(
-        MeshingContext ctx,
-        IfcEntity halfSpace,
-        IfcEntity? firstOperand,
-        bool agreement)
-    {
-        var plane = ReadHalfSpacePlane(ctx, halfSpace);
-        if (firstOperand is null || !TryGetExtrudedSolid(ctx, firstOperand, out var extruded))
-            return plane;
-
-        var frame = Placements.ReadOptionalAxis2Placement3D(ctx, extruded, IfcSweptAreaSolid.Instance.Position);
-        var direction = Placements.ReadDirection3D(ctx,
-            MeshHelpers.ResolveRequired(ctx, extruded, IfcExtrudedAreaSolid.Instance.ExtrudedDirection),
-            Vector3.UnitZ).Normalize;
-        var depth = ctx.ScaleLength(MeshHelpers.ReadNumber(extruded, IfcExtrudedAreaSolid.Instance.Depth));
-        var extrusion = frame.ToWorldDirection(direction * depth);
-        if (extrusion.LengthSquared() < 1e-12f || depth <= 1e-6f)
-            return plane;
-
-        var extAxis = extrusion.Normalize;
-        if (MathF.Abs(Vector3.Dot(plane.Normal.Normalize, extAxis)) > 0.25f)
-            return plane;
-
-        var clipDistance = InferExtrusionClipDistance(plane.Point, frame.Origin.Vector3, depth);
-        if (clipDistance <= 1e-6f || clipDistance >= depth - 1e-6f)
-            return plane;
-
-        ctx.Diagnostics.RecordApproximate("IFCHALFSPACESOLID", "Extrusion-end half-space clip");
-        var clipPoint = frame.Origin.Vector3 + extAxis * clipDistance;
-        var clipNormal = agreement ? extAxis : -extAxis;
-        return new Plane(clipPoint, clipNormal);
-    }
-
-    static float InferExtrusionClipDistance(Vector3 planePoint, Vector3 solidOrigin, float depth)
-    {
-        var offset = planePoint - solidOrigin;
-        var abs = new Vector3(MathF.Abs(offset.X), MathF.Abs(offset.Y), MathF.Abs(offset.Z));
-        if (abs.X >= abs.Y && abs.X >= abs.Z)
-            return abs.X;
-        if (abs.Y >= abs.X && abs.Y >= abs.Z)
-            return abs.Y;
-        return abs.Z;
-    }
-
-    static bool TryGetExtrudedSolid(MeshingContext ctx, IfcEntity operand, out IfcEntity extruded)
-    {
-        extruded = operand;
-        while (true)
-        {
-            switch (extruded.GetEntityName())
-            {
-                case "IFCEXTRUDEDAREASOLID":
-                    return true;
-                case "IFCBOOLEANCLIPPINGRESULT" or "IFCBOOLEANRESULT":
-                    extruded = MeshHelpers.ResolveRequired(ctx, extruded, IfcBooleanResult.Instance.FirstOperand);
-                    break;
-                default:
-                    return false;
-            }
-        }
     }
 
     static Plane ReadHalfSpacePlane(MeshingContext ctx, IfcEntity halfSpace)

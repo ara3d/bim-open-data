@@ -8,8 +8,10 @@ namespace Ara3D.Ifc.Mesher.Tests;
 public sealed class BooleanTests
 {
     [Test]
-    public void BooleanClippingResult_HalfSpace_KeepsComplementForAgreementTrue()
+    public void BooleanClippingResult_HalfSpace_AgreementTrue_KeepsSideTheNormalPointsTo()
     {
+        // IFC4: AgreementFlag TRUE means the normal points away from the half-space material, which a
+        // difference removes, so the positive side stays. This test once expected the opposite (TKT-188).
         using var model = MicroIfc.Parse("""
             #1=IFCRECTANGLEPROFILEDEF(.AREA.,'Box',$,2.,2.);
             #2=IFCDIRECTION((0.,0.,1.));
@@ -24,8 +26,8 @@ public sealed class BooleanTests
 
         var mesh = GeometryDispatcher.TryBuild(model.Context, model.Entity(9))!.Value;
         var bounds = MeshHelpers.GetBounds(mesh);
-        Assert.That(bounds.Max.Z.Value, Is.EqualTo(2f).Within(1e-4f));
-        Assert.That(bounds.Min.Z.Value, Is.EqualTo(0f).Within(1e-4f));
+        Assert.That(bounds.Max.Z.Value, Is.EqualTo(4f).Within(1e-4f));
+        Assert.That(bounds.Min.Z.Value, Is.EqualTo(2f).Within(1e-4f));
     }
 
     [Test]

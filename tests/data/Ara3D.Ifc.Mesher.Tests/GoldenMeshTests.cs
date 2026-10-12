@@ -1504,12 +1504,14 @@ public sealed class GoldenMeshTests
 
         Assert.That(mesh.FaceIndices, Has.Count.GreaterThan(0));
         Assert.That(Math.Abs(MeshHelpers.SignedVolume(mesh)), Is.LessThan(Math.Abs(MeshHelpers.SignedVolume(solid))));
-        AssertBounds(mesh, (-1f, -1f, 0f), (1f, 1f, 2f), tolerance: 1e-4f);
+        // AgreementFlag TRUE: the normal (+Z) points away from the removed material, so z >= 2 stays (TKT-188: this
+        // test once expected z <= 2).
+        AssertBounds(mesh, (-1f, -1f, 2f), (1f, 1f, 4f), tolerance: 1e-4f);
         Assert.That(model.Context.Diagnostics.EntityStatus.Keys, Does.Contain("IFCHALFSPACESOLID"));
     }
 
     [Test]
-    public void MeshesBooleanClippingResultKeepsOppositeHalfSpaceWhenAgreementFalse()
+    public void MeshesBooleanClippingResultKeepsNegativeSideWhenAgreementFalse()
     {
         using var model = MicroIfc.Parse("""
             #1=IFCRECTANGLEPROFILEDEF(.AREA.,'BoxProfile',$,2.,2.);
@@ -1524,11 +1526,13 @@ public sealed class GoldenMeshTests
             """);
 
         var mesh = MeshRequired(model, 9);
-        AssertBounds(mesh, (-1f, -1f, 2f), (1f, 1f, 4f), tolerance: 1e-4f);
+        // AgreementFlag FALSE: the normal (+Z) points into the removed material, so z <= 2 stays (TKT-188: this
+        // test once expected z >= 2).
+        AssertBounds(mesh, (-1f, -1f, 0f), (1f, 1f, 2f), tolerance: 1e-4f);
     }
 
     [Test]
-    public void MeshesExtrusionEndBooleanClipAlongDepth()
+    public void MeshesBooleanClipWithPlaneBesideExtrusionKeepsWholeSolid()
     {
         using var model = MicroIfc.Parse("""
             #1=IFCRECTANGLEPROFILEDEF(.AREA.,'BoxProfile',$,0.2,0.2);
@@ -1544,7 +1548,8 @@ public sealed class GoldenMeshTests
             """);
 
         var mesh = MeshRequired(model, 10);
-        AssertBounds(mesh, (-0.1f, -0.1f, -1f), (0.1f, 0.1f, 0f), tolerance: 1e-4f);
+        // The plane x = 1 lies beside the solid, so nothing is clipped (TKT-188: this test once expected z >= -1).
+        AssertBounds(mesh, (-0.1f, -0.1f, -4f), (0.1f, 0.1f, 0f), tolerance: 1e-4f);
     }
 
     [Test]

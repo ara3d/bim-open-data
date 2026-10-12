@@ -125,8 +125,11 @@ public sealed class CutOracleTests
     }
 
     [Test]
-    public void CutOracle_ExtrusionEndClip_ExactDepth()
+    public void CutOracle_PlaneBesideExtrusion_AgreementFalse_KeepsWholeSolid()
     {
+        // The plane x = 1 (normal +X) lies beside the 0.2 wide solid, which sits on the negative side, so
+        // AgreementFlag FALSE keeps all of it. This test once expected a clip at depth 1 m, read from the plane's
+        // offset; web-ifc does not do that (TKT-188).
         using var model = MicroIfc.Parse("""
             #1=IFCRECTANGLEPROFILEDEF(.AREA.,'Box',$,0.2,0.2);
             #2=IFCDIRECTION((0.,0.,-1.));
@@ -142,7 +145,7 @@ public sealed class CutOracleTests
 
         var mesh = GeometryDispatcher.TryBuild(model.Context, model.Entity(10))!.Value;
         MeshTestAssert.MeshValid(mesh);
-        MeshTestAssert.ClipKeptBounds(mesh, maxZ: 0f, minZ: -1f, tol: 1e-3f);
+        MeshTestAssert.ClipKeptBounds(mesh, maxZ: 0f, minZ: -4f, tol: 1e-3f);
     }
 
     [Test]
