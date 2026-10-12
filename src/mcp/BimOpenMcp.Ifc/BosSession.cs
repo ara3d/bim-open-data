@@ -1,12 +1,13 @@
 using Ara3D.BimOpenSchema;
 using Ara3D.BimOpenSchema.IO;
+using Ara3D.Ids;
 using Ara3D.Utils;
 
 namespace BimOpenMcp.Ifc;
 
 /// <summary>One BIM Open Schema model held open across tool calls: its tables, the
 /// <see cref="BosScene"/> the GLB, USD and BCF writers share, and a DuckDB database with the text
-/// views the SQL tools query. The bos_* tools and the IFC tools that read a conversion all go
+/// views the SQL tools query, and the <see cref="IdsModel"/> ifc_ids_check evaluates. The bos_* tools and the IFC tools that read a conversion all go
 /// through one, so a model's archive is read once per session, not once per call.
 /// <para>
 /// The tables and the database are each built on first use: a session that only answers SQL
@@ -27,6 +28,7 @@ public sealed class BosSession : IDisposable
     private readonly (long Length, DateTime WrittenUtc) _stamp;
     private readonly Lazy<IBimData> _data;
     private readonly Lazy<BosScene> _scene;
+    private readonly Lazy<IdsModel> _idsModel;
     private readonly Lazy<DerivedFile> _database;
     private readonly object _disposeLock = new();
     private bool _disposed;
@@ -36,6 +38,7 @@ public sealed class BosSession : IDisposable
         BosPath = bosPath;
         _data = data;
         _scene = new Lazy<BosScene>(() => new BosScene(Data));
+        _idsModel = new Lazy<IdsModel>(() => IdsModel.FromBimData(Data));
         _stamp = Stamp(bosPath);
         _database = new Lazy<DerivedFile>(() => BuildDatabase(files));
         OpenedUtc = DateTime.UtcNow;
@@ -69,6 +72,16 @@ public sealed class BosSession : IDisposable
     /// <summary>The view the writers share, built over <see cref="Data"/> on first use.</summary>
     public BosScene Scene
         => _scene.Value;
+
+    /// <summary>The entities and parameters an IDS is checked against, built over
+    /// <see cref="Data"/> on first use, so every page of a check and every later IDS over the
+    /// same model reuse one.</summary>
+    public IdsModel IdsModel
+        => _idsModel.Value;
+
+    /// <summary>True once <see cref="IdsModel"/> has been built.</summary>
+    public bool IsIdsModelBuilt
+        => _idsModel.IsValueCreated;
 
     public DateTime OpenedUtc { get; }
 

@@ -71,7 +71,7 @@ public static class IdsTools
     {
         var document = IdsFile.Load(idsPath);
         using var lease = cache.LeaseBos(path);
-        var report = IdsEvaluator.Evaluate(document, IdsModel.FromBimData(lease.Session.Data));
+        var report = IdsEvaluator.Evaluate(document, lease.Session.IdsModel);
         var shown = verdict is { } only ? report with { Verdicts = report.Verdicts.Where(v => v.Verdict == only).ToList() } : report;
         return new
         {

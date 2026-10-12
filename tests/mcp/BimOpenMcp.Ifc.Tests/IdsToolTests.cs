@@ -86,6 +86,22 @@ public sealed class IdsToolTests
     }
 
     [Test]
+    public void Check_TwiceOverOneModel_ReusesTheSessionsIdsModel()
+    {
+        using var cache = new IfcSessionCache();
+        using var mcp = IfcMcpServer.Create(cache, McpTransport.Stdio);
+        mcp.CallData("ifc_ids_check", new JsonObject { ["path"] = _bos, ["idsPath"] = DcW1, ["take"] = 4 });
+        using var lease = cache.LeaseBos(_bos);
+        Assert.That(lease.Session.IsIdsModelBuilt, Is.True, "the check builds the model on the session");
+        var built = lease.Session.IdsModel;
+
+        mcp.CallData("ifc_ids_check", new JsonObject { ["path"] = _bos, ["idsPath"] = DcW1, ["skip"] = 4, ["take"] = 4 });
+
+        using var again = cache.LeaseBos(_bos);
+        Assert.That(again.Session.IdsModel, Is.SameAs(built));
+    }
+
+    [Test]
     public void Check_UnknownVerdict_NamesTheChoices()
     {
         var payload = _mcp.Call("ifc_ids_check", new JsonObject { ["path"] = _bos, ["idsPath"] = DcW1, ["verdict"] = "Failed" });
