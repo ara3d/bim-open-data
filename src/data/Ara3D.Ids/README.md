@@ -13,10 +13,12 @@ BIM Open Schema data and returns a verdict table.
   (GlobalId, EntityIndex, CheckId, CheckTitle, Citation, Verdict, Reason), and
   `IdsTables.Specifications` lists what an IDS asks before any model is read.
 
-Facets evaluated: entity (class, exact match; predefined type, with ObjectType
-standing in for USERDEFINED), property (set, name, value, and `dataType` at the
-level BOS records: number, logical, or text), and attribute. Classification,
-material, part-of and document facets give `InfoNotAvailable` with a warning.
+Facets evaluated: entity (class, exact match as IDS 1.0 defines it, so an IDS
+names IFCWALLSTANDARDCASE beside IFCWALL when it means both; predefined type,
+with ObjectType standing in for USERDEFINED), property (set, name, value, and
+`dataType` at the level BOS records: number, logical, or text), and attribute.
+Classification, material, part-of and document facets give `InfoNotAvailable`
+with a warning.
 IDS values are in SI (metres, square metres, cubic metres), so `IdsUnits`
 converts a model's number before comparing it, when its unit can be told: a unit
 stated in the descriptor's Units column (`mm`, `ft`, `m2`), else an attribute

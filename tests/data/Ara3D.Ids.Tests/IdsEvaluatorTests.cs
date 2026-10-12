@@ -26,6 +26,18 @@ public sealed class IdsEvaluatorTests
     }
 
     [Test]
+    public void EntityFacet_DoesNotSelectSubtypes_AsIds10Defines()
+    {
+        var ids = IdsFile.Parse(Document(Specification("S", Entity("IFCWALL"))));
+        Assert.That(ids.Ids.AllSpecifications().Single().Applicability!.Facets.OfType<Xbim.InformationSpecifications.IfcTypeFacet>().Single().IncludeSubtypes,
+            Is.False, "IDS 1.0 XML has no subtype flag");
+        var model = new IdsModel([new(1, "W", "Wall", "IFCWALL", []), new(2, "WSC", "Wall", "IFCWALLSTANDARDCASE", [])]);
+        var report = IdsEvaluator.Evaluate(ids, model);
+        Assert.That(report.Verdicts.Select(v => v.GlobalId), Is.EqualTo(new[] { "W" }));
+        Assert.That(report.Warnings, Is.Empty);
+    }
+
+    [Test]
     public void EntityFacet_EnumerationSelectsSeveralClasses()
         => Assert.That(ByGlobalId(Run(EntityEnum("IFCDOOR", "IFCWINDOW"))).Keys, Is.EquivalentTo(new[] { Door1, Door2, Window }));
 

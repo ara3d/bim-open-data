@@ -41,7 +41,7 @@ internal static class IdsFacets
     public static FacetMatch Match(IFacet facet, IdsEntity entity, double? lengthToMetre, IdsWarnings warnings)
         => facet switch
         {
-            IfcTypeFacet f => MatchType(f, entity, warnings),
+            IfcTypeFacet f => MatchType(f, entity),
             IfcPropertyFacet f => MatchProperty(f, entity, lengthToMetre, warnings),
             AttributeFacet f => MatchAttribute(f, entity, lengthToMetre, warnings),
             _ => FacetMatch.Unsupported(Unsupported(facet, warnings)),
@@ -54,10 +54,13 @@ internal static class IdsFacets
         return reason;
     }
 
-    private static FacetMatch MatchType(IfcTypeFacet facet, IdsEntity entity, IdsWarnings warnings)
+    /// <summary>The class matches exactly, as IDS 1.0 defines the entity facet: its schema gives
+    /// the facet a name and a predefined type and no subtype flag, so IFCWALL does not select an
+    /// IFCWALLSTANDARDCASE and an IDS lists every class it means. <see cref="IfcTypeFacet.IncludeSubtypes"/>
+    /// is an xbim extension ("not part of buildingSmart specification") that the IDS XML loader
+    /// never sets, and is not read here.</summary>
+    private static FacetMatch MatchType(IfcTypeFacet facet, IdsEntity entity)
     {
-        if (facet.IncludeSubtypes)
-            warnings.Add($"IncludeSubtypes is ignored: the entity facet '{facet.Short()}' matches the class exactly");
         if (!Satisfies(facet.IfcType, entity.Category, ignoreCase: true))
             return FacetMatch.Absent($"class {entity.Category} is not {facet.IfcType?.Short()}");
         if (IsEmpty(facet.PredefinedType))
