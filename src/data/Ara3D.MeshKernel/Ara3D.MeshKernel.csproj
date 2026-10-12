@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Ara3D.MeshKernel</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Description>Pure geometry for meshing building models: polygons with holes, triangulation, half-space clipping, convex carving, surface parametrisation, sweeps, and mesh deduplication. No file-format words.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Ara3D.Geometry" Version="$(Ara3DSdkVersion)" />
+    <PackageReference Include="Ara3D.Models" Version="$(Ara3DSdkVersion)" />
+  </ItemGroup>
+
+</Project>

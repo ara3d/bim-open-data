@@ -161,6 +161,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ara3D.Ids.Tests", "tests\da
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ara3D.Ifc.Mesher.Benchmarks", "bench\ifc-mesher\Ara3D.Ifc.Mesher.Benchmarks\Ara3D.Ifc.Mesher.Benchmarks.csproj", "{8EC667A3-A605-4C84-86F0-493028584954}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ara3D.MeshKernel", "src\data\Ara3D.MeshKernel\Ara3D.MeshKernel.csproj", "{A4E1F25E-186E-4B19-AAB9-9B01954E5CFC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ara3D.MeshKernel.Tests", "tests\data\Ara3D.MeshKernel.Tests\Ara3D.MeshKernel.Tests.csproj", "{53A88315-DAB7-4754-A4E5-A3B6CE99146B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -1023,6 +1027,30 @@ Global
 		{8EC667A3-A605-4C84-86F0-493028584954}.Release|x64.Build.0 = Release|Any CPU
 		{8EC667A3-A605-4C84-86F0-493028584954}.Release|x86.ActiveCfg = Release|Any CPU
 		{8EC667A3-A605-4C84-86F0-493028584954}.Release|x86.Build.0 = Release|Any CPU
+		{A4E1F25E-186E-4B19-AAB9-9B01954E5CFC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A4E1F25E-186E-4B19-AAB9-9B01954E5CFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A4E1F25E-186E-4B19-AAB9-9B01954E5CFC}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A4E1F25E-186E-4B19-AAB9-9B01954E5CFC}.Debug|x64.Build.0 = Debug|Any CPU
+		{A4E1F25E-186E-4B19-AAB9-9B01954E5CFC}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A4E1F25E-186E-4B19-AAB9-9B01954E5CFC}.Debug|x86.Build.0 = Debug|Any CPU
+		{A4E1F25E-186E-4B19-AAB9-9B01954E5CFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A4E1F25E-186E-4B19-AAB9-9B01954E5CFC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A4E1F25E-186E-4B19-AAB9-9B01954E5CFC}.Release|x64.ActiveCfg = Release|Any CPU
+		{A4E1F25E-186E-4B19-AAB9-9B01954E5CFC}.Release|x64.Build.0 = Release|Any CPU
+		{A4E1F25E-186E-4B19-AAB9-9B01954E5CFC}.Release|x86.ActiveCfg = Release|Any CPU
+		{A4E1F25E-186E-4B19-AAB9-9B01954E5CFC}.Release|x86.Build.0 = Release|Any CPU
+		{53A88315-DAB7-4754-A4E5-A3B6CE99146B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53A88315-DAB7-4754-A4E5-A3B6CE99146B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53A88315-DAB7-4754-A4E5-A3B6CE99146B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{53A88315-DAB7-4754-A4E5-A3B6CE99146B}.Debug|x64.Build.0 = Debug|Any CPU
+		{53A88315-DAB7-4754-A4E5-A3B6CE99146B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{53A88315-DAB7-4754-A4E5-A3B6CE99146B}.Debug|x86.Build.0 = Debug|Any CPU
+		{53A88315-DAB7-4754-A4E5-A3B6CE99146B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53A88315-DAB7-4754-A4E5-A3B6CE99146B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53A88315-DAB7-4754-A4E5-A3B6CE99146B}.Release|x64.ActiveCfg = Release|Any CPU
+		{53A88315-DAB7-4754-A4E5-A3B6CE99146B}.Release|x64.Build.0 = Release|Any CPU
+		{53A88315-DAB7-4754-A4E5-A3B6CE99146B}.Release|x86.ActiveCfg = Release|Any CPU
+		{53A88315-DAB7-4754-A4E5-A3B6CE99146B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

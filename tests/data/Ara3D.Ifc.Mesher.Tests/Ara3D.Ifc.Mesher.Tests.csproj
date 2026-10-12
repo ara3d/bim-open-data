@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -30,6 +30,7 @@
 
   <ItemGroup>
     <Using Include="NUnit.Framework" />
+    <Using Include="Ara3D.MeshKernel" />
     <Using Include="Ara3D.IfcTypes.Ifc4" />
   </ItemGroup>
 

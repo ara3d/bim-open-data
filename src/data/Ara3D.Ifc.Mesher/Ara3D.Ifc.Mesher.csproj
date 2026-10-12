@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Ara3D.Ifc.Entities\Ara3D.Ifc.Entities.csproj" />
+    <ProjectReference Include="..\Ara3D.MeshKernel\Ara3D.MeshKernel.csproj" />
     <PackageReference Include="Ara3D.Geometry" Version="$(Ara3DSdkVersion)" />
     <PackageReference Include="Ara3D.IO.StepParser" Version="$(Ara3DSdkVersion)" />
     <PackageReference Include="Ara3D.Memory" Version="$(Ara3DSdkVersion)" />
@@ -19,6 +20,7 @@
 
   <ItemGroup>
     <Using Include="Ara3D.IfcLoader" />
+    <Using Include="Ara3D.MeshKernel" />
     <Using Include="Ara3D.IfcTypes" />
     <Using Include="Ara3D.IfcTypes.Ifc4" />
   </ItemGroup>
