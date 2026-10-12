@@ -5,12 +5,12 @@ using BimOpenData.TestSupport;
 namespace BimOpenMcp.Ifc.Tests;
 
 /// <summary>Drives ifc_ids_check and ifc_ids_specifications through tools/call over the committed
-/// Duplex and rule DC-W1 as an IDS (<c>ids/dc-w1.ids</c>, a copy of Ara3D.Ids.Tests' fixture).
+/// Duplex and rule DC-W1 as an IDS (Ara3D.Ids.Tests' fixture, <c>tests/data/Ara3D.Ids.Tests/ids/dc-w1.ids</c>).
 /// Ara3D.Ids tests the evaluation; these check the wiring and the answer's shape.</summary>
 [TestFixture]
 public sealed class IdsToolTests
 {
-    private static readonly string DcW1 = Path.Combine(RepoPaths.Root, "tests", "mcp", "BimOpenMcp.Ifc.Tests", "ids", "dc-w1.ids");
+    private static readonly string DcW1 = Path.Combine(RepoPaths.Root, "tests", "data", "Ara3D.Ids.Tests", "ids", "dc-w1.ids");
     private IfcSessionCache _cache = null!;
     private McpServer _mcp = null!;
     private string _bos = null!;
@@ -113,7 +113,7 @@ public sealed class IdsToolTests
     [Test]
     public void Check_MissingIdsFile_IsAToolError()
     {
-        var missing = Path.Combine(RepoPaths.Root, "tests", "mcp", "BimOpenMcp.Ifc.Tests", "ids", "no-such.ids");
+        var missing = Path.Combine(Path.GetDirectoryName(DcW1)!, "no-such.ids");
         var payload = _mcp.Call("ifc_ids_check", new JsonObject { ["path"] = _bos, ["idsPath"] = missing });
 
         Assert.That(payload["ok"]!.GetValue<bool>(), Is.False);
