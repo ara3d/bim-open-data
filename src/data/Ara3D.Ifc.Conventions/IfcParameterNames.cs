@@ -26,6 +26,15 @@ public static class IfcParameterNames
     /// <summary>Number, same entity and group as <see cref="LengthUnit"/>: metres per unit.</summary>
     public const string LengthUnitToMetre = Prefix + "LengthUnitToMetre";
 
+    /// <summary>Number, same entity and group as <see cref="LengthUnit"/>: square metres per the
+    /// project's AREAUNIT, written only when the file declares one. IFC declares it apart from the
+    /// length unit: a metric Revit export has a millimetre length unit and a square-metre area unit.</summary>
+    public const string AreaUnitToSquareMetre = Prefix + "AreaUnitToSquareMetre";
+
+    /// <summary>Number, same entity and group as <see cref="LengthUnit"/>: cubic metres per the
+    /// project's VOLUMEUNIT, written only when the file declares one.</summary>
+    public const string VolumeUnitToCubicMetre = Prefix + "VolumeUnitToCubicMetre";
+
     /// <summary>Entity, on each IfcMaterialLayer, grouped by the layer's class: its layer set.</summary>
     public const string LayerSet = Prefix + "LayerSet";
 

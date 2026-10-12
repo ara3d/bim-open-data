@@ -186,17 +186,20 @@ public class IfcToBosConverter
 
         AddMaterialSetMembers();
 
-        logger?.Log("Recording project length unit");
-        var lengthUnit = IfcLengthUnit.Read(IfcFile);
-        if (lengthUnit != null)
+        logger?.Log("Recording project units");
+        var projectEntity = IfcFile.EntityResolver.GetEntities().FirstOrDefault(e => e.GetEntityName() == "IFCPROJECT");
+        var projectEi = projectEntity != null ? GetBosEntityIndexFromIfc(projectEntity.Id) : InvalidEntityIndex;
+        if (projectEi != InvalidEntityIndex)
         {
-            var projectEntity = IfcFile.EntityResolver.GetEntities().FirstOrDefault(e => e.GetEntityName() == "IFCPROJECT");
-            var projectEi = projectEntity != null ? GetBosEntityIndexFromIfc(projectEntity.Id) : InvalidEntityIndex;
-            if (projectEi != InvalidEntityIndex)
+            if (IfcLengthUnit.Read(IfcFile) is { } lengthUnit)
             {
-                BimDataBuilder.AddParameter(projectEi, lengthUnit.Value.Name, IfcLengthUnit.NameParameter, null, "IFCPROJECT");
-                BimDataBuilder.AddParameter(projectEi, lengthUnit.Value.ToMetre, IfcLengthUnit.ScaleParameter, null, "IFCPROJECT");
+                BimDataBuilder.AddParameter(projectEi, lengthUnit.Name, IfcLengthUnit.NameParameter, null, "IFCPROJECT");
+                BimDataBuilder.AddParameter(projectEi, lengthUnit.ToMetre, IfcLengthUnit.ScaleParameter, null, "IFCPROJECT");
             }
+            if (IfcLengthUnit.AreaToSquareMetre(IfcFile) is { } areaToSquareMetre)
+                BimDataBuilder.AddParameter(projectEi, areaToSquareMetre, IfcParameterNames.AreaUnitToSquareMetre, null, "IFCPROJECT");
+            if (IfcLengthUnit.VolumeToCubicMetre(IfcFile) is { } volumeToCubicMetre)
+                BimDataBuilder.AddParameter(projectEi, volumeToCubicMetre, IfcParameterNames.VolumeUnitToCubicMetre, null, "IFCPROJECT");
         }
 
         logger?.Log("Creating relations");

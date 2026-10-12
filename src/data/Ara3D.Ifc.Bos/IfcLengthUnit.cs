@@ -4,7 +4,9 @@ using Ara3D.IO.StepParser;
 
 namespace Ara3D.BimOpenSchema.IO;
 
-/// <summary>The project's declared length unit: the LENGTHUNIT of IfcProject.UnitsInContext.</summary>
+/// <summary>The project's declared length unit: the LENGTHUNIT of IfcProject.UnitsInContext.
+/// The same reader gives the AREAUNIT and VOLUMEUNIT scales, which IFC declares apart from the
+/// length unit (<see cref="AreaToSquareMetre"/>, <see cref="VolumeToCubicMetre"/>).</summary>
 public readonly record struct IfcLengthUnit(string Name, double ToMetre)
 {
     /// <summary>Kept for callers; see <see cref="IfcParameterNames.LengthUnit"/>.</summary>
@@ -22,6 +24,8 @@ public readonly record struct IfcLengthUnit(string Name, double ToMetre)
     private const int MeasureWithUnitUnitIndex = 1;
 
     private const string LengthUnitType = "LENGTHUNIT";
+    private const string AreaUnitType = "AREAUNIT";
+    private const string VolumeUnitType = "VOLUMEUNIT";
 
     private static readonly Dictionary<string, double> SiPrefixScales = new(StringComparer.Ordinal)
     {
@@ -45,6 +49,19 @@ public readonly record struct IfcLengthUnit(string Name, double ToMetre)
 
     /// <summary>Null when the file declares no length unit.</summary>
     public static IfcLengthUnit? Read(IfcFile file)
+        => ReadUnit(file, LengthUnitType, 1);
+
+    /// <summary>Square metres per the project's area unit; null when the file declares none.</summary>
+    public static double? AreaToSquareMetre(IfcFile file)
+        => ReadUnit(file, AreaUnitType, 2)?.ToMetre;
+
+    /// <summary>Cubic metres per the project's volume unit; null when the file declares none.</summary>
+    public static double? VolumeToCubicMetre(IfcFile file)
+        => ReadUnit(file, VolumeUnitType, 3)?.ToMetre;
+
+    /// <summary>The project's unit of one type, with its scale in SI (metres to the
+    /// <paramref name="power"/>); null when the file declares none.</summary>
+    private static IfcLengthUnit? ReadUnit(IfcFile file, string unitType, int power)
     {
         var project = file.EntityResolver.GetEntities().FirstOrDefault(e => e.GetEntityName() == "IFCPROJECT");
         if (project == null)
@@ -60,7 +77,7 @@ public readonly record struct IfcLengthUnit(string Name, double ToMetre)
             var unitEntity = file.EntityResolver.GetEntityOrDefault(unitId);
             if (unitEntity == null)
                 continue;
-            var result = TryReadLengthUnit(file, unitEntity);
+            var result = TryReadUnit(file, unitEntity, unitType, power);
             if (result != null)
                 return result;
         }
@@ -68,19 +85,19 @@ public readonly record struct IfcLengthUnit(string Name, double ToMetre)
         return null;
     }
 
-    private static IfcLengthUnit? TryReadLengthUnit(IfcFile file, IfcEntity unit)
+    private static IfcLengthUnit? TryReadUnit(IfcFile file, IfcEntity unit, string unitType, int power)
     {
         var entityName = unit.GetEntityName();
         if (entityName == "IFCSIUNIT")
         {
-            if (StripEnumMarkers(unit.GetStringOrEmpty(NamedUnitTypeIndex)) != LengthUnitType)
+            if (StripEnumMarkers(unit.GetStringOrEmpty(NamedUnitTypeIndex)) != unitType)
                 return null;
-            return ReadSiUnit(unit);
+            return ReadSiUnit(unit, power);
         }
 
         if (entityName == "IFCCONVERSIONBASEDUNIT" || entityName == "IFCCONVERSIONBASEDUNITWITHOFFSET")
         {
-            if (StripEnumMarkers(unit.GetStringOrEmpty(NamedUnitTypeIndex)) != LengthUnitType)
+            if (StripEnumMarkers(unit.GetStringOrEmpty(NamedUnitTypeIndex)) != unitType)
                 return null;
 
             var name = unit.GetStringOrEmpty(ConversionBasedUnitNameIndex);
@@ -90,18 +107,20 @@ public readonly record struct IfcLengthUnit(string Name, double ToMetre)
 
             var factor = ReadNumberAttribute(measure, MeasureWithUnitValueIndex);
             var baseUnit = file.EntityResolver.GetEntityOrDefault(measure.GetId(MeasureWithUnitUnitIndex));
-            var baseToMetre = baseUnit != null ? TryReadLengthUnit(file, baseUnit)?.ToMetre ?? 1.0 : 1.0;
-            return new IfcLengthUnit(name, factor * baseToMetre);
+            var baseToSi = baseUnit != null ? TryReadUnit(file, baseUnit, unitType, power)?.ToMetre ?? 1.0 : 1.0;
+            return new IfcLengthUnit(name, factor * baseToSi);
         }
 
         return null;
     }
 
-    private static IfcLengthUnit ReadSiUnit(IfcEntity unit)
+    /// <summary>The prefix scales the base unit before the power applies: MILLI SQUARE_METRE is a
+    /// square millimetre, 1e-6 square metres.</summary>
+    private static IfcLengthUnit ReadSiUnit(IfcEntity unit, int power)
     {
         var prefix = StripEnumMarkers(unit.GetStringOrEmpty(SIUnitPrefixIndex));
         var name = StripEnumMarkers(unit.GetStringOrEmpty(SIUnitNameIndex));
-        var scale = string.IsNullOrEmpty(prefix) ? 1.0 : SiPrefixScales.GetValueOrDefault(prefix, 1.0);
+        var scale = string.IsNullOrEmpty(prefix) ? 1.0 : Math.Pow(SiPrefixScales.GetValueOrDefault(prefix, 1.0), power);
         var combinedName = string.IsNullOrEmpty(prefix) ? name : prefix + name;
         return new IfcLengthUnit(combinedName, scale);
     }
