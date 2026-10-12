@@ -41,8 +41,10 @@ Material and part-of read the BOS relations (`IdsRelationFacets`):
   `HasLayer` (a material, a layer, a layer set), plus each one's `Category`
   attribute and a layer's `LayerSet` (the converter writes the set's name
   there). The facet holds when any name satisfies its value; an element with no
-  material is absent. A model with no material relation at all gives
-  `InfoNotAvailable`.
+  material is absent. An element with no material of its own reads its type
+  object's (IfcRelAssociatesMaterial may relate only the type), and one whose
+  type cannot be told gives `InfoNotAvailable`, as for properties. A model with
+  no material relation at all gives `InfoNotAvailable`.
 - Part-of: the IDS relation becomes BOS relation types as the IFC converter
   writes them: IFCRELAGGREGATES and IFCRELASSIGNSTOGROUP are `MemberOf` (told
   apart by whether the container is a group class), IFCRELCONTAINEDINSPATIALSTRUCTURE

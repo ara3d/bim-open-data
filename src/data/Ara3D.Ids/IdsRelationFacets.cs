@@ -41,14 +41,19 @@ internal static class IdsRelationFacets
     /// list members or constituents' materials, and HasLayer each layer of its layer set, each
     /// layer HasMaterial its material; a layer set reached through HasMaterial and HasLayer is
     /// followed too. The names read are each reached entity's Name, its <c>Category</c>
-    /// attribute, and a layer's <c>LayerSet</c> (the converter writes the set's name there).</summary>
-    public static FacetMatch MatchMaterial(MaterialFacet facet, IdsEntity entity, IdsModel model)
+    /// attribute, and a layer's <c>LayerSet</c> (the converter writes the set's name there).
+    /// <para>IfcRelAssociatesMaterial may relate only the type object, and the converter then
+    /// writes HasMaterial on the type entity: an occurrence with no material of its own reads its
+    /// type's, and one whose type cannot be told gives InfoNotAvailable.</para></summary>
+    public static FacetMatch MatchMaterial(MaterialFacet facet, IdsEntity entity, IdsModel model, IdsWarnings warnings)
     {
         // A layer or layer set has edges to its materials too, but IDS associates materials with
         // objects; without this a material applicability would select the layers themselves.
         if (IsMaterialDefinition(entity))
             return FacetMatch.Absent($"{entity.Category} is a material definition, not an object with a material");
-        var names = MaterialNames(entity, model);
+        var names = entity.WithInherited(e => MaterialNames(e, model), _ => true);
+        if (names.Count == 0 && IdsFacets.UnresolvedType(entity, "no material of its own", warnings) is { } unknown)
+            return unknown;
         if (names.Count == 0)
             return FacetMatch.Absent("no material");
         if (IdsFacets.IsEmpty(facet.Value) || names.Any(n => IdsFacets.Satisfies(facet.Value, n, ignoreCase: false)))

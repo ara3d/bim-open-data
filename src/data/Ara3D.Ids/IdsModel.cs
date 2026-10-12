@@ -112,12 +112,20 @@ public sealed record IdsEntity(
     /// the entity does not carry. The entity's row wins even when its value is empty, as an IFC
     /// <c>$</c> on the occurrence overrides the type in ifctester.</summary>
     public IEnumerable<IdsValue> Properties
-        => Type is { } type ? Inherit(OwnProperties.ToList(), type.OwnProperties) : OwnProperties;
+        => WithInherited(e => e.OwnProperties, v => (v.Group, v.Name));
 
-    private static IEnumerable<IdsValue> Inherit(IReadOnlyList<IdsValue> own, IEnumerable<IdsValue> inherited)
+    /// <summary>Own, else type: what <paramref name="read"/> gives for the entity, then what it
+    /// gives for the entity's type object under each key the entity has nothing under. Every facet
+    /// that inherits from the type reads through this: properties key by set and name, materials
+    /// by one key, so an occurrence's material hides its type's. A type that cannot be told adds
+    /// nothing; see <see cref="TypeUnresolved"/>.</summary>
+    internal IReadOnlyList<T> WithInherited<T, TKey>(Func<IdsEntity, IEnumerable<T>> read, Func<T, TKey> key)
     {
-        var stated = own.Select(v => (v.Group, v.Name)).ToHashSet();
-        return own.Concat(inherited.Where(v => !stated.Contains((v.Group, v.Name))));
+        var own = read(this).ToList();
+        if (Type is not { } type)
+            return own;
+        var stated = own.Select(key).ToHashSet();
+        return [.. own, .. read(type).Where(v => !stated.Contains(key(v)))];
     }
 
     /// <summary>Every attribute BOS carries for the entity, keyed by the IFC attribute name.</summary>

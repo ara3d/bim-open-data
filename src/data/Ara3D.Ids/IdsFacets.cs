@@ -66,7 +66,7 @@ internal static class IdsFacets
             IfcTypeFacet f => MatchType(f, entity),
             IfcPropertyFacet f => MatchProperty(f, entity, model.Units, warnings),
             AttributeFacet f => MatchAttribute(f, entity, model.Units, warnings),
-            MaterialFacet f => IdsRelationFacets.MatchMaterial(f, entity, model),
+            MaterialFacet f => IdsRelationFacets.MatchMaterial(f, entity, model, warnings),
             PartOfFacet f => IdsRelationFacets.MatchPartOf(f, entity, model, warnings),
             _ => throw new InvalidOperationException($"no matcher for {facet.GetType().Name}"),
         };
@@ -92,9 +92,21 @@ internal static class IdsFacets
     }
 
     /// <summary>Raised once per report when an occurrence names a type object the model cannot
-    /// find by name, so a property it lacks gives InfoNotAvailable.</summary>
+    /// find by name, so a property or material it lacks gives InfoNotAvailable.</summary>
     internal const string UnresolvedTypeWarning =
-        "an occurrence's type object cannot be told from its name in the entities table, so a property it might inherit gives InfoNotAvailable; a TypeIndex column (the type's EntityIndex) removes the doubt";
+        "an occurrence's type object cannot be told from its name in the entities table, so a property or material it might inherit gives InfoNotAvailable; a TypeIndex column (the type's EntityIndex) removes the doubt";
+
+    /// <summary>InfoNotAvailable, with <see cref="UnresolvedTypeWarning"/>, when the entity names a
+    /// type object that cannot be found, so what the type might give it cannot be told; null when
+    /// its type is found or it names none. <paramref name="lacking"/> says what the entity's own
+    /// reading lacks ("no material of its own").</summary>
+    internal static FacetMatch? UnresolvedType(IdsEntity entity, string lacking, IdsWarnings warnings)
+    {
+        if (entity.TypeUnresolved is not { } unresolved)
+            return null;
+        warnings.Add(UnresolvedTypeWarning);
+        return FacetMatch.Unsupported($"{lacking}, and {unresolved}");
+    }
 
     /// <summary>Reads the entity's own values and those it inherits from its type. When it names a
     /// type that cannot be found and carries no matching value itself, the answer cannot be told.</summary>
@@ -105,11 +117,8 @@ internal static class IdsFacets
                 && Satisfies(facet.PropertyName, v.Name, ignoreCase: false) && v.IsPresent)
             .ToList();
         var subject = $"{facet.PropertySetName?.Short()}.{facet.PropertyName?.Short()}";
-        if (candidates.Count == 0 && entity.TypeUnresolved is { } unresolved)
-        {
-            warnings.Add(UnresolvedTypeWarning);
-            return FacetMatch.Unsupported($"no {subject} of its own, and {unresolved}");
-        }
+        if (candidates.Count == 0 && UnresolvedType(entity, $"no {subject} of its own", warnings) is { } unknown)
+            return unknown;
         if (candidates.Count == 0)
             return FacetMatch.Absent($"no {subject}");
         var expected = ExpectedKind(facet.DataType, warnings);

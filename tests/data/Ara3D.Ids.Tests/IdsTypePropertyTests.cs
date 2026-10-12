@@ -161,12 +161,4 @@ public sealed class IdsTypePropertyTests
             ("ParameterGroup", typeof(string), rows.Select(_ => (object?)"Pset_DoorCommon").ToArray()),
             ("ValueType", typeof(string), rows.Select(_ => (object?)"String").ToArray()),
             ("Value", typeof(string), rows.Select(r => (object?)r.FireRating).ToArray()));
-
-    private static IDataTable Table(string name, params (string Name, Type Type, object?[] Values)[] columns)
-    {
-        var b = new DataTableBuilder(name);
-        foreach (var (column, type, values) in columns)
-            b.AddColumn(values, column, type);
-        return b.Build();
-    }
 }

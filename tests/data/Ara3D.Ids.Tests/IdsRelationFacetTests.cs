@@ -60,6 +60,35 @@ public sealed class IdsRelationFacetTests
     }
 
     [Test]
+    public void Material_OfTheTypeOnly_IsTheOccurrencesWhenItHasNone()
+    {
+        var model = BuildWithTypeMaterial();
+        var prohibited = ByGlobalId(Run(Entity("IFCDOOR"), Material("Concrete", "prohibited"), model));
+        Assert.That(prohibited[Door2].Verdict, Is.EqualTo(Verdict.Fail), "door D2 inherits Concrete from its type");
+        Assert.That(prohibited[Door1].Verdict, Is.EqualTo(Verdict.Pass), "door D1's own Wood hides the type's Concrete");
+        Assert.That(ByGlobalId(Run(Entity("IFCDOOR"), Material("Concrete"), model))[Door2].Verdict, Is.EqualTo(Verdict.Pass));
+    }
+
+    /// <summary>A door whose type is not in the entities table, and a wall of Steel so the model
+    /// carries HasMaterial: the door's material cannot be told, so a prohibited Steel cannot pass.</summary>
+    [Test]
+    public void Material_WhenTheTypeCannotBeTold_IsInfoNotAvailable()
+    {
+        var entities = Table("entities", ("EntityIndex", typeof(long), [0L, 1L, 2L]), ("GlobalId", typeof(string), ["D", "W", null]),
+            ("Name", typeof(string), ["Door", "Wall", "Steel"]), ("Category", typeof(string), ["IFCDOOR", "IFCWALL", "IFCMATERIAL"]),
+            ("Type", typeof(string), ["Filtered Out", null, null]));
+        var parameters = Table("parameters", ("EntityIndex", typeof(long), []), ("Name", typeof(string), []),
+            ("ParameterGroup", typeof(string), []), ("ValueType", typeof(string), []), ("Value", typeof(string), []));
+        var relations = Table("relations", ("EntityIndexA", typeof(long), [1L]), ("EntityIndexB", typeof(long), [2L]),
+            ("RelationType", typeof(string), ["HasMaterial"]));
+        var report = Run(Entity("IFCDOOR"), Material("Steel", "prohibited"), IdsModel.FromTables(entities, parameters, relations));
+        var door = report.Verdicts.Single();
+        Assert.That(door.Verdict, Is.EqualTo(Verdict.InfoNotAvailable));
+        Assert.That(door.Reason, Does.Contain("no material of its own").And.Contain("not in the entities table"));
+        Assert.That(report.Warnings, Is.EqualTo(new[] { IdsFacets.UnresolvedTypeWarning }));
+    }
+
+    [Test]
     public void Material_AsApplicability_SelectsTheWall()
         => Assert.That(ByGlobalId(Run(Material("Concrete"))).Keys, Is.EquivalentTo(new[] { Wall1 }));
 

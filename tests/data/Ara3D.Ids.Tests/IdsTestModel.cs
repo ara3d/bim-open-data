@@ -30,6 +30,12 @@ internal static class IdsTestModel
     public static IdsModel BuildWithRelations()
         => IdsModel.FromTables(Entities(), Parameters(), Relations());
 
+    /// <summary>The model with its relations, and the door type HasMaterial "Concrete": a material
+    /// associated with the type only, as the converter writes an IfcRelAssociatesMaterial that
+    /// relates the type. Door D2 has no material of its own; door D1 has Wood.</summary>
+    public static IdsModel BuildWithTypeMaterial()
+        => IdsModel.FromTables(Entities(), Parameters(), Relations((15, 10, "HasMaterial")));
+
     public static IDataTable Entities()
     {
         var b = new DataTableBuilder("entities");
@@ -79,8 +85,9 @@ internal static class IdsTestModel
         return b.Build();
     }
 
-    /// <summary>The relations, with the three <c>RelationText</c> columns the model reads.</summary>
-    public static IDataTable Relations()
+    /// <summary>The relations, with the three <c>RelationText</c> columns the model reads, and
+    /// <paramref name="extra"/> after them.</summary>
+    public static IDataTable Relations(params (long A, long B, string Type)[] extra)
     {
         var rows = new (long A, long B, string Type)[]
         {
@@ -93,11 +100,20 @@ internal static class IdsTestModel
             (0, 13, "ContainedIn"),
             (1, 13, "ContainedIn"),
             (13, 14, "MemberOf"),
-        };
+        }.Concat(extra).ToArray();
         var b = new DataTableBuilder("relations");
         b.AddColumn(rows.Select(r => (object?)r.A).ToArray(), "EntityIndexA", typeof(long));
         b.AddColumn(rows.Select(r => (object?)r.B).ToArray(), "EntityIndexB", typeof(long));
         b.AddColumn(rows.Select(r => (object?)r.Type).ToArray(), "RelationType", typeof(string));
+        return b.Build();
+    }
+
+    /// <summary>A table from named, typed columns, for a test that needs its own small model.</summary>
+    public static IDataTable Table(string name, params (string Name, Type Type, object?[] Values)[] columns)
+    {
+        var b = new DataTableBuilder(name);
+        foreach (var (column, type, values) in columns)
+            b.AddColumn(values, column, type);
         return b.Build();
     }
 }
