@@ -159,6 +159,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ara3D.Ids", "src\data\Ara3D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ara3D.Ids.Tests", "tests\data\Ara3D.Ids.Tests\Ara3D.Ids.Tests.csproj", "{B94C9FB6-1088-41F0-8A83-A057C820A9A2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ara3D.Ifc.Mesher.Benchmarks", "bench\ifc-mesher\Ara3D.Ifc.Mesher.Benchmarks\Ara3D.Ifc.Mesher.Benchmarks.csproj", "{8EC667A3-A605-4C84-86F0-493028584954}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -1009,6 +1011,18 @@ Global
 		{B94C9FB6-1088-41F0-8A83-A057C820A9A2}.Release|x64.Build.0 = Release|Any CPU
 		{B94C9FB6-1088-41F0-8A83-A057C820A9A2}.Release|x86.ActiveCfg = Release|Any CPU
 		{B94C9FB6-1088-41F0-8A83-A057C820A9A2}.Release|x86.Build.0 = Release|Any CPU
+		{8EC667A3-A605-4C84-86F0-493028584954}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8EC667A3-A605-4C84-86F0-493028584954}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8EC667A3-A605-4C84-86F0-493028584954}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8EC667A3-A605-4C84-86F0-493028584954}.Debug|x64.Build.0 = Debug|Any CPU
+		{8EC667A3-A605-4C84-86F0-493028584954}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8EC667A3-A605-4C84-86F0-493028584954}.Debug|x86.Build.0 = Debug|Any CPU
+		{8EC667A3-A605-4C84-86F0-493028584954}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8EC667A3-A605-4C84-86F0-493028584954}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8EC667A3-A605-4C84-86F0-493028584954}.Release|x64.ActiveCfg = Release|Any CPU
+		{8EC667A3-A605-4C84-86F0-493028584954}.Release|x64.Build.0 = Release|Any CPU
+		{8EC667A3-A605-4C84-86F0-493028584954}.Release|x86.ActiveCfg = Release|Any CPU
+		{8EC667A3-A605-4C84-86F0-493028584954}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
