@@ -100,6 +100,23 @@ public sealed class IdsTypePropertyTests
         Assert.That(verdict.Reason, Does.Contain("not in the entities table"));
     }
 
+    /// <summary>The door's own Pset_DoorCommon.FireRating is EI30, and its type is not in the
+    /// entities table. A pattern on the set could match a FireRating in another set the type
+    /// gives, which might not be EI30, so the door cannot pass; an exact set and name can.</summary>
+    [Test]
+    public void PatternSetName_WhenTheTypeCannotBeTold_IsInfoNotAvailable_EvenWithAMatchingOwnValue()
+    {
+        var entities = Table("entities", ("EntityIndex", typeof(long), [0L]), ("GlobalId", typeof(string), ["D"]),
+            ("Name", typeof(string), ["Door"]), ("Category", typeof(string), ["IFCDOOR"]), ("Type", typeof(string), ["Filtered Out"]));
+        var model = IdsModel.FromTables(entities, Parameters([(0, "EI30")]));
+        var pattern = Run(Entity("IFCDOOR"), PropertyOf(Pattern("Pset_.*"), Simple("FireRating"), Simple("EI30")), model);
+        Assert.That(pattern.Verdicts.Single().Verdict, Is.EqualTo(Verdict.InfoNotAvailable));
+        Assert.That(pattern.Verdicts.Single().Reason, Does.Contain("not in the entities table"));
+        Assert.That(pattern.Warnings, Is.EqualTo(new[] { IdsFacets.UnresolvedTypeWarning }));
+        var exact = Run(Entity("IFCDOOR"), Property("Pset_DoorCommon", "FireRating", Simple("EI30")), model);
+        Assert.That(exact.Verdicts.Single().Verdict, Is.EqualTo(Verdict.Pass), "its own value hides whatever the type has under that name");
+    }
+
     [Test]
     public void FromBimData_ReadsEntityType()
     {

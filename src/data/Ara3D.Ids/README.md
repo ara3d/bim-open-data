@@ -33,7 +33,9 @@ optional `TypeIndex` column (the type's EntityIndex) when present, else its
 the entities that have no type themselves (`IdsTypeObjects`). Names repeat, so
 same-named entities count as one type only when their property values agree;
 otherwise, or when the named type is not in the table, a property the
-occurrence lacks gives `InfoNotAvailable` with a warning.
+occurrence lacks gives `InfoNotAvailable` with a warning, and so does any
+property facet whose set or name is a pattern or enumeration, since it could
+match a property the type adds under another set or name.
 
 Material and part-of read the BOS relations (`IdsRelationFacets`):
 

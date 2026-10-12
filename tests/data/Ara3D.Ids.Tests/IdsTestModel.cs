@@ -150,7 +150,11 @@ internal static class IdsXml
         => $"<entity><name><xs:restriction base=\"xs:string\">{string.Join("", names.Select(n => $"<xs:enumeration value=\"{n}\"/>"))}</xs:restriction></name></entity>";
 
     public static string Property(string set, string name, string? value = null, string? dataType = null, string? cardinality = null)
-        => $"<property{Attr("dataType", dataType)}{Attr("cardinality", cardinality)}><propertySet>{Simple(set)}</propertySet><baseName>{Simple(name)}</baseName>{(value is null ? "" : $"<value>{value}</value>")}</property>";
+        => PropertyOf(Simple(set), Simple(name), value, dataType, cardinality);
+
+    /// <summary>A property facet whose set and name are IDS XML: a simple value or a restriction.</summary>
+    public static string PropertyOf(string setXml, string nameXml, string? value = null, string? dataType = null, string? cardinality = null)
+        => $"<property{Attr("dataType", dataType)}{Attr("cardinality", cardinality)}><propertySet>{setXml}</propertySet><baseName>{nameXml}</baseName>{(value is null ? "" : $"<value>{value}</value>")}</property>";
 
     public static string Attribute(string name, string? value = null, string? cardinality = null)
         => $"<attribute{Attr("cardinality", cardinality)}><name>{Simple(name)}</name>{(value is null ? "" : $"<value>{value}</value>")}</attribute>";

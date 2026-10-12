@@ -109,7 +109,9 @@ internal static class IdsFacets
     }
 
     /// <summary>Reads the entity's own values and those it inherits from its type. When it names a
-    /// type that cannot be found and carries no matching value itself, the answer cannot be told.</summary>
+    /// type that cannot be found, the answer cannot be told if the entity carries no matching value
+    /// itself, or if the set or name is not one exact value: a pattern could match a property the
+    /// type adds under another set or name, which the entity's own values do not hide.</summary>
     private static FacetMatch MatchProperty(IfcPropertyFacet facet, IdsEntity entity, IdsUnitScales units, IdsWarnings warnings)
     {
         var candidates = entity.Properties
@@ -117,8 +119,11 @@ internal static class IdsFacets
                 && Satisfies(facet.PropertyName, v.Name, ignoreCase: false) && v.IsPresent)
             .ToList();
         var subject = $"{facet.PropertySetName?.Short()}.{facet.PropertyName?.Short()}";
-        if (candidates.Count == 0 && UnresolvedType(entity, $"no {subject} of its own", warnings) is { } unknown)
-            return unknown;
+        if (candidates.Count == 0 && UnresolvedType(entity, $"no {subject} of its own", warnings) is { } none)
+            return none;
+        if (!(IsExact(facet.PropertySetName) && IsExact(facet.PropertyName))
+            && UnresolvedType(entity, $"{subject} could match a property its type adds", warnings) is { } more)
+            return more;
         if (candidates.Count == 0)
             return FacetMatch.Absent($"no {subject}");
         var expected = ExpectedKind(facet.DataType, warnings);
@@ -190,6 +195,10 @@ internal static class IdsFacets
 
     internal static bool IsEmpty(ValueConstraint? constraint)
         => constraint is null || ValueConstraint.IsEmpty(constraint);
+
+    /// <summary>True when the constraint accepts exactly one value.</summary>
+    private static bool IsExact(ValueConstraint? constraint)
+        => constraint is not null && ValueConstraint.IsSingleExact(constraint, out _);
 
     /// <summary>An empty constraint accepts anything, as IDS reads an omitted value.</summary>
     internal static bool Satisfies(ValueConstraint? constraint, object candidate, bool ignoreCase)
