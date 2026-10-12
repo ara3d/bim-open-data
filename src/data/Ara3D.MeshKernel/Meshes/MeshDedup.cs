@@ -1,11 +1,11 @@
 using Ara3D.Geometry;
 using Ara3D.Models;
 
-namespace Ara3D.Ifc.Mesher;
+namespace Ara3D.MeshKernel;
 
 /// <summary>Shares one mesh between parts whose geometry is identical, within a dedup scope. A cheap
 /// fingerprint picks the bucket; an exact point-and-index comparison settles collisions.</summary>
-internal static class MeshDedup
+public static class MeshDedup
 {
     public static int GetOrAddMesh(
         Model3DBuilder builder,
@@ -48,7 +48,7 @@ internal static class MeshDedup
         {
             var h = mesh.FaceIndices.Count;
             h = h * 397 ^ mesh.Points.Count;
-            var bounds = MeshHelpers.GetBounds(mesh);
+            var bounds = mesh.Points.Count == 0 ? Bounds3D.Empty : mesh.Points.Bounds();
             h = h * 397 ^ bounds.Min.X.GetHashCode();
             h = h * 397 ^ bounds.Min.Y.GetHashCode();
             h = h * 397 ^ bounds.Min.Z.GetHashCode();

@@ -1,10 +1,10 @@
 using Ara3D.Geometry;
 
-namespace Ara3D.Ifc.Mesher;
+namespace Ara3D.MeshKernel;
 
 /// <summary>The one strip of quads between two consecutive rings of a sweep, shared by revolutions,
 /// swept disks, and directrix sweeps.</summary>
-internal static class SweepRings
+public static class SweepRings
 {
     /// <summary>Joins two rings of equal length into a closed band of triangles, wrapping the last
     /// point back to the first.</summary>
