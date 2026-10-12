@@ -7,14 +7,17 @@ namespace Ara3D.BimOpenSchema.IO.Bcf;
 /// <summary>Which columns of an issues table hold what. Names match case-insensitively, so
 /// <c>GlobalId</c> from DuckDB's <c>EntityText</c> view and <c>CheckTitle</c> from a verdict
 /// table both resolve. Only <see cref="GlobalId"/> and <see cref="Title"/> must exist; a
-/// missing optional column leaves that field empty.</summary>
+/// missing optional column leaves that field empty. <see cref="AuthoringToolId"/> names the column
+/// <see cref="BcfReader.ToTable"/> puts an authoring-tool id in (a Revit UniqueId, say), so a
+/// table read from a BCF writes back with every component it named.</summary>
 public sealed record BcfColumns(
     string GlobalId = IssueColumns.GlobalId,
     string Title = IssueColumns.Title,
     string Description = IssueColumns.Description,
     string Status = IssueColumns.Status,
     string Priority = IssueColumns.Priority,
-    string Type = IssueColumns.Type)
+    string Type = IssueColumns.Type,
+    string AuthoringToolId = BcfReader.AuthoringToolIdColumn)
 {
     /// <summary>A verdict table (the <c>check.*</c> nodes' columns, or <c>Ara3D.Ids</c>'s
     /// <c>IdsVerdict</c> rows as a table): one topic per check title, the citation as its
@@ -25,9 +28,10 @@ public sealed record BcfColumns(
 /// <summary>Turns a table into issues: one issue per distinct title, in order of first appearance.</summary>
 public static class BcfIssueTable
 {
-    /// <summary>Groups rows by title. Each issue lists its rows' non-empty GlobalIds once each, in
-    /// row order (a row with no GlobalId still makes the topic, as a model-level issue), and its
-    /// rows' distinct non-empty descriptions joined by line breaks. Status, priority, and type
+    /// <summary>Groups rows by title. Each issue lists its rows' non-empty ids once each, in row
+    /// order: a row's GlobalId, or its AuthoringToolId when the GlobalId is empty (a row with
+    /// neither still makes the topic, as a model-level issue). Its description is its rows'
+    /// distinct non-empty descriptions joined by line breaks. Status, priority, and type
     /// must agree within a title. Null, DBNull, and blank cells count as empty.</summary>
     /// <exception cref="ArgumentException">The GlobalId or title column is missing, a row has no
     /// title, or rows of one title disagree on status, priority, or type.</exception>
@@ -35,6 +39,7 @@ public static class BcfIssueTable
     {
         columns ??= new BcfColumns();
         var globalId = Require(table, columns.GlobalId);
+        var authoringToolId = Find(table, columns.AuthoringToolId);
         var title = Require(table, columns.Title);
         var description = Find(table, columns.Description);
         var status = Find(table, columns.Status);
@@ -54,7 +59,8 @@ public static class BcfIssueTable
                 groups.Add(key, group);
                 order.Add(group);
             }
-            group.Add(Text(globalId, row), Text(description, row));
+            var id = Text(globalId, row);
+            group.Add(id.Length > 0 ? id : Text(authoringToolId, row), Text(description, row));
             group.Agree(nameof(BcfIssue.Status), ref group.Status, Text(status, row));
             group.Agree(nameof(BcfIssue.Priority), ref group.Priority, Text(priority, row));
             group.Agree(nameof(BcfIssue.Type), ref group.Type, Text(type, row));
@@ -62,6 +68,10 @@ public static class BcfIssueTable
 
         return order.Select(g => g.ToIssue()).ToList();
     }
+
+    /// <summary>Whether an id is in IFC's 22-character GlobalId form. The writer emits such an id
+    /// as a component's IfcGuid and any other as its AuthoringToolId.</summary>
+    public static bool IsGlobalId(string id) => BcfXml.IsIfcGuid(id);
 
     private static IDataColumn Require(IDataTable table, string name)
         => Find(table, name) ?? throw new ArgumentException(

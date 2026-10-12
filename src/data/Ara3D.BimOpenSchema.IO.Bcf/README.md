@@ -24,8 +24,11 @@ var summary = BcfWriter.WriteFile("doors.bcf", doors.ToBcfIssues(), new BcfOptio
 
 - **Input.** `ToBcfIssues(table, columns)` reads the columns named by
   `BcfColumns` (case-insensitive): `GlobalId` and `Title` are required (names come from `IssueColumns`);
-  `Description`, `Status`, `Priority`, and `Type` are optional. Rows group by
-  title in order of first appearance. A topic lists each GlobalId once, and
+  `Description`, `Status`, `Priority`, `Type`, and `AuthoringToolId` are
+  optional. A row with an empty `GlobalId` contributes its `AuthoringToolId`
+  instead, so a table `BcfReader.ToTable` made writes back with every component
+  it named. Rows group by
+  title in order of first appearance. A topic lists each id once, and
   joins its rows' distinct descriptions with line breaks. Status, priority, and
   type must agree within a title. `BcfColumns.Verdicts` reads a verdict table
   (`CheckTitle`, `Citation`). Filter it to failing rows first, because every
@@ -87,7 +90,8 @@ without geometry, the ids come from the end of its description instead.
   comes back into a graph the same way a check's verdicts went out. The last
   column, `AuthoringToolId` (`BcfReader.AuthoringToolIdColumn`), holds an
   authoring-tool id; that row's `GlobalId` is empty. A topic that selects
-  nothing has one row with both empty.
+  nothing has one row with both empty. `ToBcfIssues` reads either column, so
+  reading a BCF and writing it again keeps both kinds of id.
 - **Warnings.** A part that cannot be read is skipped, and a warning names its
   zip entry: a markup or viewpoint that is not XML, a markup with no `Topic`,
   or a viewpoint a markup lists that the container does not hold. The other

@@ -166,6 +166,25 @@ public sealed class BcfReaderTests
         });
     }
 
+    /// <summary>A read table written again: <see cref="BcfIssueTable.ToBcfIssues"/> takes a row's
+    /// AuthoringToolId when its GlobalId is empty, so neither kind of id is lost on the way round.</summary>
+    [TestCase(true)]
+    [TestCase(false)]
+    public void ReadTable_WrittenAgain_KeepsBothKindsOfId(bool withGeometry)
+    {
+        IReadOnlyList<BcfIssue> issues = [new("Revit door", ["1aj$VJZFn2TxepZUBcKp$i", RevitId])];
+        var bounds = withGeometry ? Duplex() : null;
+        var table = RoundTrip(bounds, issues).ToTable();
+        var again = table.ToBcfIssues();
+        Assert.That(again.Single().GlobalIds, Is.EqualTo(new[] { "1aj$VJZFn2TxepZUBcKp$i", RevitId }));
+        var topic = RoundTrip(bounds, again).Single();
+        Assert.Multiple(() =>
+        {
+            Assert.That(topic.GlobalIds, Is.EqualTo(new[] { "1aj$VJZFn2TxepZUBcKp$i" }));
+            Assert.That(topic.AuthoringToolIds, Is.EqualTo(new[] { RevitId }));
+        });
+    }
+
     /// <summary>A container with one good topic, one whose component has only an AuthoringToolId,
     /// one whose markup lists a viewpoint the zip lacks, and one whose viewpoint is not XML. The
     /// bad parts are skipped with a warning each; every topic still reads.</summary>
