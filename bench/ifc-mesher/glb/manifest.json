@@ -1,0 +1,175 @@
+{
+  "generatedUtc": "2026-10-12T04:40:58.9999996Z",
+  "meshers": [
+    {
+      "name": "Ara3D.Ifc.Mesher",
+      "version": "bim-open-data e85c98a",
+      "color": "#4f8fc0"
+    },
+    {
+      "name": "WebIfc",
+      "version": "in process",
+      "color": "#c08a4f"
+    },
+    {
+      "name": "IfcLite",
+      "version": "4.15.0",
+      "color": "#7aa86a"
+    },
+    {
+      "name": "IfcOpenShell",
+      "version": "0.8.5",
+      "color": "#b06a8e"
+    }
+  ],
+  "files": [
+    {
+      "name": "IfcOpenHouse_IFC4.ifc",
+      "glbs": {
+        "Ara3D.Ifc.Mesher": {
+          "path": "Ara3D.Ifc.Mesher/IfcOpenHouse_IFC4.glb",
+          "triangles": 1207,
+          "instances": 38,
+          "meshes": 19,
+          "bytes": 32296,
+          "elapsedMs": 789
+        },
+        "WebIfc": {
+          "path": "WebIfc/IfcOpenHouse_IFC4.glb",
+          "triangles": 1098,
+          "instances": 38,
+          "meshes": 19,
+          "bytes": 53744,
+          "elapsedMs": 1468
+        },
+        "IfcLite": {
+          "path": "IfcLite/IfcOpenHouse_IFC4.glb",
+          "triangles": 1172,
+          "instances": 39,
+          "meshes": 39,
+          "bytes": 41116,
+          "elapsedMs": 23
+        },
+        "IfcOpenShell": {
+          "path": "IfcOpenShell/IfcOpenHouse_IFC4.glb",
+          "triangles": 1146,
+          "instances": 39,
+          "meshes": 39,
+          "bytes": 40904,
+          "elapsedMs": 224
+        }
+      }
+    },
+    {
+      "name": "example.ifc",
+      "glbs": {
+        "Ara3D.Ifc.Mesher": {
+          "path": "Ara3D.Ifc.Mesher/example.glb",
+          "triangles": 15857,
+          "instances": 120,
+          "meshes": 99,
+          "bytes": 287580,
+          "elapsedMs": 3696
+        },
+        "WebIfc": {
+          "path": "WebIfc/example.glb",
+          "triangles": 15046,
+          "instances": 120,
+          "meshes": 99,
+          "bytes": 503088,
+          "elapsedMs": 1575
+        },
+        "IfcLite": {
+          "path": "IfcLite/example.glb",
+          "triangles": 12016,
+          "instances": 116,
+          "meshes": 116,
+          "bytes": 276340,
+          "elapsedMs": 15
+        },
+        "IfcOpenShell": {
+          "path": "IfcOpenShell/example.glb",
+          "triangles": 10508,
+          "instances": 116,
+          "meshes": 116,
+          "bytes": 252268,
+          "elapsedMs": 167
+        }
+      }
+    },
+    {
+      "name": "steelplates.ifc",
+      "glbs": {
+        "Ara3D.Ifc.Mesher": {
+          "path": "Ara3D.Ifc.Mesher/steelplates.glb",
+          "triangles": 730,
+          "instances": 14,
+          "meshes": 14,
+          "bytes": 23396,
+          "elapsedMs": 4
+        },
+        "WebIfc": {
+          "path": "WebIfc/steelplates.glb",
+          "triangles": 1428,
+          "instances": 14,
+          "meshes": 14,
+          "bytes": 69652,
+          "elapsedMs": 805
+        },
+        "IfcLite": {
+          "path": "IfcLite/steelplates.glb",
+          "triangles": 2528,
+          "instances": 16,
+          "meshes": 16,
+          "bytes": 54324,
+          "elapsedMs": 22
+        },
+        "IfcOpenShell": {
+          "path": "IfcOpenShell/steelplates.glb",
+          "triangles": 1340,
+          "instances": 16,
+          "meshes": 16,
+          "bytes": 33184,
+          "elapsedMs": 164
+        }
+      }
+    },
+    {
+      "name": "duplex.ifc",
+      "glbs": {
+        "Ara3D.Ifc.Mesher": {
+          "path": "Ara3D.Ifc.Mesher/duplex.glb",
+          "triangles": 24439,
+          "instances": 714,
+          "meshes": 468,
+          "bytes": 545216,
+          "elapsedMs": 7095
+        },
+        "WebIfc": {
+          "path": "WebIfc/duplex.glb",
+          "triangles": 27342,
+          "instances": 681,
+          "meshes": 435,
+          "bytes": 901664,
+          "elapsedMs": 6005
+        },
+        "IfcLite": {
+          "path": "IfcLite/duplex.glb",
+          "triangles": 30374,
+          "instances": 286,
+          "meshes": 286,
+          "bytes": 698280,
+          "elapsedMs": 6104
+        },
+        "IfcOpenShell": {
+          "path": "IfcOpenShell/duplex.glb",
+          "triangles": 27740,
+          "instances": 286,
+          "meshes": 286,
+          "bytes": 663912,
+          "elapsedMs": 23773
+        }
+      }
+    }
+  ]
+}
