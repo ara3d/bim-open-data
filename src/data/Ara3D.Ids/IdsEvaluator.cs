@@ -64,20 +64,21 @@ public static class IdsEvaluator
         // An entity whose applicability cannot be told (a part-of facet naming no relation, over
         // a model missing one kind of relation, and no container found) gets its own
         // InfoNotAvailable row, and the cardinality is not judged: it might have applied.
+        var ordered = applicability.OrderBy(f => f is IfcTypeFacet ? 0 : 1).ToList();
         var applicable = new List<IdsEntity>();
         var unknown = 0;
         foreach (var entity in model.Entities)
         {
-            var matches = applicability.Select(f => IdsFacets.Match(f, entity, model, warnings)).ToList();
-            if (matches.Any(m => m.Supported && !m.Satisfied))
-                continue;
-            if (matches.FindIndex(m => !m.Supported) is var missing and >= 0)
+            switch (Applies(ordered, entity, model, warnings))
             {
-                unknown++;
-                Row(entity, Outcome.Unknown($"cannot tell whether the specification applies: {matches[missing].Reason}"));
-                continue;
+                case null:
+                    applicable.Add(entity);
+                    break;
+                case { Supported: false } missing:
+                    unknown++;
+                    Row(entity, Outcome.Unknown($"cannot tell whether the specification applies: {missing.Reason}"));
+                    break;
             }
-            applicable.Add(entity);
         }
 
         if (IsProhibited(specification.Cardinality))
@@ -98,6 +99,24 @@ public static class IdsEvaluator
     }
 
     private static readonly IdsEntity Empty = new(-1, "", "", "", []);
+
+    /// <summary>Null when every facet holds for the entity; else the first facet that rules it out
+    /// (supported, not satisfied), else the first that cannot be told. Facets are matched in the
+    /// given order and stop at the first that rules the entity out, so with the entity facets
+    /// first a part-of walk or a type lookup runs only for entities of the named classes.</summary>
+    private static FacetMatch? Applies(IReadOnlyList<IFacet> facets, IdsEntity entity, IdsModel model, IdsWarnings warnings)
+    {
+        FacetMatch? missing = null;
+        foreach (var facet in facets)
+        {
+            var match = IdsFacets.Match(facet, entity, model, warnings);
+            if (match.Supported && !match.Satisfied)
+                return match;
+            if (!match.Supported)
+                missing ??= match;
+        }
+        return missing;
+    }
 
     /// <summary>Prohibited at the specification level: no entity may match the applicability.</summary>
     private static bool IsProhibited(ICardinality? cardinality)

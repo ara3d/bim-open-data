@@ -158,6 +158,17 @@ public sealed class IdsRelationFacetTests
         Assert.That(report.Warnings, Is.Not.Empty);
     }
 
+    /// <summary>The part-of facet comes first in the IDS, but the entity facet is evaluated first
+    /// and rules out the walls, window and space, so no part-of walk runs for them and none of
+    /// them raises the "cannot be told" warning a miss under any relation would.</summary>
+    [Test]
+    public void Applicability_TheEntityFacetRulesOutAnEntityBeforeAPartOfWalk()
+    {
+        var report = Run(PartOf("IFCBUILDINGSTOREY", null) + Entity("IFCDOOR"));
+        Assert.That(ByGlobalId(report).Keys, Is.EquivalentTo(new[] { Door1, Door2 }));
+        Assert.That(report.Warnings, Is.Empty);
+    }
+
     [Test]
     public void WithoutRelations_BothFacetsAreInfoNotAvailable()
     {
