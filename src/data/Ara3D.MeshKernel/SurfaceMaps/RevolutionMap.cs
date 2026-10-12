@@ -1,8 +1,6 @@
 using Ara3D.Geometry;
-using Ara3D.IfcLoader;
-using Ara3D.IfcTypes;
 
-namespace Ara3D.Ifc.Mesher;
+namespace Ara3D.MeshKernel;
 
 /// <summary>
 /// Surface-of-revolution parameterization. The 2D domain is (refRadius·angle, meridian arc-length):
@@ -11,7 +9,7 @@ namespace Ara3D.Ifc.Mesher;
 /// domain unproject by evaluating the meridian at the given arc-length and rotating about the axis, so
 /// the tessellation follows the true revolved surface instead of a flat chord across it.
 /// </summary>
-internal sealed class RevolutionMap : SurfaceMap
+public sealed class RevolutionMap : SurfaceMap
 {
     readonly Frame3D _frame; // origin = axis point, Z = axis dir, X = meridian radial reference
     readonly float _refRadius;
@@ -24,48 +22,14 @@ internal sealed class RevolutionMap : SurfaceMap
     RevolutionMap(Frame3D frame, float refRadius, float[] s, float[] r, float[] a)
         => (_frame, _refRadius, _s, _r, _a) = (frame, refRadius, s, r, a);
 
-    /// <summary>Reads the surface's axis and swept profile; false when either is missing, degenerate,
-    /// or fails to read, so the caller falls back to a flat projection.</summary>
-    public static bool TryBuild(MeshingContext ctx, IfcEntity surface, out RevolutionMap map)
-    {
-        map = null!;
-        try
-        {
-            var axisEntity = MeshHelpers.ResolveOptional(ctx, surface, IfcSurfaceOfRevolution.Instance.AxisPosition);
-            if (axisEntity is null)
-                return false;
-            var position = Placements.ReadOptionalAxis2Placement3D(ctx, surface, IfcSweptSurface.Instance.Position);
-
-            var axisLocal = Placements.ReadPoint3D(ctx, MeshHelpers.ResolveRequired(ctx, axisEntity, IfcPlacement.Instance.Location));
-            var axisDirLocal = MeshHelpers.ResolveOptional(ctx, axisEntity, IfcAxis1Placement.Instance.Axis) is { } ax
-                ? Placements.ReadDirection3D(ctx, ax, Vector3.UnitZ)
-                : Vector3.UnitZ;
-
-            var axisPoint = position.ToWorld(axisLocal);
-            var axisDir = position.ToWorldDirection(axisDirLocal);
-
-            var sweptCurve = MeshHelpers.ResolveRequired(ctx, surface, IfcSweptSurface.Instance.SweptCurve);
-            var meridian = EvaluateMeridianCurve3D(ctx, sweptCurve)
-                .Select(p => position.ToWorld(p))
-                .ToList();
-
-            var built = Build(axisPoint, axisDir, meridian);
-            if (built is null)
-                return false;
-            map = built;
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    public static RevolutionMap? Build(Vector3 axisPoint, Vector3 axisDir, IReadOnlyList<Vector3> meridian)
+    /// <summary>The map for a meridian revolved about an axis; null when the meridian has under two
+    /// points, lies on the axis, or has no length.</summary>
+    public static RevolutionMap? Build(Ray3D axis, IReadOnlyList<Vector3> meridian)
     {
         if (meridian.Count < 2)
             return null;
-        axisDir = axisDir.Normalize;
+        var axisPoint = axis.Origin.Vector3;
+        var axisDir = axis.Direction.Normalize;
 
         // Radial reference direction: from the axis to the meridian point farthest from it.
         var bestRadial = Vector3.Zero;
@@ -108,21 +72,7 @@ internal sealed class RevolutionMap : SurfaceMap
         return new RevolutionMap(frame, bestR, s, r, a);
     }
 
-    /// <summary>Evaluates a swept-surface profile (curve or arbitrary profile wrapping a curve) to 3D points.</summary>
-    static List<Vector3> EvaluateMeridianCurve3D(MeshingContext ctx, IfcEntity sweptCurve)
-    {
-        var curve = sweptCurve.GetEntityName() switch
-        {
-            "IFCARBITRARYOPENPROFILEDEF" or "IFCCENTERLINEPROFILEDEF"
-                => MeshHelpers.ResolveOptional(ctx, sweptCurve, IfcArbitraryOpenProfileDef.Instance.Curve),
-            "IFCARBITRARYCLOSEDPROFILEDEF"
-                => MeshHelpers.ResolveOptional(ctx, sweptCurve, IfcArbitraryClosedProfileDef.Instance.OuterCurve),
-            _ => sweptCurve,
-        };
-        return curve is null ? [] : FaceBounds.DedupeConsecutive3D(CurveEvaluator.Evaluate3D(ctx, curve).ToList());
-    }
-
-    public override List<Vector2> ProjectRing(IReadOnlyList<Vector3> ring)
+    public override IReadOnlyList<Vector2> ProjectRing(IReadOnlyList<Vector3> ring)
     {
         var result = new List<Vector2>(ring.Count);
         var prevAngle = 0f;

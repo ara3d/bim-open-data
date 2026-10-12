@@ -1,9 +1,6 @@
 using Ara3D.Geometry;
-using Ara3D.IfcLoader;
-using Ara3D.IfcTypes;
-using Ara3D.IO.StepParser;
 
-namespace Ara3D.Ifc.Mesher;
+namespace Ara3D.MeshKernel;
 
 /// <summary>
 /// B-spline (NURBS) surface parameterization. The 2D domain is the surface (u,v) parameter rectangle
@@ -11,7 +8,7 @@ namespace Ara3D.Ifc.Mesher;
 /// a pre-sampled surface grid; interior points unproject by evaluating the surface (Cox-de Boor tensor
 /// product), so wrapping curved panels tessellate on the true surface rather than a flat chord.
 /// </summary>
-internal sealed class BSplineSurfaceMap : SurfaceMap
+public sealed class BSplineSurfaceMap : SurfaceMap
 {
     readonly Vector3[][] _ctrl; // [uIndex][vIndex]
     readonly float[][] _w;
@@ -60,49 +57,28 @@ internal sealed class BSplineSurfaceMap : SurfaceMap
         }
     }
 
-    /// <summary>False when the control net, degrees or knots do not describe a surface, or reading
-    /// them throws, so the caller falls back to a flat projection.</summary>
-    public static bool TryBuild(MeshingContext ctx, IfcEntity surface, out BSplineSurfaceMap map)
+    /// <summary>The map for a surface; null when the net has under two points in a direction, a
+    /// degree is below 1, or a knot vector's length is not points + degree + 1.</summary>
+    public static BSplineSurfaceMap? Build(BSplineSurface surface)
     {
-        map = null!;
-        try
-        {
-            var built = Build(ctx, surface);
-            if (built is null)
-                return false;
-            map = built;
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    public static BSplineSurfaceMap? Build(MeshingContext ctx, IfcEntity surface)
-    {
-        var ctrl = ReadControlGrid(ctx, surface);
+        var ctrl = surface.ControlPoints.Select(row => row.ToArray()).ToArray();
         if (ctrl.Length < 2 || ctrl[0].Length < 2)
             return null;
-        var pu = (int)MeshHelpers.ReadNumber(surface, IfcBSplineSurface.Instance.UDegree);
-        var pv = (int)MeshHelpers.ReadNumber(surface, IfcBSplineSurface.Instance.VDegree);
+        var pu = surface.UDegree;
+        var pv = surface.VDegree;
         if (pu < 1 || pv < 1)
             return null;
 
-        var uKnots = ExpandKnots(
-            MeshHelpers.ReadNumbers(surface, IfcBSplineSurfaceWithKnots.Instance.UKnots),
-            MeshHelpers.ReadNumbers(surface, IfcBSplineSurfaceWithKnots.Instance.UMultiplicities));
-        var vKnots = ExpandKnots(
-            MeshHelpers.ReadNumbers(surface, IfcBSplineSurfaceWithKnots.Instance.VKnots),
-            MeshHelpers.ReadNumbers(surface, IfcBSplineSurfaceWithKnots.Instance.VMultiplicities));
+        var uKnots = surface.UKnots.ToArray();
+        var vKnots = surface.VKnots.ToArray();
         if (uKnots.Length != ctrl.Length + pu + 1 || vKnots.Length != ctrl[0].Length + pv + 1)
             return null;
 
-        var w = ReadWeightGrid(surface, ctrl);
+        var w = surface.Weights.Select(row => row.ToArray()).ToArray();
         return new BSplineSurfaceMap(ctrl, w, uKnots, vKnots, pu, pv);
     }
 
-    public override List<Vector2> ProjectRing(IReadOnlyList<Vector3> ring)
+    public override IReadOnlyList<Vector2> ProjectRing(IReadOnlyList<Vector3> ring)
     {
         var result = new List<Vector2>(ring.Count);
         foreach (var p in ring)
@@ -190,59 +166,5 @@ internal sealed class BSplineSurfaceMap : SurfaceMap
             n[j] = saved;
         }
         return n;
-    }
-
-    static Vector3[][] ReadControlGrid(MeshingContext ctx, IfcEntity surface)
-    {
-        var token = surface.GetValue(IfcBSplineSurface.Instance.ControlPointsList.Index);
-        if (!token.IsList)
-            return [];
-        var rows = new List<Vector3[]>();
-        foreach (var rowTok in token.AsList(surface.Document))
-        {
-            if (!rowTok.IsList)
-                continue;
-            var row = new List<Vector3>();
-            foreach (var idTok in rowTok.AsList(surface.Document))
-                if (idTok.IsId)
-                    row.Add(Placements.ReadPoint3D(ctx, ctx.GetEntity(idTok.AsId())));
-            if (row.Count > 0)
-                rows.Add(row.ToArray());
-        }
-        return rows.ToArray();
-    }
-
-    static float[][] ReadWeightGrid(IfcEntity surface, Vector3[][] ctrl)
-    {
-        var w = ctrl.Select(row => Enumerable.Repeat(1f, row.Length).ToArray()).ToArray();
-        if (surface.GetEntityName() != "IFCRATIONALBSPLINESURFACEWITHKNOTS")
-            return w;
-        var token = surface.GetValue(IfcRationalBSplineSurfaceWithKnots.Instance.WeightsData.Index);
-        if (!token.IsList)
-            return w;
-        var i = 0;
-        foreach (var rowTok in token.AsList(surface.Document))
-        {
-            if (!rowTok.IsList || i >= w.Length)
-                continue;
-            var j = 0;
-            foreach (var wTok in rowTok.AsList(surface.Document))
-            {
-                if (wTok.IsNumber && j < w[i].Length)
-                    w[i][j] = (float)wTok.AsNumber();
-                j++;
-            }
-            i++;
-        }
-        return w;
-    }
-
-    static float[] ExpandKnots(IReadOnlyList<double> knots, IReadOnlyList<double> mults)
-    {
-        var full = new List<float>();
-        for (var i = 0; i < knots.Count && i < mults.Count; i++)
-            for (var m = 0; m < (int)mults[i]; m++)
-                full.Add((float)knots[i]);
-        return full.ToArray();
     }
 }

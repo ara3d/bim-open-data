@@ -1,15 +1,13 @@
 using Ara3D.Geometry;
-using Ara3D.IfcLoader;
-using Ara3D.IfcTypes;
 
-namespace Ara3D.Ifc.Mesher;
+namespace Ara3D.MeshKernel;
 
 /// <summary>
 /// Cylindrical surface parameterization: 2D domain is (arc-length = radius*angle, height).
 /// Angles are unwrapped along each ring so a partial or full wrap forms a simple 2D polygon;
 /// holes align to the outer ring's angular band.
 /// </summary>
-internal sealed class CylinderMap : SurfaceMap
+public sealed class CylinderMap : SurfaceMap
 {
     readonly Frame3D _frame;
     readonly float _radius;
@@ -24,18 +22,7 @@ internal sealed class CylinderMap : SurfaceMap
 
     public float Radius => _radius;
 
-    public static bool TryBuild(MeshingContext ctx, IfcEntity surface, out CylinderMap map)
-    {
-        map = null!;
-        var radius = (float)ctx.ScaleLength(MeshHelpers.ReadNumber(surface, IfcCylindricalSurface.Instance.Radius));
-        if (radius <= 1e-7f)
-            return false;
-        var frame = Placements.ReadOptionalAxis2Placement3D(ctx, surface, IfcElementarySurface.Instance.Position);
-        map = new CylinderMap(frame, radius);
-        return true;
-    }
-
-    public override List<Vector2> ProjectRing(IReadOnlyList<Vector3> ring)
+    public override IReadOnlyList<Vector2> ProjectRing(IReadOnlyList<Vector3> ring)
     {
         var result = new List<Vector2>(ring.Count);
         var prevU = 0f;

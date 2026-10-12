@@ -36,7 +36,7 @@ internal static class FaceSetBuilder
                 continue;
             }
 
-            var map = SurfaceMap.Resolve(ctx, face, outer);
+            var map = FaceSurfaceMaps.Resolve(ctx, face, outer);
             var outer2 = DedupeConsecutive(map.ProjectRing(outer));
             var holes2 = holes
                 .Select(h => DedupeConsecutive(map.ProjectRing(h)))
