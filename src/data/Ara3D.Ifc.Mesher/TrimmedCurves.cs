@@ -41,7 +41,7 @@ internal static class TrimmedCurves
         var u2 = ReadTrimParameter(ctx, trimmed, circle, IfcTrimmedCurve.Instance.Trim2);
         var radius = (float)ctx.ScaleLength(MeshHelpers.ReadNumber(circle, IfcCircle.Instance.Radius));
         var placement = Placements.ReadOptionalAxis2Placement3D(ctx, circle, IfcConic.Instance.Position);
-        return Conics.SampleTrimmedConicArc2D(placement, radius, radius, u1, u2, sense, ctx.CircleSegments);
+        return Conics.SampleTrimmedConicArc2D(placement, new ConicTrim(radius, radius, u1, u2, sense), ctx.CircleSegments);
     }
 
     static List<Vector3> TrimCircle3D(MeshingContext ctx, IfcEntity circle, IfcEntity trimmed, bool sense)
@@ -54,11 +54,11 @@ internal static class TrimmedCurves
         {
             var a1 = CircleAngleAtPoint(placement, cp1);
             var a2 = CircleAngleAtPoint(placement, cp2);
-            return Conics.SampleTrimmedConicArc3D(placement, radius, radius, a1, a2, sense, ctx.CircleSegments);
+            return Conics.SampleTrimmedConicArc3D(placement, new ConicTrim(radius, radius, a1, a2, sense), ctx.CircleSegments);
         }
         var u1 = ReadTrimParameter(ctx, trimmed, circle, IfcTrimmedCurve.Instance.Trim1);
         var u2 = ReadTrimParameter(ctx, trimmed, circle, IfcTrimmedCurve.Instance.Trim2);
-        return Conics.SampleTrimmedConicArc3D(placement, radius, radius, u1, u2, sense, ctx.CircleSegments);
+        return Conics.SampleTrimmedConicArc3D(placement, new ConicTrim(radius, radius, u1, u2, sense), ctx.CircleSegments);
     }
 
     static bool PrefersCartesianTrim(IfcEntity trimmed)
@@ -78,7 +78,7 @@ internal static class TrimmedCurves
         var a = (float)ctx.ScaleLength(MeshHelpers.ReadNumber(ellipse, IfcEllipse.Instance.SemiAxis1));
         var b = (float)ctx.ScaleLength(MeshHelpers.ReadNumber(ellipse, IfcEllipse.Instance.SemiAxis2));
         var placement = Placements.ReadOptionalAxis2Placement3D(ctx, ellipse, IfcConic.Instance.Position);
-        return Conics.SampleTrimmedConicArc2D(placement, a, b, u1, u2, sense, ctx.CircleSegments);
+        return Conics.SampleTrimmedConicArc2D(placement, new ConicTrim(a, b, u1, u2, sense), ctx.CircleSegments);
     }
 
     static List<Vector3> TrimEllipse3D(MeshingContext ctx, IfcEntity ellipse, IfcEntity trimmed, bool sense)
@@ -88,7 +88,7 @@ internal static class TrimmedCurves
         var a = (float)ctx.ScaleLength(MeshHelpers.ReadNumber(ellipse, IfcEllipse.Instance.SemiAxis1));
         var b = (float)ctx.ScaleLength(MeshHelpers.ReadNumber(ellipse, IfcEllipse.Instance.SemiAxis2));
         var placement = Placements.ReadOptionalAxis2Placement3D(ctx, ellipse, IfcConic.Instance.Position);
-        return Conics.SampleTrimmedConicArc3D(placement, a, b, u1, u2, sense, ctx.CircleSegments);
+        return Conics.SampleTrimmedConicArc3D(placement, new ConicTrim(a, b, u1, u2, sense), ctx.CircleSegments);
     }
 
     static List<Vector2> TrimLine2D(MeshingContext ctx, IfcEntity line, IfcEntity trimmed, bool sense)

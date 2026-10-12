@@ -81,90 +81,37 @@ internal static class Conics
         return dir.Normalize;
     }
 
-    /// <summary>
-    /// PRIMARK-style fillets use SenseAgreement=.F. with long PARAMETER trims (e.g. 0→3π/2).
-    /// Shortest-path normalization collapses those to 90°; long arcs must sweep from u2 by the raw span.
-    /// </summary>
-    public static List<Vector2> SampleTrimmedConicArc2D(
-        Frame3D placement, float a, float b, float u1, float u2, bool sense, int segments)
+    public static List<Vector2> SampleTrimmedConicArc2D(Frame3D placement, ConicTrim trim, int circleSegments)
     {
-        var (start, sweep, reverse) = ResolveConicTrimSweep(u1, u2, sense);
-        var result = SampleConicArcWithSweep2D(placement, a, b, start, sweep, segments);
+        var (arc, reverse) = trim.Resolve();
+        var result = SampleConicArc2D(placement, arc, circleSegments);
         if (reverse)
             result.Reverse();
         return result;
     }
 
-    public static List<Vector3> SampleTrimmedConicArc3D(
-        Frame3D placement, float a, float b, float u1, float u2, bool sense, int segments)
+    public static List<Vector3> SampleTrimmedConicArc3D(Frame3D placement, ConicTrim trim, int circleSegments)
     {
-        var (start, sweep, reverse) = ResolveConicTrimSweep(u1, u2, sense);
-        var steps = ConicArcSampleCount(sweep, segments, Math.Max(a, b));
-        var result = new List<Vector3>(steps + 1);
-        for (var i = 0; i <= steps; i++)
-        {
-            var u = start + sweep * i / steps;
-            var local = new Vector3(a * MathF.Cos(u), b * MathF.Sin(u), 0);
-            result.Add(placement.ToWorld(local));
-        }
+        var (arc, reverse) = trim.Resolve();
+        var chords = arc.Chords(circleSegments);
+        var result = new List<Vector3>(chords + 1);
+        for (var i = 0; i <= chords; i++)
+            result.Add(placement.ToWorld(arc.LocalPoint(i, chords)));
         if (reverse)
             result.Reverse();
         return result;
     }
 
-    public static List<Vector2> SampleConicArcWithSweep2D(
-        Frame3D placement, float a, float b, float start, float sweep, int segments)
+    public static List<Vector2> SampleConicArc2D(Frame3D placement, ConicArc arc, int circleSegments)
     {
-        var steps = ConicArcSampleCount(sweep, segments, Math.Max(a, b));
-        var result = new List<Vector2>(steps + 1);
-        for (var i = 0; i <= steps; i++)
+        var chords = arc.Chords(circleSegments);
+        var result = new List<Vector2>(chords + 1);
+        for (var i = 0; i <= chords; i++)
         {
-            var u = start + sweep * i / steps;
-            var local = new Vector3(a * MathF.Cos(u), b * MathF.Sin(u), 0);
-            var w = placement.ToWorld(local);
+            var w = placement.ToWorld(arc.LocalPoint(i, chords));
             result.Add(new Vector2(w.X.Value, w.Y.Value));
         }
         return result;
-    }
-
-    static (float Start, float Sweep, bool Reverse) ResolveConicTrimSweep(float u1, float u2, bool sense)
-    {
-        var raw = u2 - u1;
-        if (!sense)
-        {
-            if (MathF.Abs(raw) > MathF.PI + 1e-3f)
-                return (u2, raw, false);
-            return (u1, -raw, true);
-        }
-
-        return (u1, NormalizeAngleSpan(raw, true), false);
-    }
-
-    static int ConicArcSampleCount(float span, int segments, float radius)
-    {
-        var fromCircumference = (int)MathF.Ceiling(MathF.Abs(span) / MathF.Tau * segments);
-        var perQuadrant = Math.Max(2, segments / 4);
-        var fromSpan = (int)MathF.Ceiling(MathF.Abs(span) / (MathF.PI / 2f) * perQuadrant);
-        return Math.Clamp(Math.Max(fromCircumference, fromSpan), 2, 64);
-    }
-
-    static float NormalizeAngleSpan(float span, bool sense)
-    {
-        if (sense)
-        {
-            while (span < 0)
-                span += MathF.Tau;
-            if (span > MathF.PI)
-                span -= MathF.Tau;
-        }
-        else
-        {
-            while (span > 0)
-                span -= MathF.Tau;
-            if (span < -MathF.PI)
-                span += MathF.Tau;
-        }
-        return span;
     }
 
     static Vector2 ToWorld2(Frame3D frame, Vector2 local)

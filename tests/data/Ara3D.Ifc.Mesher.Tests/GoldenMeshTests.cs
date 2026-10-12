@@ -556,7 +556,8 @@ public sealed class GoldenMeshTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(points, Has.Count.EqualTo(3));
+            // 8 segments per circle x 11/8 arc density (ConicArc.DensityFactor) = 3 chords for a quarter turn.
+            Assert.That(points, Has.Count.EqualTo(4));
             Assert.That(points[0].X.Value, Is.EqualTo(2f).Within(1e-5f));
             Assert.That(points[0].Y.Value, Is.EqualTo(0f).Within(1e-5f));
             Assert.That(points[^1].X.Value, Is.EqualTo(0f).Within(1e-5f));

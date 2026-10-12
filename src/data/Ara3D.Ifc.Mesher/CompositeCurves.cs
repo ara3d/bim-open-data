@@ -163,22 +163,26 @@ internal static class CompositeCurves
         if (MathF.Abs(raw) <= MathF.PI + 1e-3f)
             return false;
 
+        var placement = Placements.ReadOptionalAxis2Placement3D(ctx, basis, IfcConic.Instance.Position);
         arc = basis.GetEntityName() switch
         {
-            "IFCCIRCLE" => Conics.SampleConicArcWithSweep2D(
-                Placements.ReadOptionalAxis2Placement3D(ctx, basis, IfcConic.Instance.Position),
-                (float)ctx.ScaleLength(MeshHelpers.ReadNumber(basis, IfcCircle.Instance.Radius)),
-                (float)ctx.ScaleLength(MeshHelpers.ReadNumber(basis, IfcCircle.Instance.Radius)),
-                u1, raw, ctx.CircleSegments),
-            "IFCELLIPSE" => Conics.SampleConicArcWithSweep2D(
-                Placements.ReadOptionalAxis2Placement3D(ctx, basis, IfcConic.Instance.Position),
-                (float)ctx.ScaleLength(MeshHelpers.ReadNumber(basis, IfcEllipse.Instance.SemiAxis1)),
-                (float)ctx.ScaleLength(MeshHelpers.ReadNumber(basis, IfcEllipse.Instance.SemiAxis2)),
-                u1, raw, ctx.CircleSegments),
+            "IFCCIRCLE" => Conics.SampleConicArc2D(placement, CircleArc(ctx, basis, u1, raw), ctx.CircleSegments),
+            "IFCELLIPSE" => Conics.SampleConicArc2D(placement, EllipseArc(ctx, basis, u1, raw), ctx.CircleSegments),
             _ => [],
         };
         return arc.Count >= 2;
     }
+
+    static ConicArc CircleArc(MeshingContext ctx, IfcEntity circle, float start, float sweep)
+    {
+        var radius = (float)ctx.ScaleLength(MeshHelpers.ReadNumber(circle, IfcCircle.Instance.Radius));
+        return new ConicArc(radius, radius, start, sweep);
+    }
+
+    static ConicArc EllipseArc(MeshingContext ctx, IfcEntity ellipse, float start, float sweep)
+        => new((float)ctx.ScaleLength(MeshHelpers.ReadNumber(ellipse, IfcEllipse.Instance.SemiAxis1)),
+            (float)ctx.ScaleLength(MeshHelpers.ReadNumber(ellipse, IfcEllipse.Instance.SemiAxis2)),
+            start, sweep);
 
     static List<Vector3> SanitizeOpenPathPoints3D(IReadOnlyList<Vector3> points, float joinToleranceSquared)
     {

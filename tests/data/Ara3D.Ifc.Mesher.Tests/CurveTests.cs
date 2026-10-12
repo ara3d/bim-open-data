@@ -196,4 +196,29 @@ public sealed class CurveTests
         Assert.That((float)pts[0].X, Is.EqualTo(0f).Within(1e-5f));
         Assert.That((float)pts[^1].Y, Is.EqualTo(1f).Within(1e-5f));
     }
+
+    [TestCase(MathF.PI / 2, 32, 11)]
+    [TestCase(MathF.Tau, 32, 44)]
+    [TestCase(MathF.Tau, 64, 64)]
+    [TestCase(-MathF.PI, 48, 33)]
+    [TestCase(0.01f, 32, 2)]
+    public void ConicArc_ChordsFollowTheDensityRule(float sweep, int circleSegments, int expected)
+        => Assert.That(new ConicArc(1, 1, 0, sweep).Chords(circleSegments), Is.EqualTo(expected));
+
+    [Test]
+    public void ConicTrim_ReversedFalseSenseKeepsTheShortArc()
+    {
+        var (arc, reverse) = new ConicTrim(1, 1, 0, MathF.PI / 2, false).Resolve();
+        Assert.That(reverse, Is.True);
+        Assert.That(arc.Sweep, Is.EqualTo(-MathF.PI / 2).Within(1e-6f));
+    }
+
+    [Test]
+    public void ConicTrim_LongFalseSenseArcSweepsTheRawSpanFromU2()
+    {
+        var (arc, reverse) = new ConicTrim(1, 1, 0, 3 * MathF.PI / 2, false).Resolve();
+        Assert.That(reverse, Is.False);
+        Assert.That(arc.Start, Is.EqualTo(3 * MathF.PI / 2).Within(1e-6f));
+        Assert.That(arc.Sweep, Is.EqualTo(3 * MathF.PI / 2).Within(1e-6f));
+    }
 }
