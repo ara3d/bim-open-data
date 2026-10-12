@@ -188,7 +188,7 @@ public static class MeshHelpers
 
         AddWallLoop(faces, profile.Outer, AddBottom, TopIndex);
         foreach (var hole in profile.Holes)
-            AddWallLoop(faces, hole, AddBottom, TopIndex, reverse: true);
+            AddWallLoop(faces, hole, AddBottom, TopIndex);
 
         return new TriangleMesh3D(points, faces);
     }

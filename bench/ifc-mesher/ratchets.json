@@ -1,9 +1,9 @@
-{
+﻿{
   "_note": "Committed floors the ParityGates tests read. Raise a floor in the same commit as the change that beats it; never lower one without a ticket. Parity floors are the committed scorecard value rounded down to three decimals, minus 0.005.",
   "parityFloors": {
     "IfcOpenHouse_IFC4.ifc": 0.958,
-    "example.ifc": 0.936,
-    "steelplates.ifc": 0.913
+    "example.ifc": 0.945,
+    "steelplates.ifc": 0.915
   },
-  "supportedCoverageCount": 16
+  "supportedCoverageCount": 20
 }

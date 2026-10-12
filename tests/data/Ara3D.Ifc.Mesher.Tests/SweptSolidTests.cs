@@ -149,7 +149,6 @@ public sealed class SweptSolidTests
     /// <summary>The extrusion of the example.ifc square tube (TKT-65) holds only the wall material:
     /// profile area 2133 times depth 1000, not the filled square's 9807 times 1000.</summary>
     [Test]
-    [Ignore("TKT-65: fails until MeshHelpers.BuildExtrusionWithHoles stops passing reverse: true for holes; remove this line then")]
     public void ExtrudedAreaSolid_ArbitraryProfileWithVoids_VolumeIsTheWall()
     {
         using var model = MicroIfc.Parse(

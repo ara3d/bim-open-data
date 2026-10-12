@@ -1,4 +1,4 @@
-using Ara3D.IfcLoader;
+﻿using Ara3D.IfcLoader;
 using Ara3D.IO.StepParser;
 using Ara3D.Utils;
 
@@ -72,7 +72,7 @@ public static class GeometryCoverage
         new("IFCISHAPEPROFILEDEF", GeometryCreationSupport.Partial, "Parameterized I-shape; fillets and slopes ignored."),
         new("IFCLSHAPEPROFILEDEF", GeometryCreationSupport.Partial, "Parameterized L-shape; radii and leg slope ignored."),
         new("IFCARBITRARYCLOSEDPROFILEDEF", GeometryCreationSupport.Partial, "Polylines, composite curves, trimmed arcs, B-spline control polygons."),
-        new("IFCARBITRARYPROFILEDEFWITHVOIDS", GeometryCreationSupport.Partial, "Outer and inner bounded curves; simple non-touching holes.", "Winding_HollowProfile", ExpectWatertight: true),
+        new("IFCARBITRARYPROFILEDEFWITHVOIDS", GeometryCreationSupport.Supported, "Outer and inner bounded curves, composite curves with arcs; hole walls wound outward and caps checked against the area between the rings.", "Winding_HollowProfile", ExpectWatertight: true),
         new("IFCCOMPOSITEPROFILEDEF", GeometryCreationSupport.Partial, "Nested profiles as holes; disjoint sub-profiles unioned at extrusion."),
         new("IFCDERIVEDPROFILEDEF", GeometryCreationSupport.Supported, "Parent profile transformed by 2D/3D Cartesian operator.", "Winding_DerivedProfile_MirrorOperator", ExpectWatertight: true),
         new("IFCTRAPEZIUMPROFILEDEF", GeometryCreationSupport.Partial, "Parameterized trapezium profile."),

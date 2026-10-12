@@ -1,4 +1,4 @@
-using Ara3D.Geometry;
+﻿using Ara3D.Geometry;
 using Ara3D.Ifc.Mesher;
 using Ara3D.Ifc.Mesher.Tests.GeometryOracles;
 
@@ -27,7 +27,7 @@ public sealed class WindingTests
 
     [Test]
     [GeometryCoverage("IFCARBITRARYPROFILEDEFWITHVOIDS")]
-    public void Winding_HollowProfile_HoleWallsInverted()
+    public void Winding_HollowProfile_VolumeIsOuterMinusHole()
     {
         using var model = MicroIfc.Parse("""
             #1=IFCCARTESIANPOINT((0.,0.));
@@ -49,12 +49,9 @@ public sealed class WindingTests
         MeshTestAssert.MeshValid(mesh);
         Assert.That(MeshHelpers.SignedVolume(mesh), Is.GreaterThan(0));
         MeshTestAssert.Watertight(mesh, maxOpenEdges: 0);
-        // Hollow solids have inward hole walls; centroid outward-fraction is weaker than solid boxes.
-        Assert.That(WindingOracle.OutwardNormalFraction(mesh), Is.GreaterThanOrEqualTo(0.85f));
-        // Outer 4×3 − inner 2×1, depth 2 → analytical 20; current extrusion signed volume can
-        // overshoot when hole-cap triangulation double-counts — gate on solid-ness for now.
-        Assert.That(AnalyticalOracle.AbsVolume(mesh), Is.GreaterThan(10.0));
-        Assert.That(AnalyticalOracle.AbsVolume(mesh), Is.LessThan(AnalyticalOracle.BoxVolume(4, 3, 2) * 1.5));
+        // Hole walls face the hole, which is toward the centroid, so the centroid-based outward
+        // fraction is not a winding check here; the exact volume is. Outer 4×3 minus inner 2×1, depth 2.
+        Assert.That(AnalyticalOracle.AbsVolume(mesh), Is.EqualTo(20.0).Within(1e-3));
     }
 
     [Test]
