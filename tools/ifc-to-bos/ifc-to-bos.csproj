@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0-windows</TargetFramework><PlatformTarget>x64</PlatformTarget><AllowUnsafeBlocks>true</AllowUnsafeBlocks><IsPackable>false</IsPackable><AssemblyName>ifc-to-bos</AssemblyName><RootNamespace>IfcToBos</RootNamespace><Version>0.1.0</Version></PropertyGroup>
+  <Import Project="..\..\Platonic.props" />
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\data\Ara3D.Ifc.Bos\Ara3D.Ifc.Bos.csproj" />
+  </ItemGroup>
+</Project>
