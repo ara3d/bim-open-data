@@ -6,8 +6,8 @@ public sealed class CircleSamplesTests
 {
     static void AssertNear(Vector2 actual, float x, float y)
     {
-        Assert.That(actual.X, Is.EqualTo(x).Within(1e-6f), $"{actual}");
-        Assert.That(actual.Y, Is.EqualTo(y).Within(1e-6f), $"{actual}");
+        Assert.That(actual.X.Value, Is.EqualTo(x).Within(1e-6f), $"{actual}");
+        Assert.That(actual.Y.Value, Is.EqualTo(y).Within(1e-6f), $"{actual}");
     }
 
     [Test]
@@ -27,7 +27,7 @@ public sealed class CircleSamplesTests
         var ring = CircleSamples.Ring(2, 32);
         Assert.That(ring, Has.Count.EqualTo(32));
         foreach (var p in ring)
-            Assert.That(MathF.Sqrt(p.X * p.X + p.Y * p.Y), Is.EqualTo(2f).Within(1e-5f));
+            Assert.That(MathF.Sqrt(p.X.Value * p.X.Value + p.Y.Value * p.Y.Value), Is.EqualTo(2f).Within(1e-5f));
     }
 
     [Test]
