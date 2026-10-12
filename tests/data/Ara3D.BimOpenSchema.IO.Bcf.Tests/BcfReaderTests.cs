@@ -239,6 +239,32 @@ public sealed class BcfReaderTests
             """;
     }
 
+    /// <summary>A container whose first markup's deflate data starts with a block of the reserved
+    /// type (0xFF sets BTYPE to 11), so reading it throws InvalidDataException. That topic is
+    /// skipped with a warning naming its entry; the other topic still reads.</summary>
+    [Test]
+    public void ACorruptEntry_IsAWarning_AndTheOtherTopicsStillRead()
+    {
+        const string corrupt = "00000000-0000-4000-8000-000000000001", good = "00000000-0000-4000-8000-000000000002";
+        using var stream = new MemoryStream();
+        using (var zip = new System.IO.Compression.ZipArchive(stream, System.IO.Compression.ZipArchiveMode.Create, leaveOpen: true))
+            foreach (var guid in new[] { corrupt, good })
+                Add(zip, $"{guid}/markup.bcf", $"""<Markup><Topic Guid="{guid}"><Title>Topic {guid[^1]}</Title></Topic></Markup>""");
+        var bytes = stream.ToArray();
+        // The first entry's local header sits at offset 0; its data follows the 30-byte fixed
+        // part, the name, and the extra field.
+        var data = 30 + BitConverter.ToUInt16(bytes, 26) + BitConverter.ToUInt16(bytes, 28);
+        bytes[data] = 0xFF;
+
+        var contents = BcfReader.Read(new MemoryStream(bytes));
+        Assert.Multiple(() =>
+        {
+            Assert.That(contents.Topics.Select(t => t.Guid), Is.EqualTo(new[] { good }));
+            Assert.That(contents.Warnings, Has.Count.EqualTo(1));
+            Assert.That(contents.Warnings[0], Does.Contain($"{corrupt}/markup.bcf").And.Contains("cannot be decompressed"));
+        });
+    }
+
     private static List<string?> Column(Ara3D.DataTable.IDataTable table, string name)
     {
         var column = table.Columns.ToList().FindIndex(c => c.Descriptor.Name == name);

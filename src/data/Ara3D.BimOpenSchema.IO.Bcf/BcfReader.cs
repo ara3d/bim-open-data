@@ -27,7 +27,8 @@ public sealed record BcfTopicRecord(
     bool HasViewpoint);
 
 /// <summary>What <see cref="BcfReader"/> read: the topics, and one warning per part it skipped
-/// (a markup or viewpoint that is not XML, a markup with no Topic element, a viewpoint a markup
+/// (a markup or viewpoint that is not XML or whose compressed data is corrupt, a markup with no
+/// Topic element, a viewpoint a markup
 /// lists that the container does not hold), each naming the zip entry.</summary>
 public sealed record BcfContents(IReadOnlyList<BcfTopicRecord> Topics, IReadOnlyList<string> Warnings);
 
@@ -98,8 +99,9 @@ public static class BcfReader
         return builder.Build();
     }
 
-    /// <summary>The topic in one markup, or null with a warning when the markup is not XML or has
-    /// no Topic element. A listed viewpoint that is missing or not XML is skipped with a warning.</summary>
+    /// <summary>The topic in one markup, or null with a warning when the markup cannot be read
+    /// (see <see cref="TryLoad"/>) or has no Topic element. A listed viewpoint that is missing or
+    /// cannot be read is skipped with a warning.</summary>
     private static BcfTopicRecord? Topic(Dictionary<string, ZipArchiveEntry> entries, string markupName, List<string> warnings)
     {
         var folder = markupName[..(markupName.Length - BcfTopic.MarkupFile.Length)];
@@ -201,6 +203,8 @@ public static class BcfReader
         return XDocument.Load(stream);
     }
 
+    /// <summary>The entry's XML, or null with a warning naming the entry when it is not XML or
+    /// its compressed data is corrupt (<see cref="InvalidDataException"/>).</summary>
     private static XDocument? TryLoad(ZipArchiveEntry entry, string name, List<string> warnings)
     {
         try
@@ -210,6 +214,11 @@ public static class BcfReader
         catch (XmlException e)
         {
             warnings.Add($"{name} is not XML ({e.Message}); skipped");
+            return null;
+        }
+        catch (InvalidDataException e)
+        {
+            warnings.Add($"{name} cannot be decompressed ({e.Message}); skipped");
             return null;
         }
     }

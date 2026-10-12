@@ -93,7 +93,8 @@ without geometry, the ids come from the end of its description instead.
   nothing has one row with both empty. `ToBcfIssues` reads either column, so
   reading a BCF and writing it again keeps both kinds of id.
 - **Warnings.** A part that cannot be read is skipped, and a warning names its
-  zip entry: a markup or viewpoint that is not XML, a markup with no `Topic`,
+  zip entry: a markup or viewpoint that is not XML or whose compressed data
+  is corrupt, a markup with no `Topic`,
   or a viewpoint a markup lists that the container does not hold. The other
   topics still read. Only a file that is not a zip throws.
 
