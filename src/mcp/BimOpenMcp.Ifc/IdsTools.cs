@@ -30,9 +30,12 @@ public static class IdsTools
                 + "pass, so report it as unchecked. A required specification that matches no "
                 + "element gets one Fail row with an empty GlobalId. Always read 'warnings' and "
                 + "report them: a facet the IDS loader skipped (a misspelling, say), an unsupported "
-                + "facet, or a model not in metres is listed only there, and means a requirement "
-                + "was not checked as written. Set 'verdict' to 'Fail' to page through the failures "
-                + "only. Numbers are compared in the model's own units. Call ifc_ids_specifications "
+                + "facet, or a number compared as stored is listed only there, and means a "
+                + "requirement was not checked as written. Set 'verdict' to 'Fail' to page through "
+                + "the failures only. IDS values are in SI units (metres, square metres, cubic "
+                + "metres); the model's lengths, areas and volumes are converted to SI when their "
+                + "unit can be told, and a warning names each value compared as stored instead. "
+                + "Call ifc_ids_specifications "
                 + "first to see what an IDS asks. 'path' may name a .bos file instead of an IFC file.",
                 IfcToolArgs.ModelOrBos()
                     .IdsPath()
@@ -47,8 +50,11 @@ public static class IdsTools
                 "Lists the specifications of an IDS file (Information Delivery Specification) without "
                 + "reading a model: one row each with CheckId (its name), CheckTitle, IfcVersion, "
                 + "Cardinality (required, optional, prohibited), Applicability (which elements it "
-                + "selects), Requirements (what they must carry), and Supported (false when a facet "
-                + "would give InfoNotAvailable in ifc_ids_check, so that part goes unchecked). "
+                + "selects), Requirements (what they must carry), and Supported (true when every "
+                + "facet can be evaluated over a model that carries what the facet needs: material "
+                + "and part-of facets need the model's relations, and give InfoNotAvailable in "
+                + "ifc_ids_check over a model without them; false means some facet always gives "
+                + "InfoNotAvailable, so that part goes unchecked). "
                 + "'warnings' lists what the IDS loader skipped; a skipped facet is a requirement "
                 + "nobody will check.",
                 McpSchema.Object().IdsPath().Build(),
