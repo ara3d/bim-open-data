@@ -30,7 +30,9 @@ occurrence's row wins, even an empty one. Attributes are not inherited. From a
 BOS document the type is `Entity.Type`. From tables it is the entities table's
 optional `TypeIndex` column (the type's EntityIndex) when present, else its
 `Type` column, the type's name as the `EntityText` view gives it, matched among
-the entities that have no type themselves (`IdsTypeObjects`). Names repeat, so
+the type objects (an IFC class ending TYPE, IfcDoorStyle, IfcWindowStyle) that
+have no type themselves (`IdsTypeObjects`), so a space sharing a type's name is
+not taken for it. Names repeat, so
 same-named entities count as one type only when their property values agree;
 otherwise, or when the named type is not in the table, a property the
 occurrence lacks gives `InfoNotAvailable` with a warning, and so does any

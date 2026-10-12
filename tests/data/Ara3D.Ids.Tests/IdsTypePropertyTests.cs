@@ -117,6 +117,31 @@ public sealed class IdsTypePropertyTests
         Assert.That(exact.Verdicts.Single().Verdict, Is.EqualTo(Verdict.Pass), "its own value hides whatever the type has under that name");
     }
 
+    /// <summary>A door whose Type column names "Kitchen", and a space named "Kitchen" that carries
+    /// a fire rating: the space is not a type object, so the door does not inherit from it.</summary>
+    [Test]
+    public void ASpaceNamedLikeTheType_IsNotTheType()
+    {
+        var entities = Table("entities", ("EntityIndex", typeof(long), [0L, 1L]), ("GlobalId", typeof(string), ["D", "S"]),
+            ("Name", typeof(string), ["Door", "Kitchen"]), ("Category", typeof(string), ["IFCDOOR", "IFCSPACE"]),
+            ("Type", typeof(string), ["Kitchen", null]));
+        var model = IdsModel.FromTables(entities, Parameters([(1, "EI60")]));
+        Assert.That(model.Entities.Single(e => e.GlobalId == "D").Type, Is.Null);
+        var verdict = Run(Entity("IFCDOOR"), Property("Pset_DoorCommon", "FireRating", Simple("EI60")), model).Verdicts.Single();
+        Assert.That(verdict.Verdict, Is.EqualTo(Verdict.InfoNotAvailable));
+        Assert.That(verdict.Reason, Does.Contain("not in the entities table as a type object"));
+    }
+
+    [TestCase("IFCDOORTYPE", true)]
+    [TestCase("IFCDOORSTYLE", true)]
+    [TestCase("IFCTYPEPRODUCT", true)]
+    [TestCase("IFCSPACE", false)]
+    [TestCase("IFCMATERIAL", false)]
+    [TestCase("IFCRELDEFINESBYTYPE", false)]
+    [TestCase("IFCSURFACESTYLE", false)]
+    public void TypeObjectClasses(string category, bool isType)
+        => Assert.That(IdsTypeObjects.IsTypeObjectClass(category), Is.EqualTo(isType));
+
     [Test]
     public void FromBimData_ReadsEntityType()
     {
