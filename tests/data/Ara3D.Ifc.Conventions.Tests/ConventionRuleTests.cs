@@ -37,4 +37,18 @@ public class ConventionRuleTests
     [TestCase(null, false)]
     public void IsIntegerType(string? ifcType, bool expected)
         => Assert.That(IfcPropertyValues.IsIntegerType(ifcType), Is.EqualTo(expected));
+
+    [Test]
+    public void IsTypeObject_WhenAttributeFiveIsHasPropertySets()
+    {
+        string[] typeObject = ["GlobalId", "OwnerHistory", "Name", "Description", "ApplicableOccurrence", "HasPropertySets", "RepresentationMaps"];
+        string[] wall = ["GlobalId", "OwnerHistory", "Name", "Description", "ObjectType", "ObjectPlacement", "Representation", "Tag"];
+        Assert.Multiple(() =>
+        {
+            Assert.That(IfcTypeObjects.HasPropertySetsAttribute, Is.EqualTo(5));
+            Assert.That(IfcTypeObjects.IsTypeObject(typeObject), Is.True);
+            Assert.That(IfcTypeObjects.IsTypeObject(wall), Is.False);
+            Assert.That(IfcTypeObjects.IsTypeObject(typeObject[..5]), Is.False);
+        });
+    }
 }

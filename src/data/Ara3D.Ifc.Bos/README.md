@@ -51,3 +51,32 @@ properties at attribute 3, so without this special case (mirroring the
 existing one for `IFCSPACE`'s room number) the tag is never stored. Before
 this chunk, no `IFCGRIDAXIS` parameter reached the BOS at all (see
 `samples/snowdon-analyses/README.md`, "Converter facts").
+
+## Type-object property sets (TKT-237)
+
+An `IfcTypeObject` (a door type, an IFC2x3 door style, a beam type) can list
+property sets in its `HasPropertySets` attribute instead of, or beside, those
+an `IfcRelDefinesByProperties` attaches to each occurrence. Before TKT-237 the
+converter read only the relation, so a set that lived on the type never
+reached BOS. `IfcPropData` now attaches a type object's `HasPropertySets` to
+the type itself, and the converter writes each value as a parameter on the
+type entity: named by the property, grouped by the set, as an occurrence's own
+sets are written. A member of `HasPropertySets` that is not an
+`IfcPropertySet` or `IfcElementQuantity` (the Duplex door and window styles
+list only an `IfcDoorLiningProperties` or `IfcWindowLiningProperties`, with
+every attribute unset) adds nothing.
+
+The values are not copied onto occurrences. An occurrence's `Entity.Type`
+points at its type entity (the `Type` column of the `EntityText` view), so a
+reader that wants the properties IDS 1.0 and ifctester assign to an
+occurrence takes the occurrence's own parameters and adds its type's, the
+occurrence's value winning for the same set and property name. The rule lives
+in `Ara3D.Ifc.Conventions`' `IfcTypeObjects`.
+
+The Fragments reader (`Ara3D.BimOpenSchema.IO.Fragments`) already wrote a
+type item's `HasPropertySets` on the type entity, so this change brings the
+IFC output to the same shape rather than widening a difference between them.
+`tests/data/Ara3D.Ifc.Tests/ConverterTypePropertySetTests.cs` shows it on an
+IFC4 door type, an IFC2x3 door style, and (when `data/model_0.ifc` is
+present) every `IfcBeamType` in that model, whose `Pset_BeamCommon` is
+reached only through `HasPropertySets`.

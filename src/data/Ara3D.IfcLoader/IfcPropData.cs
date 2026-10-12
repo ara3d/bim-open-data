@@ -1,4 +1,5 @@
-﻿using Ara3D.IO.StepParser;
+﻿using Ara3D.Ifc.Conventions;
+using Ara3D.IO.StepParser;
 using Ara3D.Utils;
 using System.Diagnostics;
 using Ara3D.IfcTypes.Ifc2x3;
@@ -35,6 +36,9 @@ public sealed class IfcPropData
     public readonly List<(int Id, Exception Ex)> Errors = [];
     public readonly Dictionary<int, IfcPropValue> PropValues = [];
     public readonly Dictionary<int, IfcPropSet> PropSets = [];
+    /// <summary>The property and quantity sets of each object or type object, by IFC id: those an
+    /// IfcRelDefinesByProperties attaches, and a type object's own HasPropertySets (see
+    /// <see cref="IfcTypeObjects"/>).</summary>
     public readonly MultiDictionary<int, int> ObjectToPropSets = [];
 
     /// <summary>IfcPhysicalComplexQuantity entities by id, kept as named groups of quantity ids.
@@ -47,6 +51,10 @@ public sealed class IfcPropData
     public IfcPropData(IfcFile file)
     {
         _document = file.Document;
+        var typeObjectCodes = file.Schema.Entities
+            .Where(kv => IfcTypeObjects.IsTypeObject(kv.Value.Attributes.Select(a => a.Name).ToList()))
+            .Select(kv => kv.Key)
+            .ToHashSet();
         foreach (var e in file.EntityResolver.GetEntities())
         {
             var id = e.Id;
@@ -109,6 +117,11 @@ public sealed class IfcPropData
                 case IfcQuantityTime.ENTITY_CODE:
                     ParseProperty(e, 3, IfcPropKind.Quantity);
                     break;
+
+                default:
+                    if (typeObjectCodes.Contains(entityCode))
+                        ParseTypePropertySets(e);
+                    break;
             }
         } ;
     }
@@ -124,6 +137,17 @@ public sealed class IfcPropData
             return;
         foreach (var objectId in objectIds)
             ObjectToPropSets.Add(objectId, propSetId);
+    }
+
+    /// <summary>Attaches a type object's HasPropertySets to the type itself. An unset list ($)
+    /// attaches nothing.</summary>
+    public void ParseTypePropertySets(IfcEntity typeObject)
+    {
+        var index = IfcTypeObjects.HasPropertySetsAttribute;
+        if (typeObject.Attributes.Count <= index || !typeObject.GetAttribute(index).IsList)
+            return;
+        foreach (var propSetId in typeObject.GetIdList(index))
+            ObjectToPropSets.Add(typeObject.Id, propSetId);
     }
 
     public void ParseProperty(IfcEntity e, int valIndex, IfcPropKind kind)

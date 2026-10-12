@@ -16,6 +16,7 @@ portable).
 | `IfcClasses` | Classes whose geometry is flagged hidden (sites, buildings, storeys, spaces, zones, grids, annotations) and the flag rule; classes that never become entities; the material resource family |
 | `IfcMaterialSets` | Layer and constituent sets: where the member list is, and the parameters each member gets |
 | `IfcRelationNames` | IFC relation classes that become BOS relations, with the inverse attribute names that reach them; the type and property-set names a reader of inverse attributes follows |
+| `IfcTypeObjects` | A type object's own property sets (HasPropertySets): written on the type entity, never copied to occurrences; a reader resolves an occurrence's inherited values through `Entity.Type` |
 | `IfcPropertyValues` | The attributes holding a property's or quantity's value, and the IFC defined types that are integers |
 
 Class names are upper case, as STEP writes them and Fragments categories

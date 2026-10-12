@@ -229,6 +229,8 @@ public class IfcToBosConverter
         foreach (var n in catNames)
             logger?.Log($"Category: {n}");
 
+        // A type object's own HasPropertySets are among these, keyed by the type: its values land on
+        // the type entity, not on its occurrences (IfcTypeObjects in Ara3D.Ifc.Conventions).
         logger?.Log($"Computing {PropData.ObjectToPropSets.Count} object-property set pairs");
         foreach (var objectId in PropData.ObjectToPropSets.Keys)
         {
