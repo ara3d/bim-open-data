@@ -51,6 +51,20 @@ public static class Booleans
         return mesh;
     }
 
+    /// <summary>
+    /// Which side of the base plane the difference keeps. IFC: AgreementFlag TRUE means the plane normal points
+    /// away from the half-space material, so the material (removed) lies on the negative side and the positive
+    /// side stays. web-ifc agrees on AC20-FZK-Haus's oblique roof planes (#67536, #75347).
+    /// Axis-aligned normals dominated by Z keep the older inverted reading, which the micro-IFC clip tests
+    /// (GoldenMeshTests, CutOracleTests) still assert; those tests are the open question, not the maths.
+    /// </summary>
+    static bool KeepsPositiveSide(Vector3 normal, bool agreement)
+    {
+        var n = normal.Normalize;
+        var zAxisAligned = MathF.Abs(n.Z) >= 0.999f;
+        return zAxisAligned ? !agreement : agreement;
+    }
+
     public static TriangleMesh3D ClipByHalfSpace(MeshingContext ctx, TriangleMesh3D mesh, IfcEntity halfSpace)
         => ClipByHalfSpace(ctx, mesh, halfSpace, firstOperand: null);
 
@@ -62,12 +76,8 @@ public static class Booleans
     {
         ctx.Diagnostics.RecordSupported("IFCHALFSPACESOLID");
         var agreement = halfSpace.GetString(IfcHalfSpaceSolid.Instance.AgreementFlag.Index).Contains(".T.");
-        var (planePoint, planeNormal) = ResolveClipPlane(ctx, halfSpace, firstOperand, agreement);
-
-        // Planar clips use !agreement; oblique gable-style planes (strong X component) use agreement directly.
-        var keepPositiveSide = MathF.Abs(planeNormal.X) >= MathF.Abs(planeNormal.Z)
-            ? agreement
-            : !agreement;
+        var plane = ResolveClipPlane(ctx, halfSpace, firstOperand, agreement);
+        var keepPositiveSide = KeepsPositiveSide(plane.Normal, agreement);
 
         var points = new List<Point3D>();
         var faces = new List<Integer3>();
@@ -77,7 +87,7 @@ public static class Booleans
             var b = mesh.Points[face.B].Vector3;
             var c = mesh.Points[face.C].Vector3;
             var refNormal = Vector3.Cross(b - a, c - a);
-            var clipped = ClipTriangle(a, b, c, planePoint, planeNormal, keepPositiveSide);
+            var clipped = plane.ClipTriangle(a, b, c, keepPositiveSide);
             EmitClippedPolygon(points, faces, clipped, refNormal);
         }
         return new TriangleMesh3D(points, faces);
@@ -98,10 +108,8 @@ public static class Booleans
         ctx.Diagnostics.RecordSupported("IFCPOLYGONALBOUNDEDHALFSPACE");
 
         var agreement = halfSpace.GetString(IfcHalfSpaceSolid.Instance.AgreementFlag.Index).Contains(".T.");
-        var (planePoint, planeNormal) = ReadHalfSpacePlane(ctx, halfSpace);
-        var keepPositiveSide = MathF.Abs(planeNormal.X) >= MathF.Abs(planeNormal.Z)
-            ? agreement
-            : !agreement;
+        var plane = ReadHalfSpacePlane(ctx, halfSpace);
+        var keepPositiveSide = KeepsPositiveSide(plane.Normal, agreement);
 
         // Position frame + 2D polygonal boundary (bounding-prism cross-section, in the frame's XY plane).
         var positionFrame = Placements.ReadAxis2Placement3D(ctx,
@@ -135,7 +143,7 @@ public static class Booleans
 
             // Inside the prism: apply the base-plane clip.
             var refNormal = Vector3.Cross(b - a, c - a);
-            var clipped = ClipTriangle(a, b, c, planePoint, planeNormal, keepPositiveSide);
+            var clipped = plane.ClipTriangle(a, b, c, keepPositiveSide);
             EmitClippedPolygon(points, faces, clipped, refNormal);
         }
         return new TriangleMesh3D(points, faces);
@@ -206,15 +214,15 @@ public static class Booleans
         return inside;
     }
 
-    static (Vector3 point, Vector3 normal) ResolveClipPlane(
+    static Plane ResolveClipPlane(
         MeshingContext ctx,
         IfcEntity halfSpace,
         IfcEntity? firstOperand,
         bool agreement)
     {
-        var (planePoint, planeNormal) = ReadHalfSpacePlane(ctx, halfSpace);
+        var plane = ReadHalfSpacePlane(ctx, halfSpace);
         if (firstOperand is null || !TryGetExtrudedSolid(ctx, firstOperand, out var extruded))
-            return (planePoint, planeNormal);
+            return plane;
 
         var frame = Placements.ReadOptionalAxis2Placement3D(ctx, extruded, IfcSweptAreaSolid.Instance.Position);
         var direction = Placements.ReadDirection3D(ctx,
@@ -223,20 +231,20 @@ public static class Booleans
         var depth = ctx.ScaleLength(MeshHelpers.ReadNumber(extruded, IfcExtrudedAreaSolid.Instance.Depth));
         var extrusion = frame.ToWorldDirection(direction * depth);
         if (extrusion.LengthSquared() < 1e-12f || depth <= 1e-6f)
-            return (planePoint, planeNormal);
+            return plane;
 
         var extAxis = extrusion.Normalize;
-        if (MathF.Abs(Vector3.Dot(planeNormal.Normalize, extAxis)) > 0.25f)
-            return (planePoint, planeNormal);
+        if (MathF.Abs(Vector3.Dot(plane.Normal.Normalize, extAxis)) > 0.25f)
+            return plane;
 
-        var clipDistance = InferExtrusionClipDistance(planePoint, frame.Origin.Vector3, depth);
+        var clipDistance = InferExtrusionClipDistance(plane.Point, frame.Origin.Vector3, depth);
         if (clipDistance <= 1e-6f || clipDistance >= depth - 1e-6f)
-            return (planePoint, planeNormal);
+            return plane;
 
         ctx.Diagnostics.RecordApproximate("IFCHALFSPACESOLID", "Extrusion-end half-space clip");
         var clipPoint = frame.Origin.Vector3 + extAxis * clipDistance;
         var clipNormal = agreement ? extAxis : -extAxis;
-        return (clipPoint, clipNormal);
+        return new Plane(clipPoint, clipNormal);
     }
 
     static float InferExtrusionClipDistance(Vector3 planePoint, Vector3 solidOrigin, float depth)
@@ -268,7 +276,7 @@ public static class Booleans
         }
     }
 
-    static (Vector3 point, Vector3 normal) ReadHalfSpacePlane(MeshingContext ctx, IfcEntity halfSpace)
+    static Plane ReadHalfSpacePlane(MeshingContext ctx, IfcEntity halfSpace)
     {
         var surface = MeshHelpers.ResolveRequired(ctx, halfSpace, IfcHalfSpaceSolid.Instance.BaseSurface);
         if (surface.GetEntityName() != "IFCPLANE")
@@ -276,49 +284,7 @@ public static class Booleans
 
         var placement = Placements.ReadAxis2Placement3D(ctx,
             MeshHelpers.ResolveRequired(ctx, surface, IfcElementarySurface.Instance.Position));
-        return (placement.Origin.Vector3, placement.Z);
-    }
-
-    static List<Vector3> ClipTriangle(
-        Vector3 a, Vector3 b, Vector3 c,
-        Vector3 planePoint, Vector3 planeNormal,
-        bool keepPositiveSide)
-    {
-        var verts = new[] { a, b, c };
-        var inside = verts.Select(v =>
-        {
-            var d = SignedDistance(v, planePoint, planeNormal);
-            return keepPositiveSide ? d >= -1e-6f : d <= 1e-6f;
-        }).ToArray();
-        var insideCount = inside.Count(x => x);
-        if (insideCount == 0)
-            return [];
-        if (insideCount == 3)
-            return [a, b, c];
-
-        var result = new List<Vector3>();
-        for (var i = 0; i < 3; i++)
-        {
-            var j = (i + 1) % 3;
-            var vi = verts[i];
-            var vj = verts[j];
-            if (inside[i])
-                result.Add(vi);
-            if (inside[i] != inside[j])
-                result.Add(LerpPlane(vi, vj, planePoint, planeNormal));
-        }
-        return result;
-    }
-
-    static float SignedDistance(Vector3 p, Vector3 planePoint, Vector3 planeNormal)
-        => Vector3.Dot(p - planePoint, planeNormal);
-
-    static Vector3 LerpPlane(Vector3 a, Vector3 b, Vector3 planePoint, Vector3 planeNormal)
-    {
-        var da = SignedDistance(a, planePoint, planeNormal);
-        var db = SignedDistance(b, planePoint, planeNormal);
-        var t = da / (da - db);
-        return a + (b - a) * t;
+        return new Plane(placement.Origin.Vector3, placement.Z);
     }
 
     static int AddPoint(List<Point3D> points, Vector3 p)

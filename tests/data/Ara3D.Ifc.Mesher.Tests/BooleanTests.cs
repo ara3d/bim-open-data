@@ -29,6 +29,31 @@ public sealed class BooleanTests
     }
 
     [Test]
+    public void BooleanClippingResult_ObliqueRoofPlane_AgreementTrue_RemovesSideAboveNormal()
+    {
+        // FZK-Haus upper-wall shape: Z-dominant normal pointing down and toward -Y (a gable roof underside).
+        // AgreementFlag .T. puts the removed material on the negative side, which is above the plane.
+        // Plane through (0,0,2): z = 2 - y * 0.5 / 0.866, so over y in [-1,1] it spans z 1.423 to 2.577.
+        using var model = MicroIfc.Parse("""
+            #1=IFCRECTANGLEPROFILEDEF(.AREA.,'Wall',$,2.,2.);
+            #2=IFCDIRECTION((0.,0.,1.));
+            #3=IFCEXTRUDEDAREASOLID(#1,$,#2,4.);
+            #4=IFCCARTESIANPOINT((0.,0.,2.));
+            #5=IFCDIRECTION((0.,-0.5,-0.866025403784));
+            #6=IFCDIRECTION((1.,0.,0.));
+            #7=IFCAXIS2PLACEMENT3D(#4,#5,#6);
+            #8=IFCPLANE(#7);
+            #9=IFCHALFSPACESOLID(#8,.T.);
+            #10=IFCBOOLEANCLIPPINGRESULT(.DIFFERENCE.,#3,#9);
+            """);
+
+        var mesh = GeometryDispatcher.TryBuild(model.Context, model.Entity(10))!.Value;
+        var bounds = MeshHelpers.GetBounds(mesh);
+        Assert.That(bounds.Min.Z.Value, Is.EqualTo(0f).Within(1e-4f));
+        Assert.That(bounds.Max.Z.Value, Is.EqualTo(2.57735f).Within(1e-3f));
+    }
+
+    [Test]
     public void BooleanClippingResult_HalfSpace_ReducesVolume()
     {
         using var model = MicroIfc.Parse("""

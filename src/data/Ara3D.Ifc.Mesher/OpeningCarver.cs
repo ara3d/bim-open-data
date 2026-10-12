@@ -64,7 +64,6 @@ public static class OpeningCarver
         return result;
     }
 
-    readonly record struct Plane(Vector3 Point, Vector3 Normal);
 
     /// <summary>
     /// Returns the host mesh with the (convex) prism volume carved out and the hole-wall reveal caps
