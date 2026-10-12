@@ -27,7 +27,8 @@ public static class IdsTables
 
     /// <summary>One row per specification, before any model is read: CheckId, CheckTitle,
     /// IfcVersion, Cardinality, Applicability, Requirements, and Supported (false when a facet
-    /// would give InfoNotAvailable).</summary>
+    /// would give InfoNotAvailable even over a model with its relations; material and part-of
+    /// facets count as supported, and need the relations at evaluation).</summary>
     public static IDataTable Specifications(IdsDocument document, string name = "specifications")
         => Specifications(document.Ids, name);
 

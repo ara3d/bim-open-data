@@ -52,17 +52,33 @@ public static class IdsEvaluator
         void Row(IdsEntity? entity, Outcome outcome)
             => verdicts.Add(new(entity?.GlobalId ?? "", entity?.EntityIndex ?? -1, checkId, title, citation, outcome.Verdict, outcome.Reason, index));
 
-        if (applicability.Any(f => !IdsFacets.IsSupported(f)))
+        var unsupported = applicability.Where(f => IdsFacets.Unsupported(f, model) is not null).ToList();
+        if (unsupported.Count > 0)
         {
-            foreach (var facet in applicability.Where(f => !IdsFacets.IsSupported(f)))
-                IdsFacets.Match(facet, model.Entities.FirstOrDefault() ?? Empty, model.LengthToMetre, warnings);
-            Row(null, Outcome.Unknown("the applicability uses a facet that is not evaluated over BOS"));
+            foreach (var facet in unsupported)
+                IdsFacets.Match(facet, Empty, model, warnings);
+            Row(null, Outcome.Unknown("the applicability uses a facet that cannot be evaluated over this model"));
             return;
         }
 
-        var applicable = model.Entities
-            .Where(e => applicability.All(f => IdsFacets.Match(f, e, model.LengthToMetre, warnings).Satisfied))
-            .ToList();
+        // An entity whose applicability cannot be told (a part-of facet naming no relation, over
+        // a model missing one kind of relation, and no container found) gets its own
+        // InfoNotAvailable row, and the cardinality is not judged: it might have applied.
+        var applicable = new List<IdsEntity>();
+        var unknown = 0;
+        foreach (var entity in model.Entities)
+        {
+            var matches = applicability.Select(f => IdsFacets.Match(f, entity, model, warnings)).ToList();
+            if (matches.Any(m => m.Supported && !m.Satisfied))
+                continue;
+            if (matches.FindIndex(m => !m.Supported) is var missing and >= 0)
+            {
+                unknown++;
+                Row(entity, Outcome.Unknown($"cannot tell whether the specification applies: {matches[missing].Reason}"));
+                continue;
+            }
+            applicable.Add(entity);
+        }
 
         if (IsProhibited(specification.Cardinality))
         {
@@ -71,12 +87,12 @@ public static class IdsEvaluator
             return;
         }
 
-        if (specification.Cardinality is { } cardinality && !cardinality.IsSatisfiedBy(applicable.Count))
+        if (unknown == 0 && specification.Cardinality is { } cardinality && !cardinality.IsSatisfiedBy(applicable.Count))
             Row(null, Outcome.Fail($"{applicable.Count} applicable entities; the specification is {cardinality.Description}"));
 
         foreach (var entity in applicable)
             Row(entity, requirements
-                .Select(f => Judge(f, RequirementCardinality(specification.Requirement, f), entity, model.LengthToMetre, warnings))
+                .Select(f => Judge(f, RequirementCardinality(specification.Requirement, f), entity, model, warnings))
                 .ToList()
                 .Combine());
     }
@@ -98,9 +114,9 @@ public static class IdsEvaluator
 
     /// <summary>One facet's outcome under its cardinality: expected means the facet must hold,
     /// prohibited that it must not, optional that it must hold only when its subject exists.</summary>
-    private static Outcome Judge(IFacet facet, Cardinality cardinality, IdsEntity entity, double? lengthToMetre, IdsWarnings warnings)
+    private static Outcome Judge(IFacet facet, Cardinality cardinality, IdsEntity entity, IdsModel model, IdsWarnings warnings)
     {
-        var match = IdsFacets.Match(facet, entity, lengthToMetre, warnings);
+        var match = IdsFacets.Match(facet, entity, model, warnings);
         if (!match.Supported)
             return Outcome.Unknown(match.Reason);
         return cardinality switch

@@ -44,8 +44,11 @@ public sealed class IdsTablesTests
     [Test]
     public void SpecificationTable_ListsEachSpecificationAndWhetherItIsSupported()
     {
-        var table = IdsTables.Specifications(IdsFile.Parse(Ids));
-        Assert.That(table.Rows, Has.Count.EqualTo(2));
+        var table = IdsTables.Specifications(IdsFile.Parse(Document(
+            Specification("DC-W1", Entity("IFCDOOR"), Attribute("OverallWidth", AtLeast(0.85)), description: "Door leaf width at least 850 mm"),
+            Specification("MAT", Entity("IFCWALL"), Material("concrete")),
+            Specification("CLS", Entity("IFCWALL"), "<classification><system><simpleValue>Uniclass</simpleValue></system></classification>"))));
+        Assert.That(table.Rows, Has.Count.EqualTo(3));
         Assert.That(table.Columns.Select(c => c.Descriptor.Name), Is.EqualTo(new[]
         {
             IssueColumns.CheckId, IssueColumns.CheckTitle, "IfcVersion", "Cardinality", "Applicability", "Requirements", "Supported",
@@ -55,6 +58,7 @@ public sealed class IdsTablesTests
         Assert.That((string?)table[4, 0], Does.Contain("IFCDOOR"));
         Assert.That((string?)table[5, 0], Does.Contain("OverallWidth"));
         Assert.That(table[6, 0], Is.True);
-        Assert.That(table[6, 1], Is.False);
+        Assert.That(table[6, 1], Is.True, "a material facet is evaluated when the model has its relations");
+        Assert.That(table[6, 2], Is.False, "classification facets are not");
     }
 }

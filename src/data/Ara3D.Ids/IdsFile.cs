@@ -17,16 +17,28 @@ public static class IdsFile
     {
         if (!File.Exists(path))
             throw new FileNotFoundException("IDS file not found", path);
-        var log = new WarningLog();
-        var ids = Xids.LoadBuildingSmartIDS(path, log) ?? throw new InvalidDataException($"Not a readable IDS file: {path}; {log.Summary}");
-        return new(ids, log.Messages);
+        using var stream = File.OpenRead(path);
+        return Read(stream, $"Not a readable IDS file: {path}");
     }
 
     public static IdsDocument Load(Stream stream)
+        => Read(stream, "Not a readable IDS stream");
+
+    /// <summary>Loads with Xbim, then reads the XML a second time for what Xbim drops silently:
+    /// see <see cref="IdsRelationFacets.MarkUnknownRelations"/>.</summary>
+    private static IdsDocument Read(Stream source, string failure)
     {
+        using var buffer = new MemoryStream();
+        source.CopyTo(buffer);
+        buffer.Position = 0;
         var log = new WarningLog();
-        var ids = Xids.LoadBuildingSmartIDS(stream, log) ?? throw new InvalidDataException($"Not a readable IDS stream; {log.Summary}");
-        return new(ids, log.Messages);
+        var ids = Xids.LoadBuildingSmartIDS(buffer, log) ?? throw new InvalidDataException($"{failure}; {log.Summary}");
+        buffer.Position = 0;
+        var relations = System.Xml.Linq.XDocument.Load(buffer).Descendants()
+            .Where(e => e.Name.LocalName == "partOf")
+            .Select(e => e.Attribute("relation")?.Value ?? "")
+            .ToList();
+        return new(ids, [.. log.Messages, .. IdsRelationFacets.MarkUnknownRelations(ids, relations)]);
     }
 
     /// <summary>Parses IDS XML held in a string.</summary>

@@ -38,6 +38,35 @@ public sealed class DuplexIdsTests
         Assert.That(report.Verdicts.Select(v => v.Reason), Has.All.Contain("no Pset_NRC"));
     }
 
+    [Test]
+    public void PartOf_EveryDoorIsContainedInAStorey()
+    {
+        var report = IdsEvaluator.Evaluate(IdsFile.Parse(IdsXml.Document(IdsXml.Specification("DOOR-STOREY", IdsXml.Entity("IFCDOOR"),
+            IdsXml.PartOf("IFCBUILDINGSTOREY", "IFCRELCONTAINEDINSPATIALSTRUCTURE")))), Duplex.Value);
+        Assert.That(report.Warnings, Is.Empty);
+        Assert.That(report.Verdicts, Has.Count.EqualTo(14));
+        Assert.That(report.Verdicts.Select(v => v.Verdict), Has.All.EqualTo(Verdict.Pass));
+    }
+
+    /// <summary>56 standard-case walls, each with a layer set; 15 have a concrete block layer. The
+    /// Duplex's doors have no material association at all.</summary>
+    [Test]
+    public void Material_ConcreteBlockWalls()
+    {
+        var ids = IdsFile.Parse(IdsXml.Document(
+            IdsXml.Specification("CMU", IdsXml.Entity("IFCWALLSTANDARDCASE"), IdsXml.Material("Masonry - Concrete Block")),
+            IdsXml.Specification("DOOR-MAT", IdsXml.Entity("IFCDOOR"), IdsXml.MaterialOf(IdsXml.Pattern(".*")))));
+        var report = IdsEvaluator.Evaluate(ids, Duplex.Value);
+        Assert.That(report.Warnings, Is.Empty);
+        var walls = report.Verdicts.Where(v => v.CheckId == "CMU").ToList();
+        Assert.That(walls, Has.Count.EqualTo(56));
+        Assert.That(walls.Count(v => v.Verdict == Verdict.Pass), Is.EqualTo(15));
+        Assert.That(walls.Count(v => v.Verdict == Verdict.Fail), Is.EqualTo(41));
+        Assert.That(walls.First(v => v.Verdict == Verdict.Fail).Reason, Does.Contain("Basic Wall:"), "the layer set's name is among those read");
+        var doors = report.Verdicts.Where(v => v.CheckId == "DOOR-MAT").ToList();
+        Assert.That(doors.Select(v => v.Reason), Has.All.EqualTo("no material"));
+    }
+
     /// <summary>Pass and fail counts per specification, against ifctester over the same IFC.</summary>
     [Test]
     public void DcW1_AgreesWithIfctester()

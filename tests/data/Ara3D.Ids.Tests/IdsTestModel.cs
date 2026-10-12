@@ -3,13 +3,18 @@ using Ara3D.DataTable;
 
 namespace Ara3D.Ids.Tests;
 
-/// <summary>A five-entity model built from the two text tables, the shape <c>bos.load</c>
-/// outputs, so the evaluator is tested without a file: two doors (widths 0.9 and 0.8, one with
+/// <summary>A small model built from the text tables, the shape <c>bos.load</c> outputs, so the
+/// evaluator is tested without a file: two doors (widths 0.9 and 0.8, one with
 /// a predefined type, one USERDEFINED with an ObjectType), two walls (one with a fire rating and
 /// a length quantity, one with an empty fire rating and a logical), a window, and a space whose
 /// LongName is the entity name and whose IFC Name is the room number. Enumerations are stored
 /// as the converter stores them, with their dots. The model records no length unit; the wall's
-/// quantity states its unit, "m", in the Units column.</summary>
+/// quantity states its unit, "m", in the Units column.
+/// <para>The relations, as the IFC converter writes them: wall W1 HasMaterial a layer set whose two
+/// layers each HasMaterial a material, "Concrete" and "Insulation"; door D1 HasMaterial "Wood";
+/// both doors are ContainedIn the storey "Level 1", which is MemberOf (IfcRelAggregates) the
+/// building. The window and wall W2 are related to nothing. <see cref="Build"/> leaves the
+/// relations out, <see cref="BuildWithRelations"/> gives them.</para></summary>
 internal static class IdsTestModel
 {
     public const string Door1 = "D1", Door2 = "D2", Wall1 = "W1", Wall2 = "W2", Window = "X1", Space = "S1";
@@ -17,13 +22,25 @@ internal static class IdsTestModel
     public static IdsModel Build()
         => IdsModel.FromTables(Entities(), Parameters());
 
+    public static IdsModel BuildWithRelations()
+        => IdsModel.FromTables(Entities(), Parameters(), Relations());
+
     public static IDataTable Entities()
     {
         var b = new DataTableBuilder("entities");
-        b.AddColumn(new object?[] { 0L, 1L, 2L, 3L, 4L, 5L, 6L }, "EntityIndex", typeof(long));
-        b.AddColumn(new object?[] { Door1, Door2, Wall1, Wall2, Window, Space, null }, "GlobalId", typeof(string));
-        b.AddColumn(new object?[] { "Door 1", "Door 2", "Wall 1", "Wall 2", "Window 1", "Kitchen", "IFCDOOR" }, "Name", typeof(string));
-        b.AddColumn(new object?[] { "IFCDOOR", "IFCDOOR", "IFCWALL", "IFCWALL", "IFCWINDOW", "IFCSPACE", null }, "Category", typeof(string));
+        b.AddColumn(new object?[] { 0L, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 12L, 13L, 14L }, "EntityIndex", typeof(long));
+        b.AddColumn(new object?[] { Door1, Door2, Wall1, Wall2, Window, Space, null, null, null, null, null, null, null, "L1", "B1" }, "GlobalId", typeof(string));
+        b.AddColumn(new object?[]
+        {
+            "Door 1", "Door 2", "Wall 1", "Wall 2", "Window 1", "Kitchen", "IFCDOOR",
+            "Wall Set", null, null, "Concrete", "Insulation", "Wood", "Level 1", "Building",
+        }, "Name", typeof(string));
+        b.AddColumn(new object?[]
+        {
+            "IFCDOOR", "IFCDOOR", "IFCWALL", "IFCWALL", "IFCWINDOW", "IFCSPACE", null,
+            "IFCMATERIALLAYERSET", "IFCMATERIALLAYER", "IFCMATERIALLAYER", "IFCMATERIAL", "IFCMATERIAL", "IFCMATERIAL",
+            "IFCBUILDINGSTOREY", "IFCBUILDING",
+        }, "Category", typeof(string));
         return b.Build();
     }
 
@@ -51,6 +68,28 @@ internal static class IdsTestModel
         b.AddColumn(rows.Select(r => (object?)(r.Name == "Length" ? "m" : null)).ToArray(), "Units", typeof(string));
         b.AddColumn(rows.Select(r => (object?)r.Type).ToArray(), "ValueType", typeof(string));
         b.AddColumn(rows.Select(r => (object?)r.Value).ToArray(), "Value", typeof(string));
+        return b.Build();
+    }
+
+    /// <summary>The relations, with the three <c>RelationText</c> columns the model reads.</summary>
+    public static IDataTable Relations()
+    {
+        var rows = new (long A, long B, string Type)[]
+        {
+            (2, 7, "HasMaterial"),
+            (7, 8, "HasLayer"),
+            (7, 9, "HasLayer"),
+            (8, 10, "HasMaterial"),
+            (9, 11, "HasMaterial"),
+            (0, 12, "HasMaterial"),
+            (0, 13, "ContainedIn"),
+            (1, 13, "ContainedIn"),
+            (13, 14, "MemberOf"),
+        };
+        var b = new DataTableBuilder("relations");
+        b.AddColumn(rows.Select(r => (object?)r.A).ToArray(), "EntityIndexA", typeof(long));
+        b.AddColumn(rows.Select(r => (object?)r.B).ToArray(), "EntityIndexB", typeof(long));
+        b.AddColumn(rows.Select(r => (object?)r.Type).ToArray(), "RelationType", typeof(string));
         return b.Build();
     }
 }
@@ -92,8 +131,17 @@ internal static class IdsXml
     public static string Attribute(string name, string? value = null, string? cardinality = null)
         => $"<attribute{Attr("cardinality", cardinality)}><name>{Simple(name)}</name>{(value is null ? "" : $"<value>{value}</value>")}</attribute>";
 
-    public static string Material(string value)
-        => $"<material><value>{Simple(value)}</value></material>";
+    public static string Material(string value, string? cardinality = null)
+        => MaterialOf(Simple(value), cardinality);
+
+    /// <summary>A material facet whose value is IDS XML: a simple value or a restriction.</summary>
+    public static string MaterialOf(string valueXml, string? cardinality = null)
+        => $"<material{Attr("cardinality", cardinality)}><value>{valueXml}</value></material>";
+
+    /// <summary>A part-of facet; <paramref name="relation"/> is the IDS relation attribute, left
+    /// out when null.</summary>
+    public static string PartOf(string entity, string? relation, string? cardinality = null)
+        => $"<partOf{Attr("relation", relation)}{Attr("cardinality", cardinality)}><entity><name>{Simple(entity)}</name></entity></partOf>";
 
     public static string Simple(string value)
         => $"<simpleValue>{value}</simpleValue>";

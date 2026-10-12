@@ -28,30 +28,48 @@ internal sealed class IdsWarnings
     public IReadOnlyList<string> List => _list;
 }
 
-/// <summary>Matches the facets BOS can answer: entity (class and predefined type), property, and
-/// attribute. Classification, material, part-of and document facets need relations BOS does not
-/// carry in a form the evaluator reads yet, and produce <see cref="FacetMatch.Unsupported"/>.</summary>
+/// <summary>Matches the facets BOS can answer: entity (class and predefined type), property,
+/// attribute, and, when the model has its relations, material and part-of (see
+/// <see cref="IdsRelationFacets"/>). Classification and document facets, and the two relation
+/// facets over a model without relations, produce <see cref="FacetMatch.Unsupported"/>.</summary>
 internal static class IdsFacets
 {
+    /// <summary>True when the facet can be evaluated over a model that has its relations;
+    /// <see cref="Unsupported(IFacet, IdsModel)"/> answers for a given model.</summary>
     public static bool IsSupported(IFacet facet)
-        => facet is IfcTypeFacet or IfcPropertyFacet or AttributeFacet;
+        => facet is IfcTypeFacet or IfcPropertyFacet or AttributeFacet || IdsRelationFacets.IsSupported(facet);
 
-    /// <summary>Numbers are compared in SI, as IDS states them: <paramref name="lengthToMetre"/>
-    /// is the model's metres per length unit, null when it records none (see <see cref="IdsUnits"/>).</summary>
-    public static FacetMatch Match(IFacet facet, IdsEntity entity, double? lengthToMetre, IdsWarnings warnings)
+    /// <summary>Why the facet cannot be evaluated over this model at all, or null when it can.</summary>
+    public static string? Unsupported(IFacet facet, IdsModel model)
         => facet switch
         {
-            IfcTypeFacet f => MatchType(f, entity),
-            IfcPropertyFacet f => MatchProperty(f, entity, lengthToMetre, warnings),
-            AttributeFacet f => MatchAttribute(f, entity, lengthToMetre, warnings),
-            _ => FacetMatch.Unsupported(Unsupported(facet, warnings)),
+            IfcTypeFacet or IfcPropertyFacet or AttributeFacet => null,
+            MaterialFacet or PartOfFacet => IdsRelationFacets.Unsupported(facet, model),
+            _ => $"{FacetName(facet)} facets are not evaluated over BOS",
         };
 
-    private static string Unsupported(IFacet facet, IdsWarnings warnings)
+    /// <summary>"material" for a MaterialFacet, "partof" for a PartOfFacet.</summary>
+    public static string FacetName(IFacet facet)
+        => facet.GetType().Name.Replace("Facet", "").Replace("Ifc", "").ToLowerInvariant();
+
+    /// <summary>Numbers are compared in SI, as IDS states them, using the model's metres per
+    /// length unit (see <see cref="IdsUnits"/>).</summary>
+    public static FacetMatch Match(IFacet facet, IdsEntity entity, IdsModel model, IdsWarnings warnings)
     {
-        var reason = $"{facet.GetType().Name.Replace("Facet", "").Replace("Ifc", "").ToLowerInvariant()} facets are not evaluated over BOS";
-        warnings.Add(reason + $" ({facet.Short()})");
-        return reason;
+        if (Unsupported(facet, model) is { } reason)
+        {
+            warnings.Add(reason + $" ({facet.Short()})");
+            return FacetMatch.Unsupported(reason);
+        }
+        return facet switch
+        {
+            IfcTypeFacet f => MatchType(f, entity),
+            IfcPropertyFacet f => MatchProperty(f, entity, model.LengthToMetre, warnings),
+            AttributeFacet f => MatchAttribute(f, entity, model.LengthToMetre, warnings),
+            MaterialFacet f => IdsRelationFacets.MatchMaterial(f, entity, model),
+            PartOfFacet f => IdsRelationFacets.MatchPartOf(f, entity, model, warnings),
+            _ => throw new InvalidOperationException($"no matcher for {facet.GetType().Name}"),
+        };
     }
 
     /// <summary>The class matches exactly, as IDS 1.0 defines the entity facet: its schema gives
@@ -59,7 +77,7 @@ internal static class IdsFacets
     /// IFCWALLSTANDARDCASE and an IDS lists every class it means. <see cref="IfcTypeFacet.IncludeSubtypes"/>
     /// is an xbim extension ("not part of buildingSmart specification") that the IDS XML loader
     /// never sets, and is not read here.</summary>
-    private static FacetMatch MatchType(IfcTypeFacet facet, IdsEntity entity)
+    internal static FacetMatch MatchType(IfcTypeFacet facet, IdsEntity entity)
     {
         if (!Satisfies(facet.IfcType, entity.Category, ignoreCase: true))
             return FacetMatch.Absent($"class {entity.Category} is not {facet.IfcType?.Short()}");

@@ -101,13 +101,29 @@ public sealed record IdsEntity(
 }
 
 /// <summary>What an IDS is evaluated over: every entity with a class, each with all of its
-/// parameters. Built from a BOS document, or from the <c>EntityText</c> and <c>ParameterText</c>
-/// tables (as <c>bos.load</c> outputs them) so a check can run over tables already in a graph.</summary>
+/// parameters, and the relations between them when the source has them. Built from a BOS
+/// document, or from the <c>EntityText</c>, <c>ParameterText</c> and (optionally)
+/// <c>RelationText</c> tables (as <c>bos.load</c> outputs them) so a check can run over tables
+/// already in a graph.</summary>
 public sealed class IdsModel
 {
-    public IdsModel(IReadOnlyList<IdsEntity> entities)
+    private readonly Lazy<IdsRelations>? _relations;
+    private readonly Lazy<Dictionary<long, IdsEntity>> _byIndex;
+
+    /// <param name="relations">Builds the relations on first use, so a check with no material or
+    /// part-of facet never sorts them; null when the source has none, and those two facets give
+    /// InfoNotAvailable.</param>
+    public IdsModel(IReadOnlyList<IdsEntity> entities, Func<IdsRelations>? relations = null)
     {
         Entities = entities;
+        _relations = relations is null ? null : new(relations);
+        _byIndex = new(() =>
+        {
+            var byIndex = new Dictionary<long, IdsEntity>(entities.Count);
+            foreach (var entity in entities)
+                byIndex.TryAdd(entity.EntityIndex, entity);
+            return byIndex;
+        });
         LengthToMetre = entities.SelectMany(e => e.Values)
             .Where(v => v.Name == IfcParameterNames.LengthUnitToMetre)
             .Select(v => double.TryParse(v.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out var d) ? d : (double?)null)
@@ -116,13 +132,21 @@ public sealed class IdsModel
 
     public IReadOnlyList<IdsEntity> Entities { get; }
 
+    /// <summary>The relations, or null when the model was built without them.</summary>
+    public IdsRelations? Relations
+        => _relations?.Value;
+
+    /// <summary>The entity at a BOS entity index, or null when it has no class (or no row).</summary>
+    public IdsEntity? Entity(long entityIndex)
+        => _byIndex.Value.GetValueOrDefault(entityIndex);
+
     /// <summary>Metres per model length unit, from the project's <c>Ifc:LengthUnitToMetre</c>
     /// row; null when the model records none. IDS values are in SI, so the evaluator scales a
     /// length, area or volume by this before comparing it (see <see cref="IdsUnits"/>).</summary>
     public double? LengthToMetre { get; }
 
     /// <summary>Every entity whose category is a row (the class entity), with its parameters in
-    /// table order. Values are rendered as the DuckDB text views render them: an entity value by
+    /// table order, and the document's relations. Values are rendered as the DuckDB text views render them: an entity value by
     /// its name, a point as text, an absent string or number as "".</summary>
     public static IdsModel FromBimData(IBimData data)
     {
@@ -148,73 +172,52 @@ public sealed class IdsModel
                 values.TryGetValue(i, out var list) ? list : []));
         }
 
-        return new(entities);
+        var relations = data.Relations;
+        return new(entities, () => IdsRelations.FromBimData(relations));
     }
 
-    /// <summary>From the two text tables: <c>EntityIndex</c>, <c>GlobalId</c>, <c>Name</c>,
+    /// <summary>From the text tables: <c>EntityIndex</c>, <c>GlobalId</c>, <c>Name</c>,
     /// <c>Category</c>; and <c>EntityIndex</c>, <c>Name</c>, <c>ParameterGroup</c>,
     /// <c>ValueType</c>, <c>Value</c>, and optionally <c>Units</c> (the <c>ParameterText</c> view
-    /// has it). Column names match case-insensitively. Rows without a
+    /// has it); and, optionally, the relations in the <c>RelationText</c> shape (see
+    /// <see cref="IdsRelations.FromTable"/>). Column names match case-insensitively. Rows without a
     /// category are left out; a parameter whose entity is not in the entities table is dropped.</summary>
-    public static IdsModel FromTables(IDataTable entities, IDataTable parameters)
+    public static IdsModel FromTables(IDataTable entities, IDataTable parameters, IDataTable? relations = null)
     {
         var values = new Dictionary<long, List<IdsValue>>();
-        var pIndex = Column(parameters, "EntityIndex");
-        var pName = Column(parameters, "Name");
-        var pGroup = Column(parameters, "ParameterGroup");
-        var pType = Column(parameters, "ValueType");
-        var pValue = Column(parameters, "Value");
-        var pUnits = OptionalColumn(parameters, "Units");
+        var pIndex = IdsTableColumns.Required(parameters, "EntityIndex");
+        var pName = IdsTableColumns.Required(parameters, "Name");
+        var pGroup = IdsTableColumns.Required(parameters, "ParameterGroup");
+        var pType = IdsTableColumns.Required(parameters, "ValueType");
+        var pValue = IdsTableColumns.Required(parameters, "Value");
+        var pUnits = IdsTableColumns.Optional(parameters, "Units");
         for (var row = 0; row < parameters.Rows.Count; row++)
         {
-            var index = Index(parameters, pIndex, row);
-            var type = Enum.TryParse<ParameterType>(Cell(parameters, pType, row), out var t) ? t : ParameterType.String;
+            var index = IdsTableColumns.Index(parameters, pIndex, row);
+            var type = Enum.TryParse<ParameterType>(IdsTableColumns.Text(parameters, pType, row), out var t) ? t : ParameterType.String;
             if (!values.TryGetValue(index, out var list))
                 values[index] = list = [];
-            list.Add(new(Cell(parameters, pGroup, row), Cell(parameters, pName, row), type, Cell(parameters, pValue, row),
-                pUnits < 0 ? "" : Cell(parameters, pUnits, row)));
+            list.Add(new(IdsTableColumns.Text(parameters, pGroup, row), IdsTableColumns.Text(parameters, pName, row), type, IdsTableColumns.Text(parameters, pValue, row),
+                pUnits < 0 ? "" : IdsTableColumns.Text(parameters, pUnits, row)));
         }
 
-        var eIndex = Column(entities, "EntityIndex");
-        var eGlobalId = Column(entities, "GlobalId");
-        var eName = Column(entities, "Name");
-        var eCategory = Column(entities, "Category");
+        var eIndex = IdsTableColumns.Required(entities, "EntityIndex");
+        var eGlobalId = IdsTableColumns.Required(entities, "GlobalId");
+        var eName = IdsTableColumns.Required(entities, "Name");
+        var eCategory = IdsTableColumns.Required(entities, "Category");
         var result = new List<IdsEntity>();
         for (var row = 0; row < entities.Rows.Count; row++)
         {
-            var category = Cell(entities, eCategory, row);
+            var category = IdsTableColumns.Text(entities, eCategory, row);
             if (category.Length == 0)
                 continue;
-            var index = Index(entities, eIndex, row);
-            result.Add(new(index, Cell(entities, eGlobalId, row), Cell(entities, eName, row), category,
+            var index = IdsTableColumns.Index(entities, eIndex, row);
+            result.Add(new(index, IdsTableColumns.Text(entities, eGlobalId, row), IdsTableColumns.Text(entities, eName, row), category,
                 values.TryGetValue(index, out var list) ? list : []));
         }
 
-        return new(result);
+        return new(result, relations is null ? null : () => IdsRelations.FromTable(relations));
     }
-
-    private static int Column(IDataTable table, string name)
-        => OptionalColumn(table, name) is var i and >= 0
-            ? i
-            : throw new ArgumentException(
-                $"Table '{table.Name}' has no '{name}' column; its columns are {string.Join(", ", table.Columns.Select(c => c.Descriptor.Name))}");
-
-    /// <summary>The column's position, or -1 when the table has none by that name.</summary>
-    private static int OptionalColumn(IDataTable table, string name)
-    {
-        for (var i = 0; i < table.Columns.Count; i++)
-            if (string.Equals(table.Columns[i].Descriptor.Name, name, StringComparison.OrdinalIgnoreCase))
-                return i;
-        return -1;
-    }
-
-    private static long Index(IDataTable table, int column, int row)
-        => table[column, row] is { } value and not DBNull ? Convert.ToInt64(value, CultureInfo.InvariantCulture) : -1;
-
-    private static string Cell(IDataTable table, int column, int row)
-        => table[column, row] is { } value and not DBNull
-            ? Convert.ToString(value, CultureInfo.InvariantCulture) ?? ""
-            : "";
 
     private static string Text(IBimData data, StringIndex index)
         => (uint)index < (uint)data.Strings.Length ? data.Strings[(int)index] : "";

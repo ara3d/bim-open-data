@@ -1,8 +1,13 @@
 # Ara3D.Ids.Tests
 
-Facet-by-facet tests over a five-entity model built from the two text tables
-(`IdsTestModel`), the table shapes, and the committed IDS files under `ids/`
-over `samples/public/duplex.bos`.
+Facet-by-facet tests over a small model built from the text tables
+(`IdsTestModel`: doors, walls, a window, a space, and, for the material and
+part-of facets in `IdsRelationFacetTests`, a layer set, materials, a storey and
+a building with their relations), the table shapes, and the committed IDS files
+under `ids/` over `samples/public/duplex.bos`. Over the Duplex, every IFCDOOR is
+contained in an IFCBUILDINGSTOREY (14 pass), and 15 of the 56
+IFCWALLSTANDARDCASE walls have a "Masonry - Concrete Block" layer; the doors
+have no material.
 
 `parity/run-ifctester.py` runs IfcOpenShell's ifctester over the source IFC and
 prints pass and fail counts per specification; `DuplexIdsTests.DcW1_AgreesWithIfctester`
