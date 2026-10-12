@@ -68,10 +68,12 @@ Client config:
 | `bos_export_glb` | Writes a `.bos` model's geometry as GLB, entity index and GlobalId in each node's extras; hidden instances only when named in `entityIndices`. |
 | `bos_export_usd` | Writes a `.bos` model as an OpenUSD `.usda` stage with element data as `bim:` attributes. |
 | `bos_export_bcf` | Writes the rows of a SQL query over a `.bos` model as BCF 3.0 topics, one per `Title`. |
+| `ifc_ids_check` | Checks a model or a `.bos` file against an IDS (`Ara3D.Ids`): a summary per specification, the loader's and evaluator's warnings, and a page of verdict rows, filterable by `verdict`. |
+| `ifc_ids_specifications` | The specifications of an IDS file, with no model: what each selects, what it requires, and whether every facet is supported. |
 
 The six `bos_*`/`frag_*` tools take a `.bos` path (from `ifc_to_bos`'s `bosPath`, `frag_to_bos`, or disk)
 instead of an IFC file, so they work for any source that becomes BOS. The tools that read only the
-converted model, `ifc_table`, `ifc_sql`, `ifc_sql_export` and `ifc_export_glb`, take a `.bos` as
+converted model, `ifc_table`, `ifc_sql`, `ifc_sql_export`, `ifc_export_glb` and `ifc_ids_check`, take a `.bos` as
 their `path` too and query its BOS session; the other `ifc_*` tools read the STEP file itself and
 fail on a `.bos` with a message naming the ones that work. `bos_table` and `bos_sql` stay, as the
 same tools under the argument name `bosPath`, so callers written against them keep working.
