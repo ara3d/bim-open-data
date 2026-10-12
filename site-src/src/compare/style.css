@@ -1,0 +1,27 @@
+:root {
+  --text: #171a1f; --dim: #5a606c; --surface: #ffffff; --bg: #f4f5f7; --border: #e3e6ea; --accent: #b8326e;
+  --font-ui: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Fira Code", "Cascadia Mono", Consolas, ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --text: #e8eaed; --dim: #a0a6b0; --surface: #23272e; --bg: #1b1e24; --border: #343a44; --accent: #e0709f; }
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; display: flex; flex-direction: column; background: var(--bg); color: var(--text); font: 400 13px/1.5 var(--font-ui); }
+.bar { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; padding: 8px 16px; background: var(--surface); border-bottom: 1px solid var(--border); }
+.bar h1 { margin: 0; font-size: 15px; }
+.bar label { display: flex; align-items: center; gap: 6px; }
+.bar select { font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 3px 6px; }
+.bar .meta { margin-left: auto; color: var(--dim); }
+#status:empty { display: none; }
+#panes { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 1px; background: var(--border); }
+.pane { position: relative; min-width: 0; min-height: 0; background: var(--bg); }
+.pane-head { position: absolute; z-index: 1; top: 0; left: 0; right: 0; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; padding: 4px 10px; background: color-mix(in srgb, var(--surface) 85%, transparent); border-bottom: 1px solid var(--border); pointer-events: none; }
+.pane { --mesher: var(--dim); }
+.pane-head { border-left: 4px solid var(--mesher); }
+.pane-mesher { margin-right: 8px; }
+.pane-version, .pane-stats { color: var(--dim); font: 400 12px var(--font-mono); }
+.pane-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.pane-message { position: absolute; inset: 0; display: grid; place-items: center; color: var(--dim); pointer-events: none; }
+.pane-message:empty { display: none; }

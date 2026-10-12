@@ -3,7 +3,8 @@
 // `node deps.mjs` from deps.json), so nothing needs building there first. Their third-party
 // imports resolve from this folder's node_modules.
 import { defineConfig } from 'vite';
-import { readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SAMPLES, SAMPLE_FOLDER } from './sample.mjs';
 
@@ -32,20 +33,47 @@ const sampleArchive = {
   },
 };
 
+// The mesher comparison's GLBs and manifest (bench/ifc-mesher/glb/, or MESHER_GLB_DIR) are served under /glb/
+// in development and copied into the build under glb/, like the sample archives.
+const glbRoot = process.env.MESHER_GLB_DIR ?? here('../bench/ifc-mesher/glb');
+const filesUnder = (folder, prefix = '') => readdirSync(folder, { withFileTypes: true })
+  .flatMap((entry) => entry.isDirectory() ? filesUnder(join(folder, entry.name), `${prefix}${entry.name}/`) : [`${prefix}${entry.name}`]);
+
+const mesherGlbs = {
+  name: 'mesher-glbs',
+  configureServer(server) {
+    server.middlewares.use('/glb/', (request, response, next) => {
+      const file = normalize(join(glbRoot, decodeURIComponent(request.url.split('?')[0])));
+      if (!file.startsWith(normalize(glbRoot)) || !existsSync(file) || !statSync(file).isFile()) return next();
+      response.setHeader('Content-Type', file.endsWith('.json') ? 'application/json' : 'model/gltf-binary');
+      response.end(readFileSync(file));
+    });
+  },
+  generateBundle() {
+    if (!existsSync(glbRoot)) return;
+    for (const name of filesUnder(glbRoot))
+      this.emitFile({ type: 'asset', fileName: `glb/${name}`, source: readFileSync(join(glbRoot, name)) });
+  },
+};
+
 export default defineConfig({
   base: './',
-  plugins: [sampleArchive],
+  plugins: [sampleArchive, mesherGlbs],
   resolve: {
     alias: {
       '@bim-open-viewer/core': viewerPackage('core'),
       '@bim-open-viewer/controls': viewerPackage('controls'),
       '@bim-open-viewer/loaders': viewerPackage('loaders'),
+      '@bim-open-viewer/visualization/view-link': here('../deps/bim-open-viewer/packages/visualization/src/view-link.ts'),
+      '@bim-open-viewer/visualization/contracts': here('../deps/bim-open-viewer/packages/visualization/src/contracts.ts'),
+      '@bim-open-viewer/visualization/camera': here('../deps/bim-open-viewer/packages/visualization/src/camera.ts'),
     },
-    dedupe: ['three', 'jszip', 'hyparquet', 'hyparquet-compressors'],
+    dedupe: ['three', 'jszip', 'hyparquet', 'hyparquet-compressors', 'brotli-dec-wasm'],
   },
   build: {
     outDir: '../site/explorer',
     emptyOutDir: true,
     chunkSizeWarningLimit: 1500,
+    rollupOptions: { input: { index: here('index.html'), compare: here('compare.html') } },
   },
 });

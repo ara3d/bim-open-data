@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mesher comparison · BIM Open Data</title>
+<meta name="description" content="The same IFC file as meshed by four meshers, in four BIM Open Viewer panes with one locked camera.">
+<link rel="icon" href="../assets/data-mark.svg" type="image/svg+xml">
+</head>
+<body>
+<header class="bar">
+  <h1>Mesher comparison</h1>
+  <label>File <select id="file"></select></label>
+  <label><input id="lock" type="checkbox" checked> Lock cameras</label>
+  <span id="status" role="status" aria-live="polite"></span>
+  <span id="generated" class="meta"></span>
+</header>
+<main id="panes"></main>
+<script type="module" src="./src/compare/main.ts"></script>
+</body>
+</html>
