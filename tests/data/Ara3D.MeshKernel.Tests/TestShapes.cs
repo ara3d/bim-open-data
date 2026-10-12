@@ -21,4 +21,11 @@ public static class TestShapes
 
     /// <summary>Four points whose edges cross each other.</summary>
     public static IReadOnlyList<Vector2> BowTie { get; } = [P(0, 0), P(2, 1), P(2.5f, 0), P(0.5f, 1)];
+
+    /// <summary>Unit square (or the holed square) extruded by one along +Z from the origin.</summary>
+    public static TriangleMesh3D Box(PolygonWithHoles? profile = null)
+        => Extrusion.Solid(
+            profile ?? new PolygonWithHoles(UnitSquare),
+            new Frame3D(Point3D.Zero, OrthonormalBasis3D.Identity),
+            new Vector3(0, 0, 1));
 }

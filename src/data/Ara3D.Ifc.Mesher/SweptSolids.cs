@@ -79,7 +79,7 @@ public static class SweptSolids
             return BuildExtrudedCompositeProfile(ctx, profileEntity, frame, extrusion);
 
         var profile = ProfileBuilder.Build(ctx, profileEntity);
-        return MeshHelpers.BuildExtrusionWithHoles(profile, frame, extrusion);
+        return Extrusion.Solid(profile, frame, extrusion);
     }
 
     static TriangleMesh3D BuildExtrudedCompositeProfile(
@@ -96,14 +96,14 @@ public static class SweptSolids
             throw new InvalidOperationException($"Empty composite profile #{profileEntity.Id}");
 
         if (profiles.Count == 1)
-            return MeshHelpers.BuildExtrusionWithHoles(profiles[0], frame, extrusion);
+            return Extrusion.Solid(profiles[0], frame, extrusion);
 
         if (TryCombineCompositeAsHoles(profiles, out var combined))
-            return MeshHelpers.BuildExtrusionWithHoles(combined, frame, extrusion);
+            return Extrusion.Solid(combined, frame, extrusion);
 
         ctx.Diagnostics.RecordApproximate("IFCCOMPOSITEPROFILEDEF", "Disjoint sub-profiles extruded separately and merged");
         var meshes = profiles
-            .Select(p => MeshHelpers.BuildExtrusionWithHoles(p, frame, extrusion))
+            .Select(p => Extrusion.Solid(p, frame, extrusion))
             .ToList();
         return MeshHelpers.Merge(meshes);
     }
@@ -201,7 +201,7 @@ public static class SweptSolids
             return BuildExtrudedOpenPath(openPath, frame, extrusion);
 
         var profile = ProfileBuilder.Build(ctx, profileEntity);
-        return MeshHelpers.BuildExtrusionWithHoles(profile, frame, extrusion);
+        return Extrusion.Solid(profile, frame, extrusion);
     }
 
     static bool TryBuildOpenProfilePath(MeshingContext ctx, IfcEntity profileEntity, out IReadOnlyList<Vector2> path)
@@ -236,40 +236,14 @@ public static class SweptSolids
     static TriangleMesh3D BuildExtrudedOpenPath(IReadOnlyList<Vector2> path, Frame3D frame, Vector3 extrusion)
     {
         var bottomRow = path.Select(p => (Point3D)frame.ToWorld(new Vector3(p.X, p.Y, 0))).ToList();
-        return BuildExtrudedRibbon(bottomRow, extrusion);
+        return Extrusion.Ribbon(bottomRow, extrusion);
     }
 
     /// <summary>Extrudes an open 3D polyline (local to placement) into a ribbon surface.</summary>
     static TriangleMesh3D BuildExtrudedOpenPath3D(IReadOnlyList<Vector3> path, Frame3D frame, Vector3 extrusion)
     {
         var bottomRow = path.Select(p => (Point3D)frame.ToWorld(p)).ToList();
-        return BuildExtrudedRibbon(bottomRow, extrusion);
-    }
-
-    /// <summary>Extrudes a polyline into a single-sided ribbon (surface, not solid; no end caps).</summary>
-    static TriangleMesh3D BuildExtrudedRibbon(IReadOnlyList<Point3D> bottomRow, Vector3 extrusion)
-    {
-        if (bottomRow.Count < 2)
-            return new TriangleMesh3D([], []);
-
-        var points = new List<Point3D>(bottomRow.Count * 2);
-        foreach (var bottom in bottomRow)
-        {
-            points.Add(bottom);
-            points.Add(bottom + extrusion);
-        }
-
-        var faces = new List<Integer3>();
-        for (var i = 0; i < bottomRow.Count - 1; i++)
-        {
-            var b0 = i * 2;
-            var b1 = (i + 1) * 2;
-            var t0 = b0 + 1;
-            var t1 = b1 + 1;
-            faces.Add(new Integer3(b0, b1, t1));
-            faces.Add(new Integer3(b0, t1, t0));
-        }
-        return new TriangleMesh3D(points, faces);
+        return Extrusion.Ribbon(bottomRow, extrusion);
     }
 
     static bool IsCurveEntity(string entityName)

@@ -48,7 +48,7 @@ public static class MeshDedup
         {
             var h = mesh.FaceIndices.Count;
             h = h * 397 ^ mesh.Points.Count;
-            var bounds = mesh.Points.Count == 0 ? Bounds3D.Empty : mesh.Points.Bounds();
+            var bounds = MeshMeasure.Bounds(mesh);
             h = h * 397 ^ bounds.Min.X.GetHashCode();
             h = h * 397 ^ bounds.Min.Y.GetHashCode();
             h = h * 397 ^ bounds.Min.Z.GetHashCode();

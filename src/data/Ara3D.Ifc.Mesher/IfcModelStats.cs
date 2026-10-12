@@ -28,7 +28,7 @@ public static class IfcModelStats
             var transformed = Transform(mesh, inst.Matrix4x4);
             allPoints.AddRange(transformed.Points);
             triCount += transformed.FaceIndices.Count;
-            volume += SignedVolume(transformed);
+            volume += MeshMeasure.SignedVolume(transformed);
         }
 
         var bounds = allPoints.Count == 0 ? Bounds3D.Empty : allPoints.Bounds();
@@ -43,18 +43,5 @@ public static class IfcModelStats
             return new Point3D(v.X, v.Y, v.Z);
         }).ToList();
         return new TriangleMesh3D(points, mesh.FaceIndices);
-    }
-
-    static double SignedVolume(TriangleMesh3D mesh)
-    {
-        double volume = 0;
-        foreach (var face in mesh.FaceIndices)
-        {
-            var a = mesh.Points[face.A].Vector3;
-            var b = mesh.Points[face.B].Vector3;
-            var c = mesh.Points[face.C].Vector3;
-            volume += Vector3.Dot(a, Vector3.Cross(b, c)) / 6.0;
-        }
-        return volume;
     }
 }
