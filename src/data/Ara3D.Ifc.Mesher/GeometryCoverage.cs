@@ -98,9 +98,9 @@ public static class GeometryCoverage
         new("IFCINDEXEDPOLYCURVE", GeometryCreationSupport.Partial, "Indexed point-list paths with line/arc indices."),
         new("IFCLINEINDEX", GeometryCreationSupport.Partial, "Indexed polycurve line segment indices."),
         new("IFCARCINDEX", GeometryCreationSupport.Partial, "Indexed polycurve arc indices sampled as arcs."),
-        new("IFCBSPLINECURVE", GeometryCreationSupport.Partial, "Control-polygon approximation for profiles and directrices."),
-        new("IFCBSPLINECURVEWITHKNOTS", GeometryCreationSupport.Partial, "Control-polygon approximation; knots ignored."),
-        new("IFCRATIONALBSPLINECURVEWITHKNOTS", GeometryCreationSupport.Partial, "Control-polygon approximation; weights and knots ignored."),
+        new("IFCBSPLINECURVE", GeometryCreationSupport.Supported, "Clamped uniform knots; sampled by control-polygon turning.", "BSplineCurve_Plain"),
+        new("IFCBSPLINECURVEWITHKNOTS", GeometryCreationSupport.Supported, "Evaluated from degree, knots and multiplicities.", "BSplineCurve_Knots"),
+        new("IFCRATIONALBSPLINECURVEWITHKNOTS", GeometryCreationSupport.Partial, "Evaluated with weights and knots by BSplineCurves; CurveEvaluator and SweptSolids do not yet dispatch this entity name."),
         new("IFCINDEXEDPOLYGONALFACE", GeometryCreationSupport.Partial, "Indexed polygon face fan-triangulated from one-based CoordIndex."),
         new("IFCINDEXEDPOLYGONALFACEWITHVOIDS", GeometryCreationSupport.Partial, "Outer and inner CoordIndex rings; planar XY triangulation."),
     ];
