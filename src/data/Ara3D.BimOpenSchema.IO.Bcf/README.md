@@ -1,7 +1,7 @@
 # Ara3D.BimOpenSchema.IO.Bcf
 
 Writes BCF 3.0 (BIM Collaboration Format, buildingSMART's issue-exchange format)
-from a table of issues, and reads a BCF back into one,, so the failing rows of a rule check, an IDS verdict
+from a table of issues, and reads a BCF back into one, so the failing rows of a rule check, an IDS verdict
 table, or any SQL result over a BIM Open Schema (BOS) model open as topics in
 Revit, Solibri, BIMcollab, and other BCF readers.
 
@@ -70,14 +70,31 @@ the BCF encoding guide asks.
 
 ## Reading it back
 
-`BcfReader.ReadFile` (or `Read` over a stream) returns one `BcfTopicRecord` per
-topic: GUID, title, description, type, status, priority, author, creation date,
-the GlobalIds its viewpoints select (or, for a topic written without geometry,
-the ids listed at the end of its description), and whether it has a viewpoint.
-`ToTable` renders them as an issues table with the `IssueColumns` names, one row
-per topic and element, so a colleague's BCF comes back into a graph the same
-way a check's verdicts went out. BCF 2.1 markup has the same shape and reads
-too; comments, snapshots and cameras are not read.
+`BcfReader.ReadFile` (or `Read` over a stream) returns a `BcfContents`: the
+topics, and a list of warnings. Each `BcfTopicRecord` holds a topic's GUID,
+title, description, type, status, priority, author, and creation date, the ids
+its viewpoints select, and whether a viewpoint was read. For a topic written
+without geometry, the ids come from the end of its description instead.
+
+- **Two kinds of id.** A component's `IfcGuid` goes in `GlobalIds`. A component
+  with only an `AuthoringToolId`, such as a Revit UniqueId, goes in
+  `AuthoringToolIds`. Ids read from a description are sorted by the writer's
+  rule (22 characters of IFC's alphabet is a GlobalId), so a topic reads the
+  same with or without geometry. A component with both is read by its
+  `IfcGuid`.
+- **Table.** `ToTable` renders the topics as an issues table with the
+  `IssueColumns` names, one row per topic and element, so a colleague's BCF
+  comes back into a graph the same way a check's verdicts went out. The last
+  column, `AuthoringToolId` (`BcfReader.AuthoringToolIdColumn`), holds an
+  authoring-tool id; that row's `GlobalId` is empty. A topic that selects
+  nothing has one row with both empty.
+- **Warnings.** A part that cannot be read is skipped, and a warning names its
+  zip entry: a markup or viewpoint that is not XML, a markup with no `Topic`,
+  or a viewpoint a markup lists that the container does not hold. The other
+  topics still read. Only a file that is not a zip throws.
+
+BCF 2.1 markup has the same shape and reads too; comments, snapshots and
+cameras are not read.
 
 ## What it does not do
 
