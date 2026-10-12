@@ -1,0 +1,91 @@
+{
+  "commit": "4940d85",
+  "machine": "Intel64 Family 6 Model 170 Stepping 4, GenuineIntel, 22 logical cores, Windows 11 (10.0.26200.9457), .NET 8.0.30 (8.0.3026.36720)",
+  "unit": "ms",
+  "rows": [
+    {
+      "file": "duplex.ifc",
+      "operation": "MesherOnly",
+      "meanMs": 108.03,
+      "medianMs": 109.51,
+      "stdDevMs": 5.79
+    },
+    {
+      "file": "duplex.ifc",
+      "operation": "ParseAndMesh",
+      "meanMs": 129.96,
+      "medianMs": 118.47,
+      "stdDevMs": 25.77
+    },
+    {
+      "file": "duplex.ifc",
+      "operation": "WebIfc",
+      "meanMs": 99.34,
+      "medianMs": 102.42,
+      "stdDevMs": 5.84
+    },
+    {
+      "file": "example.ifc",
+      "operation": "MesherOnly",
+      "meanMs": 118.58,
+      "medianMs": 129.73,
+      "stdDevMs": 19.9
+    },
+    {
+      "file": "example.ifc",
+      "operation": "ParseAndMesh",
+      "meanMs": 63.66,
+      "medianMs": 61.18,
+      "stdDevMs": 6.47
+    },
+    {
+      "file": "example.ifc",
+      "operation": "WebIfc",
+      "meanMs": 22.28,
+      "medianMs": 21.94,
+      "stdDevMs": 2.5
+    },
+    {
+      "file": "IfcOpenHouse_IFC4.ifc",
+      "operation": "MesherOnly",
+      "meanMs": 12.12,
+      "medianMs": 11.99,
+      "stdDevMs": 1.7
+    },
+    {
+      "file": "IfcOpenHouse_IFC4.ifc",
+      "operation": "ParseAndMesh",
+      "meanMs": 13.79,
+      "medianMs": 12.35,
+      "stdDevMs": 3.49
+    },
+    {
+      "file": "IfcOpenHouse_IFC4.ifc",
+      "operation": "WebIfc",
+      "meanMs": 11.01,
+      "medianMs": 10.61,
+      "stdDevMs": 0.9
+    },
+    {
+      "file": "steelplates.ifc",
+      "operation": "MesherOnly",
+      "meanMs": 4.77,
+      "medianMs": 4.65,
+      "stdDevMs": 0.51
+    },
+    {
+      "file": "steelplates.ifc",
+      "operation": "ParseAndMesh",
+      "meanMs": 5.38,
+      "medianMs": 5.2,
+      "stdDevMs": 0.44
+    },
+    {
+      "file": "steelplates.ifc",
+      "operation": "WebIfc",
+      "meanMs": 34.46,
+      "medianMs": 34.04,
+      "stdDevMs": 4.89
+    }
+  ]
+}
