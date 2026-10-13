@@ -1,8 +1,6 @@
 <Project>
   <PropertyGroup>
-    <PlatonicVersion Condition="'$(PlatonicVersion)' == ''">0.1.0</PlatonicVersion>
-    <PlatonicRoot Condition="'$(PlatonicRoot)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\..\Platonic.CSharp'))</PlatonicRoot>
-    <RestoreAdditionalProjectSources Condition="Exists('$(PlatonicRoot)/artifacts')">$(RestoreAdditionalProjectSources);$(PlatonicRoot)/artifacts</RestoreAdditionalProjectSources>
+    <!-- PlatonicVersion, PlatonicRoot, and the restore source are in Directory.Build.props, for every project. -->
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>

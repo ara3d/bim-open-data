@@ -34,6 +34,21 @@
     <DepsRoot Condition="'$(DepsRoot)' == ''">$(MSBuildThisFileDirectory)deps\</DepsRoot>
   </PropertyGroup>
 
+  <!--
+    Platonic.Core and Platonic.Analyzers 0.1.0 are not on nuget.org yet. The data
+    projects reference them through Platonic.props; every other project here reaches
+    Platonic.Core transitively, so the restore source has to be set for all of them,
+    or a machine with an empty NuGet cache fails restore with NU1101 (toolkit TKT-290).
+    The packages come from a sibling Platonic.CSharp clone's packed artifacts (three
+    levels up from this folder, so beside the toolkit when built from deps/), or from
+    -p:PlatonicRoot=<clone>.
+  -->
+  <PropertyGroup>
+    <PlatonicVersion Condition="'$(PlatonicVersion)' == ''">0.1.0</PlatonicVersion>
+    <PlatonicRoot Condition="'$(PlatonicRoot)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../../../Platonic.CSharp'))</PlatonicRoot>
+    <RestoreAdditionalProjectSources Condition="Exists('$(PlatonicRoot)/artifacts')">$(RestoreAdditionalProjectSources);$(PlatonicRoot)/artifacts</RestoreAdditionalProjectSources>
+  </PropertyGroup>
+
   <!-- Keep in step with bim-open-toolkit's Directory.Build.props: both build these projects. -->
   <PropertyGroup Label="Central NuGet dependency versions">
     <Ara3DSdkVersion>1.6.1</Ara3DSdkVersion>
