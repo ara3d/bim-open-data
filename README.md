@@ -122,7 +122,7 @@ The explorer loads archives with `bosToGroups(..., { sourceUp: 'Z' })`: BOS mode
 
 ## The family
 
-BIM Open Data is one of the BIM Open repositories, alongside [BIM Open Flow](https://github.com/ara3d/bim-open-flow) (graphs over the tables), [BIM Open Viewer](https://github.com/ara3d/bim-open-viewer) (the 3D viewer), [BIM Open Notebook](https://github.com/ara3d/bim-open-notebook) (agent sessions as documents), and [BIM Open Toolkit](https://github.com/ara3d/bim-open-toolkit), which joins them. The mark and colours follow the toolkit's `docs/BRANDING.md`.
+BIM Open Data is one of the BIM Open repositories, alongside [BIM Open Flow](https://github.com/ara3d/bim-open-flow) (graphs over the tables), [BIM Open Viewer](https://github.com/ara3d/bim-open-viewer) (the 3D viewer), [BIM Open Notebook](https://github.com/ara3d/bim-open-notebook) (agent sessions as documents), [BIM Open Plot](https://github.com/ara3d/bim-open-plot) (the figure layer to come: charts and drawings from result tables; brand and a brief only as of 2026-10-13), and [BIM Open Toolkit](https://github.com/ara3d/bim-open-toolkit), which joins them. The mark and colours follow the toolkit's `docs/BRANDING.md`.
 
 ## License
 
