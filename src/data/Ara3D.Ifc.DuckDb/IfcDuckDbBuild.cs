@@ -10,8 +10,9 @@ public static class IfcDuckDbBuild
 {
     /// <summary>Identifies this builder's output format for stamp files that decide whether a
     /// prepared database or BOS file is current. Bump whenever the output changes for the same
-    /// input.</summary>
-    public const string Version = "ifc-duckdb/1";
+    /// input. <c>IfcDuckDbVersionTests</c> pins the output of the committed Duplex sample to this
+    /// value and fails when the output changes without a bump.</summary>
+    public const string Version = "ifc-duckdb/2";
 
     /// <summary>Converts the IFC to BOS, loads it into a new DuckDB file, and creates the text
     /// views. Overwrites the database. Returns the database path.</summary>
