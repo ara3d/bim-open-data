@@ -32,6 +32,20 @@ public sealed class IfcSourceFile : IDisposable
     public int Count
         => Spans.Count;
 
+    /// <summary>The schema the FILE_SCHEMA header names: <see cref="IfcSchema.Ifc4"/> for IFC4 and
+    /// IFC4X3, otherwise <see cref="IfcSchema.Ifc2x3"/>.</summary>
+    public IfcSchema Schema
+    {
+        get
+        {
+            var header = System.Text.Encoding.Latin1.GetString(Bytes, 0, Math.Min(Bytes.Length, 8192));
+            var at = header.IndexOf("FILE_SCHEMA", StringComparison.OrdinalIgnoreCase);
+            return at >= 0 && header.IndexOf("'IFC4", at, StringComparison.OrdinalIgnoreCase) > 0
+                ? IfcSchema.Ifc4
+                : IfcSchema.Ifc2x3;
+        }
+    }
+
     public bool Contains(int id)
         => _spanIndexById.ContainsKey(id);
 

@@ -5,3 +5,5 @@
 `DocumentReferenceTests` covers `IfcDocumentReferenceBuilder`: appending a
 document reference to `duplex.ifc`'s `IFCPROJECT` and removing it again byte for
 byte, plus string-level checks of the IFC2X3 and IFC4 attribute layouts.
+
+`ZoneBuilderTests` covers `IfcZoneBuilder` the same way, on `samples/nrc/duplex-base.ifc`.

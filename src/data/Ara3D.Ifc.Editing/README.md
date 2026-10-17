@@ -39,3 +39,14 @@ The two schemas order these attributes differently, so the constructor takes an
 `IfcDateAndTime` entity reference in IFC2X3) and `Format` (an
 `IfcDocumentElectronicFormat` entity reference in IFC2X3). Both builders share
 `IfcStepLines`, which allocates ids and formats lines.
+
+## Zones
+
+`IfcZoneBuilder` groups existing spaces into a zone. `AddZone(name, spaceIds)`
+emits an `IFCZONE` and an `IFCRELASSIGNSTOGROUP` that lists the spaces, returns
+the zone's id, and takes its GlobalId from the zone name, so a zone keeps its
+GlobalId when the table around it changes. A property set attaches to the
+returned id with `IfcPropertySetBuilder`, as it does to any object.
+`IfcSourceFile.Schema` reads the schema from the header for the constructor.
+Same append/diff/remove path as the other builders; `ZoneBuilderTests` shows
+the additions diff to exactly the zones and removing them restores the source.
