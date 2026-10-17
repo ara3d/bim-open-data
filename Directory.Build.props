@@ -51,7 +51,7 @@
 
   <!-- Keep in step with bim-open-toolkit's Directory.Build.props: both build these projects. -->
   <PropertyGroup Label="Central NuGet dependency versions">
-    <Ara3DSdkVersion>1.6.1</Ara3DSdkVersion>
+    <Ara3DSdkVersion>1.6.2</Ara3DSdkVersion>
     <Ara3DClosedXmlVersion>0.105.0</Ara3DClosedXmlVersion>
     <Ara3DCoverletCollectorVersion>6.0.0</Ara3DCoverletCollectorVersion>
     <!-- Equal to the flatc that generated Ara3D.BimOpenSchema.IO.Fragments/Schema: the generated code checks it. -->
