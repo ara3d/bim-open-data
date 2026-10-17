@@ -39,7 +39,7 @@ public static class BosFileTools
                 "ifc_table with the argument named bosPath: lists the tables and views bos_sql sees "
                 + "in a .bos model, with their row counts and column types, so a query can be written "
                 + "without guessing. Start with the EntityText, ParameterText and RelationText views, "
-                + "and see ifc_table for StoreyOfElement and MetricCatalog. Set 'table' to describe "
+                + "and see ifc_table for StoreyOfElement, SpaceOfElement, ZoneOfSpace and MetricCatalog. Set 'table' to describe "
                 + "just one.",
                 BosPath()
                     .String("table", "Optional single table to describe, e.g. Entities.")
@@ -53,7 +53,7 @@ public static class BosFileTools
                 "ifc_sql with the argument named bosPath: runs a read-only SQL query (DuckDB dialect) "
                 + "over a .bos model, from any source, and returns a page of rows plus the unpaged row "
                 + "count. The views: EntityText, ParameterText, RelationText, StoreyOfEntity, "
-                + "StoreyOfElement, MetricCatalog; bos_table lists them. The first call builds a DuckDB database in a "
+                + "StoreyOfElement, SpaceOfElement, ZoneOfSpace, MetricCatalog; bos_table lists them. The first call builds a DuckDB database in a "
                 + "temporary folder; later calls reuse it until the .bos file changes.",
                 BosPath()
                     .String("sql", "A single SELECT or WITH statement.", required: true)

@@ -76,6 +76,8 @@ public static class BosDuckDbViews
 
         conn.Execute(StoreyOfEntitySql);
         conn.Execute(StoreyOfElementSql);
+        conn.Execute(SpaceOfElementSql);
+        conn.Execute(ZoneOfSpaceSql);
     }
 
     /// <summary>Every entity with the building storey above it, and how many relations away it is.
@@ -112,6 +114,46 @@ public static class BosDuckDbViews
     public static readonly string StoreyOfElementSql = """
         CREATE OR REPLACE VIEW StoreyOfElement AS
         SELECT * FROM StoreyOfEntity WHERE EntityIndex != StoreyIndex
+        """;
+
+    /// <summary>Every element with the <c>IfcSpace</c> it sits in: the first space above it on the
+    /// same walk <see cref="StoreyOfEntitySql"/> makes, over <c>ContainedIn</c>, <c>PartOf</c> and
+    /// <c>MemberOf</c>, so a stair flight reaches the space its stair is contained in. An entity
+    /// the model places in a storey and not in a room has no row; the Duplex puts some elements in
+    /// rooms and some in storeys. An entity is never mapped to itself (Depth starts at 1), and a
+    /// space inside a space gives its element one row per space, told apart by Depth.</summary>
+    public static readonly string SpaceOfElementSql = $"""
+        CREATE OR REPLACE VIEW SpaceOfElement AS
+        WITH RECURSIVE Ancestors(EntityIndex, Ancestor, Depth) AS (
+            SELECT e.rowid, e.rowid, 0 FROM Entities e
+            UNION ALL
+            SELECT a.EntityIndex, r.EntityB, a.Depth + 1
+            FROM Ancestors a
+            JOIN Relations r ON r.EntityA = a.Ancestor
+            WHERE r.RelationType IN ({(int)RelationType.PartOf}, {(int)RelationType.MemberOf}, {(int)RelationType.ContainedIn})
+              AND a.Depth < 16
+        )
+        SELECT a.EntityIndex, a.Ancestor AS SpaceIndex, s.Name AS SpaceName, s.GlobalId AS SpaceGlobalId, a.Depth
+        FROM Ancestors a
+        JOIN EntityText s ON s.EntityIndex = a.Ancestor
+        WHERE s.Category = 'IFCSPACE' AND a.Depth > 0
+        """;
+
+    /// <summary>Every <c>IfcSpace</c> with the <c>IfcZone</c> groups it belongs to. The IFC loader
+    /// turns <c>IfcRelAssignsToGroup</c> into a <c>MemberOf</c> relation from the member
+    /// (<c>EntityA</c>) to the group (<c>EntityB</c>); <c>MemberOf</c> also carries aggregation, so
+    /// the zone's own category picks out the grouping. A space in two zones (a functional zone and
+    /// a thermal one) has two rows; a space in none has none. <c>EntityIndex</c> is the space,
+    /// as in <c>StoreyOfEntity</c>.</summary>
+    public static readonly string ZoneOfSpaceSql = $"""
+        CREATE OR REPLACE VIEW ZoneOfSpace AS
+        SELECT s.EntityIndex, s.Name AS SpaceName, s.GlobalId AS SpaceGlobalId,
+               z.EntityIndex AS ZoneIndex, z.Name AS ZoneName, z.GlobalId AS ZoneGlobalId
+        FROM Relations r
+        JOIN EntityText s ON s.EntityIndex = r.EntityA
+        JOIN EntityText z ON z.EntityIndex = r.EntityB
+        WHERE r.RelationType = {(int)RelationType.MemberOf}
+          AND s.Category = 'IFCSPACE' AND z.Category = 'IFCZONE'
         """;
 
     private static string EnumCase<T>(string column, IReadOnlyList<T> values) where T : struct, Enum

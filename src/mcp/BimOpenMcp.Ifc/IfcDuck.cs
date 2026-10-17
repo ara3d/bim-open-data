@@ -21,7 +21,7 @@ public readonly record struct IfcQueryResult(
 public static class IfcDuck
 {
     /// <summary>Adds the text views (EntityText, ParameterText, RelationText, StoreyOfEntity,
-    /// StoreyOfElement). They are defined once, in <see cref="BosDuckDbViews"/>, so the MCP server
+    /// StoreyOfElement, SpaceOfElement, ZoneOfSpace). They are defined once, in <see cref="BosDuckDbViews"/>, so the MCP server
     /// and the flow graphs cannot drift into answering the same question two ways.</summary>
     public static void CreateViews(FilePath database)
         => BosDuckDbViews.CreateViews(database);

@@ -143,7 +143,7 @@ index into `Strings`, `Entities.Category` is an index into `Entities`, and `Para
 tagged index whose meaning depends on its descriptor's type. A query against the raw tables can see
 no text at all, so `IfcDuck.CreateViews` adds `EntityText`, `ParameterText`, and `RelationText`,
 which resolve those indexes by joining on `rowid`. The views are defined once, in
-`BosDuckDbViews`, together with `StoreyOfEntity` and `StoreyOfElement`.
+`BosDuckDbViews`, together with `StoreyOfEntity`, `StoreyOfElement`, `SpaceOfElement` (an element and the `IfcSpace` it sits in) and `ZoneOfSpace` (a space and its `IfcZone` groups).
 
 **MetricCatalog.** `IfcMetricCatalog` adds one table beside the views: the analytics metric
 dictionary the model names in `NRC_AnalyticsProvenance.MetricDictionaryURI`, read from that
