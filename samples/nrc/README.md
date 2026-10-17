@@ -15,4 +15,4 @@ as debt.
 
 ## Licence
 
-`duplex-base.ifc` is the Duplex Apartment from buildingSMART's Community Sample Test Files, unchanged; `duplex-enriched.ifc` adds analytics property sets to it. Attribution: BSI (2020) Duplex Apartment Test Files, buildingSMART International; (C) original authors, licensed CC BY 4.0, https://creativecommons.org/licenses/by/4.0/. The source commit and the full notice are in `samples/public/NOTICE.md`.
+`duplex-base.ifc` is the Duplex Apartment from buildingSMART's Community Sample Test Files, unchanged; `duplex-enriched.ifc` adds analytics property sets and four `IfcZone` groups to it. Attribution: BSI (2020) Duplex Apartment Test Files, buildingSMART International; (C) original authors, licensed CC BY 4.0, https://creativecommons.org/licenses/by/4.0/. The source commit and the full notice are in `samples/public/NOTICE.md`.

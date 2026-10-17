@@ -45,12 +45,13 @@ public sealed class MetricCatalogTests
         var rows = _mcp.Rows(path,
             "SELECT PropertySet, PropertyName, Rollup FROM MetricCatalog WHERE MetricId = 'NRC.OC.ANNUAL' ORDER BY Level");
 
-        // nrc-metrics.csv: the operational-carbon metric at building, element, and storey level.
+        // nrc-metrics.csv: the operational-carbon metric at building, element, storey, and zone level.
         Assert.That(rows.Select(Cells), Is.EqualTo(new[]
         {
             new[] { "NRC_BuildingSummary", "TotalOperationalCarbon_kgCO2e_per_year", "sum" },
             new[] { "NRC_OperationalCarbon", "OperationalCarbon_kgCO2e_per_year", "none" },
             new[] { "NRC_StoreySummary", "TotalOperationalCarbon_kgCO2e_per_year", "sum" },
+            new[] { "NRC_ZoneSummary", "TotalOperationalCarbon_kgCO2e_per_year", "sum" },
         }));
         Assert.That(Count(path), Is.EqualTo(File.ReadLines(RepoPaths.Samples("nrc", "nrc-metrics.csv")).Count() - 1));
         Assert.That(_mcp.CallData("ifc_to_bos", new JsonObject { ["path"] = path })["metricDictionary"]!.GetValue<string>(),

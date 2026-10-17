@@ -99,6 +99,21 @@ public sealed partial class SpaceZoneViewTests
         Assert.That(rows[0]![0]!.GetValue<long>(), Is.EqualTo(0));
     }
 
+    /// <summary>The enriched Duplex carries four zones, one per dwelling per floor, over the 20
+    /// conditioned spaces (samples/nrc/nrc-zones.csv in the toolkit); the roof space is in none.</summary>
+    [Test]
+    public void ZoneOfSpace_OnTheEnrichedDuplex_HoldsTheTwentyConditionedSpacesInFourZones()
+    {
+        var path = RepoPaths.Samples("nrc", "duplex-enriched.ifc");
+        var perZone = Pairs(path, "SELECT ZoneName, count(*) FROM ZoneOfSpace GROUP BY ZoneName ORDER BY ZoneName");
+        Assert.That(perZone, Is.EqualTo(new[] { "Unit A Level 1|5", "Unit A Level 2|5", "Unit B Level 1|5", "Unit B Level 2|5" }));
+
+        var distinctSpaces = _mcp.Rows(path, "SELECT count(DISTINCT EntityIndex) FROM ZoneOfSpace");
+        Assert.That(distinctSpaces[0]![0]!.GetValue<long>(), Is.EqualTo(20), "each space in exactly one zone");
+        var roof = _mcp.Rows(path, "SELECT count(*) FROM ZoneOfSpace WHERE SpaceName = 'R301'");
+        Assert.That(roof[0]![0]!.GetValue<long>(), Is.EqualTo(0), "R301 Roof is unconditioned");
+    }
+
     [Test]
     public void SpaceOfElement_OnTheDuplex_ReachesEveryElementTheModelContainsInARoom()
     {
