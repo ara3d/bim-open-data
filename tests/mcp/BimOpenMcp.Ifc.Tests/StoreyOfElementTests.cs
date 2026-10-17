@@ -7,7 +7,7 @@ namespace BimOpenMcp.Ifc.Tests;
 /// <summary>TKT-18 and TKT-48: StoreyOfEntity also maps a storey to itself (Depth 0), so joining it
 /// straight to ParameterText double-counted a storey's embodied carbon while the Duplex storeys
 /// carried a rollup under the element property's own name. Since TKT-48 the storeys carry their
-/// totals as Pset_NRCStoreySummary.TotalEmbodiedCarbon_A1A3_kgCO2e, so both views give the element
+/// totals as NRC_StoreySummary.TotalEmbodiedCarbon_A1A3_kgCO2e, so both views give the element
 /// sum; StoreyOfElement still removes the self-mapped row for models that repeat a property.</summary>
 [TestFixture]
 public sealed class StoreyOfElementTests
@@ -56,7 +56,7 @@ public sealed class StoreyOfElementTests
     [Test]
     public void StoreySummary_EqualsTheSumOfItsElements()
     {
-        var total = StoreyTotal("StoreyOfEntity", "Level 1", "TotalEmbodiedCarbon_A1A3_kgCO2e", "Pset_NRCStoreySummary");
+        var total = StoreyTotal("StoreyOfEntity", "Level 1", "TotalEmbodiedCarbon_A1A3_kgCO2e", "NRC_StoreySummary");
         Assert.That(total, Is.EqualTo(49451.2).Within(0.05));
     }
 
@@ -72,7 +72,7 @@ public sealed class StoreyOfElementTests
         Assert.That(data["rows"]!.AsArray()[0]!.AsArray()[0]!.GetValue<long>(), Is.EqualTo(0));
     }
 
-    private double StoreyTotal(string storeyView, string storeyName, string property, string set = "Pset_NRCEmbodiedCarbon")
+    private double StoreyTotal(string storeyView, string storeyName, string property, string set = "NRC_EmbodiedCarbon")
     {
         var data = _mcp.CallData("ifc_sql", new JsonObject
         {

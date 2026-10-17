@@ -46,7 +46,7 @@ public sealed class DuplexIdsTests
         Assert.That(report.Verdicts.Select(v => v.CheckId).Distinct(), Is.EquivalentTo(new[] { "IDS-OC", "IDS-EC" }));
         Assert.That(report.Verdicts, Has.Count.GreaterThan(100));
         Assert.That(report.Verdicts.Select(v => v.Verdict), Has.All.EqualTo(Verdict.Fail));
-        Assert.That(report.Verdicts.Select(v => v.Reason), Has.All.Contain("no Pset_NRC"));
+        Assert.That(report.Verdicts.Select(v => v.Reason), Has.All.Contain("no NRC_"));
     }
 
     [Test]

@@ -15,10 +15,10 @@ namespace Ara3D.BimOpenSchema.DuckDb.Tests;
 public sealed class IfcDuckDbVersionTests
 {
     /// <summary>The fingerprint of the BOS file for samples/nrc/duplex-enriched.ifc under each
-    /// version. Add a line when the version changes; never edit one.</summary>
+    /// version. Add a line when the version changes. When the sample file changes and the converter does not, replace the line (done for the NRC_ rename of the property sets).</summary>
     private static readonly Dictionary<string, string> Fingerprints = new()
     {
-        ["ifc-duckdb/2"] = "17fcaf1691ef9e2ddc75be1cf37ffa9388e01dbc3ece9fd0519f665cbdae7daa",
+        ["ifc-duckdb/2"] = "72e2941267f6df54102a3b780bebbd39cd18a937d1743d4b849d3fb835060175",
     };
 
     [Test]

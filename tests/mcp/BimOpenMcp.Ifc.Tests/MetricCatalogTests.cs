@@ -48,9 +48,9 @@ public sealed class MetricCatalogTests
         // nrc-metrics.csv: the operational-carbon metric at building, element, and storey level.
         Assert.That(rows.Select(Cells), Is.EqualTo(new[]
         {
-            new[] { "Pset_NRCBuildingSummary", "TotalOperationalCarbon_kgCO2e_per_year", "sum" },
-            new[] { "Pset_NRCOperationalCarbon", "OperationalCarbon_kgCO2e_per_year", "none" },
-            new[] { "Pset_NRCStoreySummary", "TotalOperationalCarbon_kgCO2e_per_year", "sum" },
+            new[] { "NRC_BuildingSummary", "TotalOperationalCarbon_kgCO2e_per_year", "sum" },
+            new[] { "NRC_OperationalCarbon", "OperationalCarbon_kgCO2e_per_year", "none" },
+            new[] { "NRC_StoreySummary", "TotalOperationalCarbon_kgCO2e_per_year", "sum" },
         }));
         Assert.That(Count(path), Is.EqualTo(File.ReadLines(RepoPaths.Samples("nrc", "nrc-metrics.csv")).Count() - 1));
         Assert.That(_mcp.CallData("ifc_to_bos", new JsonObject { ["path"] = path })["metricDictionary"]!.GetValue<string>(),

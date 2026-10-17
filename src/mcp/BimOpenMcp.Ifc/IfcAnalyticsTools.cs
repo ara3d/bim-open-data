@@ -43,7 +43,7 @@ public static class IfcAnalyticsTools
                 + "that carries its own rollup of that property. MetricCatalog lists the analytics "
                 + "metrics, one row per metric and level (element, storey, building) with its "
                 + "PropertySet, PropertyName, Unit, and Rollup (none, sum, mean, count); it is read "
-                + "from the CSV the model's Pset_NRCAnalyticsProvenance.MetricDictionaryURI names, "
+                + "from the CSV the model's NRC_AnalyticsProvenance.MetricDictionaryURI names, "
                 + "beside the IFC file, and is empty when the model names none or the file is "
                 + "missing. Aggregate the element-level properties only; storey and building totals "
                 + "already sit in their own summary sets. 'path' may name a .bos file instead of an "

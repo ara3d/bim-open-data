@@ -146,7 +146,7 @@ which resolve those indexes by joining on `rowid`. The views are defined once, i
 `BosDuckDbViews`, together with `StoreyOfEntity` and `StoreyOfElement`.
 
 **MetricCatalog.** `IfcMetricCatalog` adds one table beside the views: the analytics metric
-dictionary the model names in `Pset_NRCAnalyticsProvenance.MetricDictionaryURI`, read from that
+dictionary the model names in `NRC_AnalyticsProvenance.MetricDictionaryURI`, read from that
 CSV when the database is built. A relative URI is resolved against the folder of the source file
 the model records for that entity (the Documents table's `Path`: the IFC file, for a conversion),
 then against the `.bos` file's folder. An agent resolves a metric

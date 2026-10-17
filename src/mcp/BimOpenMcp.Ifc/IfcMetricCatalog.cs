@@ -7,7 +7,7 @@ namespace BimOpenMcp.Ifc;
 /// <summary>The MetricCatalog table: the analytics metric dictionary a model names in its
 /// provenance set, so an agent can resolve a metric to its property set, property, unit, and
 /// rollup rule without guessing from names. The dictionary is a CSV (for the NRC sample,
-/// samples/nrc/nrc-metrics.csv) located by <c>Pset_NRCAnalyticsProvenance.MetricDictionaryURI</c>.
+/// samples/nrc/nrc-metrics.csv) located by <c>NRC_AnalyticsProvenance.MetricDictionaryURI</c>.
 /// A relative URI is resolved against the folder of the source file the model records for the
 /// entity that names it (the Documents table's Path: for an IFC conversion, the IFC file), then
 /// against the .bos file's folder. A model that names none, or names a file that is not there,
@@ -16,7 +16,7 @@ namespace BimOpenMcp.Ifc;
 public static class IfcMetricCatalog
 {
     public const string Table = "MetricCatalog";
-    public const string ProvenanceSet = "Pset_NRCAnalyticsProvenance";
+    public const string ProvenanceSet = "NRC_AnalyticsProvenance";
     public const string UriProperty = "MetricDictionaryURI";
 
     /// <summary>The columns of the empty table, in the dictionary's order.</summary>
