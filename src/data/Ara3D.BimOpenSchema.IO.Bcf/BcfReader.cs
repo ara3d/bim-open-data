@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.IO.Compression;
+using System.Numerics;
 using System.Xml;
 using System.Xml.Linq;
 using Ara3D.DataTable;
@@ -12,7 +13,11 @@ namespace Ara3D.BimOpenSchema.IO.Bcf;
 /// have only an <c>AuthoringToolId</c>, such as a Revit UniqueId. A topic this library wrote
 /// without geometry lists its ids at the end of the description instead (see
 /// <see cref="BcfTopic"/>); the reader recovers those and sorts them by the writer's rule. A
-/// topic has a viewpoint when at least one viewpoint its markup lists was read.</summary>
+/// topic has a viewpoint when at least one viewpoint its markup lists was read.
+/// <see cref="Camera"/> is the first viewpoint's perspective camera, null when no viewpoint read
+/// has one (an orthogonal camera is not read). <see cref="Comments"/> are the topic's comments in
+/// file order. <see cref="ModelFile"/> is the file name of the first file in the markup's header,
+/// "" when there is none.</summary>
 public sealed record BcfTopicRecord(
     string Guid,
     string Title,
@@ -24,7 +29,10 @@ public sealed record BcfTopicRecord(
     DateTimeOffset? CreationDate,
     IReadOnlyList<string> GlobalIds,
     IReadOnlyList<string> AuthoringToolIds,
-    bool HasViewpoint);
+    bool HasViewpoint,
+    BcfCamera? Camera,
+    IReadOnlyList<BcfComment> Comments,
+    string ModelFile);
 
 /// <summary>What <see cref="BcfReader"/> read: the topics, and one warning per part it skipped
 /// (a markup or viewpoint that is not XML or whose compressed data is corrupt, a markup with no
@@ -74,8 +82,10 @@ public static class BcfReader
 
     /// <summary>One row per topic and selected element, or one row with both ids empty for a
     /// topic that selects nothing: GlobalId, Title, Description, Status, Priority, Type, then
-    /// TopicGuid, Author, CreationDate, AuthoringToolId. A row from a GlobalId has an empty
-    /// AuthoringToolId, and a row from an authoring-tool id has an empty GlobalId.</summary>
+    /// TopicGuid, Author, CreationDate, AuthoringToolId, then the eleven camera columns of
+    /// <see cref="BcfColumnNames"/> (numbers, null when the topic has no camera) and Comments (the
+    /// topic's comment count). A row from a GlobalId has an empty AuthoringToolId, and a row from
+    /// an authoring-tool id has an empty GlobalId.</summary>
     public static IDataTable ToTable(this IReadOnlyList<BcfTopicRecord> topics, string name = "issues")
     {
         var rows = topics
@@ -91,13 +101,48 @@ public static class BcfReader
         builder.AddColumn(rows.Select(r => (object?)r.t.Status).ToArray(), IssueColumns.Status, typeof(string));
         builder.AddColumn(rows.Select(r => (object?)r.t.Priority).ToArray(), IssueColumns.Priority, typeof(string));
         builder.AddColumn(rows.Select(r => (object?)r.t.Type).ToArray(), IssueColumns.Type, typeof(string));
-        builder.AddColumn(rows.Select(r => (object?)r.t.Guid).ToArray(), "TopicGuid", typeof(string));
-        builder.AddColumn(rows.Select(r => (object?)r.t.Author).ToArray(), "Author", typeof(string));
-        builder.AddColumn(rows.Select(r => (object?)r.t.CreationDate?.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture)).ToArray(),
-            "CreationDate", typeof(string));
+        builder.AddColumn(rows.Select(r => (object?)r.t.Guid).ToArray(), BcfColumnNames.TopicGuid, typeof(string));
+        builder.AddColumn(rows.Select(r => (object?)r.t.Author).ToArray(), BcfColumnNames.Author, typeof(string));
+        builder.AddColumn(rows.Select(r => (object?)IsoDate(r.t.CreationDate)).ToArray(),
+            BcfColumnNames.CreationDate, typeof(string));
         builder.AddColumn(rows.Select(r => (object?)r.AuthoringToolId).ToArray(), AuthoringToolIdColumn, typeof(string));
+        foreach (var (column, value) in CameraValues)
+            builder.AddColumn(rows.Select(r => r.t.Camera is { } c ? (object?)value(c) : null).ToArray(), column, typeof(double));
+        builder.AddColumn(rows.Select(r => (object?)r.t.Comments.Count).ToArray(), BcfColumnNames.Comments, typeof(int));
         return builder.Build();
     }
+
+    private static readonly (string Name, Func<BcfCamera, double> Value)[] CameraValues =
+    [
+        (BcfColumnNames.CameraX, c => c.ViewPoint.X),
+        (BcfColumnNames.CameraY, c => c.ViewPoint.Y),
+        (BcfColumnNames.CameraZ, c => c.ViewPoint.Z),
+        (BcfColumnNames.DirectionX, c => c.Direction.X),
+        (BcfColumnNames.DirectionY, c => c.Direction.Y),
+        (BcfColumnNames.DirectionZ, c => c.Direction.Z),
+        (BcfColumnNames.UpX, c => c.Up.X),
+        (BcfColumnNames.UpY, c => c.Up.Y),
+        (BcfColumnNames.UpZ, c => c.Up.Z),
+        (BcfColumnNames.FieldOfView, c => c.FieldOfView),
+        (BcfColumnNames.AspectRatio, c => c.AspectRatio),
+    ];
+
+    /// <summary>One row per comment of every topic: TopicGuid, Title, Author, CreationDate (UTC
+    /// ISO text, null when the comment has none), Comment. A topic without comments adds no row.</summary>
+    public static IDataTable CommentsTable(this IReadOnlyList<BcfTopicRecord> topics, string name = "comments")
+    {
+        var rows = topics.SelectMany(t => t.Comments.Select(c => (t, c))).ToList();
+        var builder = new DataTableBuilder(name);
+        builder.AddColumn(rows.Select(r => (object?)r.t.Guid).ToArray(), BcfColumnNames.TopicGuid, typeof(string));
+        builder.AddColumn(rows.Select(r => (object?)r.t.Title).ToArray(), IssueColumns.Title, typeof(string));
+        builder.AddColumn(rows.Select(r => (object?)r.c.Author).ToArray(), BcfColumnNames.Author, typeof(string));
+        builder.AddColumn(rows.Select(r => (object?)IsoDate(r.c.Date)).ToArray(), BcfColumnNames.CreationDate, typeof(string));
+        builder.AddColumn(rows.Select(r => (object?)r.c.Text).ToArray(), BcfColumnNames.Comment, typeof(string));
+        return builder.Build();
+    }
+
+    private static string? IsoDate(DateTimeOffset? date)
+        => date?.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture);
 
     /// <summary>The topic in one markup, or null with a warning when the markup cannot be read
     /// (see <see cref="TryLoad"/>) or has no Topic element. A listed viewpoint that is missing or
@@ -134,8 +179,49 @@ public static class BcfReader
             DateTimeOffset.TryParse(Text(topic, markup, "CreationDate"), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var date) ? date : null,
             components.Where(c => c.IsGlobalId).Select(c => c.Id).ToList(),
             components.Where(c => !c.IsGlobalId).Select(c => c.Id).ToList(),
-            viewpoints.Count > 0);
+            viewpoints.Count > 0,
+            viewpoints.Select(Camera).FirstOrDefault(c => c is not null),
+            Comments(topic, markup),
+            ModelFile(markup));
     }
+
+    /// <summary>A viewpoint's perspective camera; null for an orthogonal one, or when its values
+    /// are missing or are not numbers.</summary>
+    private static BcfCamera? Camera(XDocument viewpoint)
+    {
+        var camera = viewpoint.Root?.Element(Name(viewpoint, "PerspectiveCamera"));
+        if (camera is null)
+            return null;
+        var point = Vector(viewpoint, camera, "CameraViewPoint");
+        var direction = Vector(viewpoint, camera, "CameraDirection");
+        var up = Vector(viewpoint, camera, "CameraUpVector");
+        return point is { } p && direction is { } d && up is { } u
+            ? new BcfCamera(p, d, u, Number(camera, "FieldOfView") ?? 60, Number(camera, "AspectRatio") ?? 1)
+            : null;
+    }
+
+    private static Vector3? Vector(XDocument document, XElement parent, string name)
+        => parent.Element(Name(document, name)) is { } e
+           && Number(e, "X") is { } x && Number(e, "Y") is { } y && Number(e, "Z") is { } z
+            ? new Vector3((float)x, (float)y, (float)z)
+            : null;
+
+    private static double? Number(XElement parent, string name)
+        => double.TryParse((string?)parent.Element(parent.Name.Namespace + name), NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ? value : null;
+
+    /// <summary>The topic's comments in file order. A comment without text is kept with empty text,
+    /// since BCF allows one (a comment that only carries a viewpoint).</summary>
+    private static List<BcfComment> Comments(XElement topic, XDocument markup)
+        => (topic.Element(Name(markup, "Comments"))?.Elements(Name(markup, "Comment")) ?? [])
+            .Select(c => new BcfComment(
+                Text(c, markup, "Author"),
+                DateTimeOffset.TryParse(Text(c, markup, "Date"), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var date) ? date : null,
+                Text(c, markup, "Comment")))
+            .ToList();
+
+    private static string ModelFile(XDocument markup)
+        => (markup.Root?.Element(Name(markup, "Header"))?.Element(Name(markup, "Files"))?.Elements(Name(markup, "File")) ?? [])
+            .Select(f => Text(f, markup, "Filename")).FirstOrDefault(n => n.Length > 0) ?? "";
 
     private static XDocument? Missing(string viewpoint, string markupName, List<string> warnings)
     {

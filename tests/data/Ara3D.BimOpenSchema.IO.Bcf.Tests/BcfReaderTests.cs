@@ -78,6 +78,8 @@ public sealed class BcfReaderTests
         {
             IssueColumns.GlobalId, IssueColumns.Title, IssueColumns.Description, IssueColumns.Status,
             IssueColumns.Priority, IssueColumns.Type, "TopicGuid", "Author", "CreationDate", BcfReader.AuthoringToolIdColumn,
+            "CameraX", "CameraY", "CameraZ", "DirectionX", "DirectionY", "DirectionZ", "UpX", "UpY", "UpZ",
+            "FieldOfView", "AspectRatio", "Comments",
         }));
         Assert.That(table.Rows, Has.Count.EqualTo(4), "two doors, one wall, one model-level row");
         var titles = Enumerable.Range(0, 4).Select(r => (string?)table[1, r]).ToList();
