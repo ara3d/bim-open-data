@@ -63,26 +63,70 @@ public sealed class FaceMesherTests
     public void AddFace_SameSenseFalse_ReversesEveryTriangle()
         => AssertPlanarFaceWithHole(MeshPlanar(TriangleHole, sameSense: false), 7, 14f, -1f);
 
-    /// <summary>The boundary is densified, so the patch has more than its four corners; earcut adds
-    /// no interior points, so interior triangles are chords and the mesh's area is not the surface's.</summary>
-    [Test]
-    public void AddFace_CylinderQuarterPatch_IsDensifiedOntoTheSurfaceAndFacesOutward()
+    const float Radius = 2f;
+
+    static Vector3 OnCylinder(float angle, float z) => V(Radius * MathF.Cos(angle), Radius * MathF.Sin(angle), z);
+
+    /// <summary>Quarter of a cylinder of radius 2 around Z, height 1, given by its four corners: its area is pi.</summary>
+    static TriangleMesh3D MeshQuarterCylinder(float maxDeviation)
     {
-        const float radius = 2f;
-        var map = new CylinderMap(new Frame3D(Point3D.Zero, OrthonormalBasis3D.Identity), radius);
-        Vector3 At(float angle, float z) => V(radius * MathF.Cos(angle), radius * MathF.Sin(angle), z);
-        IReadOnlyList<Vector3> ring = [At(0, 0), At(MathF.PI / 2, 0), At(MathF.PI / 2, 1), At(0, 1)];
-
+        var map = new CylinderMap(new Frame3D(Point3D.Zero, OrthonormalBasis3D.Identity), Radius);
+        IReadOnlyList<Vector3> ring = [OnCylinder(0, 0), OnCylinder(MathF.PI / 2, 0), OnCylinder(MathF.PI / 2, 1), OnCylinder(0, 1)];
         var builder = new WeldedMeshBuilder();
-        Assert.That(builder.AddFace(map, ring, [], sameSense: true), Is.Null);
-        var mesh = builder.ToMesh();
+        Assert.That(builder.AddFace(map, ring, [], sameSense: true, maxDeviation), Is.Null);
+        return builder.ToMesh();
+    }
 
-        Assert.That(mesh.Points.Count, Is.GreaterThan(20));
-        Assert.That(mesh.FaceIndices.Count, Is.EqualTo(mesh.Points.Count - 2));
+    static float DistanceFromCylinder(Vector3 p)
+        => MathF.Abs(MathF.Sqrt(p.X.Value * p.X.Value + p.Y.Value * p.Y.Value) - Radius);
+
+    static float MaxDeviation(TriangleMesh3D mesh)
+        => MaxOverTriangles(mesh, DistanceFromCylinder);
+
+    /// <summary>The largest <paramref name="distance"/> over a grid of 66 points on each triangle.</summary>
+    static float MaxOverTriangles(TriangleMesh3D mesh, Func<Vector3, float> distance)
+    {
+        const int n = 10;
+        var worst = 0f;
+        foreach (var f in mesh.FaceIndices)
+        {
+            var t = Corners(mesh, f);
+            for (var i = 0; i <= n; i++)
+                for (var j = 0; i + j <= n; j++)
+                    worst = MathF.Max(worst, distance(t[0] + (t[1] - t[0]) * (i / (float)n) + (t[2] - t[0]) * (j / (float)n)));
+        }
+        return worst;
+    }
+
+    const float SphereTop = MathF.PI / 3;
+    static readonly float SpherePatchArea = MathF.PI / 2 * Radius * Radius * MathF.Sin(SphereTop);
+
+    static Vector3 OnSphere(float angle, float latitude)
+        => V(Radius * MathF.Cos(latitude) * MathF.Cos(angle), Radius * MathF.Cos(latitude) * MathF.Sin(angle), Radius * MathF.Sin(latitude));
+
+    /// <summary>A quarter of the sphere of radius 2 between the equator and latitude 60 degrees, as a
+    /// revolution of a meridian sampled at 257 points (meridian sag under 1e-5).</summary>
+    static TriangleMesh3D MeshSpherePatch(float maxDeviation)
+    {
+        var meridian = Enumerable.Range(0, 257).Select(i => OnSphere(0, MathF.PI / 2 * i / 256)).ToList();
+        var map = RevolutionMap.Build(new Ray3D(Point3D.Zero, Vector3.UnitZ), meridian)!;
+        IReadOnlyList<Vector3> ring = [OnSphere(0, 0), OnSphere(MathF.PI / 2, 0), OnSphere(MathF.PI / 2, SphereTop), OnSphere(0, SphereTop)];
+        var builder = new WeldedMeshBuilder();
+        Assert.That(builder.AddFace(map, ring, [], sameSense: true, maxDeviation), Is.Null);
+        return builder.ToMesh();
+    }
+
+    static float MaxSphereDeviation(TriangleMesh3D mesh)
+        => MaxOverTriangles(mesh, p => MathF.Abs(p.Length.Value - Radius));
+
+    /// <summary>Every corner lies on the surface, inside the quarter, and every triangle faces outward.</summary>
+    [Test]
+    public void AddFace_CylinderQuarterPatch_LiesOnTheSurfaceAndFacesOutward()
+    {
+        var mesh = MeshQuarterCylinder(Tolerance.ChordDeviation);
         foreach (var p in mesh.Points)
         {
-            var r = MathF.Sqrt(p.X.Value * p.X.Value + p.Y.Value * p.Y.Value);
-            Assert.That(r, Is.EqualTo(radius).Within(1e-4f));
+            Assert.That(DistanceFromCylinder(p.Vector3), Is.LessThan(1e-4f));
             Assert.That(p.X.Value, Is.GreaterThan(-1e-4f));
             Assert.That(p.Y.Value, Is.GreaterThan(-1e-4f));
             Assert.That(p.Z.Value, Is.InRange(0f, 1f));
@@ -93,6 +137,52 @@ public sealed class FaceMesherTests
             var centroid = (t[0] + t[1] + t[2]) / 3f;
             Assert.That(Vector3.Dot(Normal(t), V(centroid.X, centroid.Y, 0)).Value, Is.GreaterThan(0f));
         }
+    }
+
+    /// <summary>The boundary arcs are cut to 3/4 of the bound and earcut's long diagonals are
+    /// flipped to join neighbouring columns, so no interior point is needed (triangles = points - 2).
+    /// A strip of chords that sag s has area 1 - s / 3r of the arc's, so the area is within pi tol / r.</summary>
+    [Test]
+    public void AddFace_CylinderQuarterPatch_IsWithinTheBoundWithNoInteriorPoint()
+    {
+        const float tol = Tolerance.ChordDeviation;
+        var mesh = MeshQuarterCylinder(tol);
+
+        Assert.That(MaxDeviation(mesh), Is.LessThanOrEqualTo(tol));
+        Assert.That(Area(mesh), Is.EqualTo(MathF.PI).Within(MathF.PI * tol / Radius));
+        Assert.That(mesh.FaceIndices.Count, Is.EqualTo(mesh.Points.Count - 2));
+    }
+
+    /// <summary>A doubly curved patch needs interior points (triangles more than points - 2). The
+    /// slack of 1e-5 is the sag of the sampled meridian the map revolves.</summary>
+    [Test]
+    public void AddFace_SpherePatch_GetsInteriorPointsUntilWithinTheBound()
+    {
+        const float tol = Tolerance.ChordDeviation;
+        var mesh = MeshSpherePatch(tol);
+
+        Assert.That(MaxSphereDeviation(mesh), Is.LessThanOrEqualTo(tol + 1e-5f));
+        Assert.That(Area(mesh), Is.EqualTo(SpherePatchArea).Within(SpherePatchArea * 2 * tol / Radius));
+        Assert.That(mesh.FaceIndices.Count, Is.GreaterThan(mesh.Points.Count - 2));
+    }
+
+    /// <summary>A plane is never densified or refined however small the bound (TKT-190 counts
+    /// triangles against web-ifc, and flat faces are most of a model).</summary>
+    [Test]
+    public void AddFace_PlanarFace_KeepsItsTrianglesUnderAnyBound()
+    {
+        TriangleMesh3D Mesh(float maxDeviation)
+        {
+            var builder = new WeldedMeshBuilder();
+            Assert.That(builder.AddFace(new PlanarMap(FacePlane.OfRing(SquareOuter)), SquareOuter, [TriangleHole], true, maxDeviation), Is.Null);
+            return builder.ToMesh();
+        }
+        var unrefined = Mesh(float.MaxValue);
+        var refined = Mesh(1e-9f);
+
+        Assert.That(refined.Points, Is.EqualTo(unrefined.Points));
+        Assert.That(refined.FaceIndices, Is.EqualTo(unrefined.FaceIndices));
+        Assert.That(refined.FaceIndices.Count, Is.EqualTo(7));
     }
 
     [Test]

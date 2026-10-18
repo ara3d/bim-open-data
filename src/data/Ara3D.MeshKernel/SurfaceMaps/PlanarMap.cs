@@ -9,4 +9,7 @@ public sealed class PlanarMap(FacePlane plane) : SurfaceMap
         => ring.Select(plane.Project).ToList();
 
     public override Vector3 Unproject(Vector2 uv) => plane.Unproject(uv);
+
+    /// <summary>A point between points of the plane lies on it.</summary>
+    public override float ChordDeviation(Vector2 uv, Vector3 chordPoint) => 0;
 }
