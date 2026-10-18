@@ -19,6 +19,7 @@ public sealed class StepModelIndex
     readonly Dictionary<int, List<int>> _shapesOfDefinition = new();
     readonly Dictionary<int, List<int>> _representationsOfShape = new();
     readonly Dictionary<int, int> _placementOfShape = new();
+    readonly List<int> _styledItems = new();
 
     public StepModelIndex(StepModel model, StepMeshingDiagnostics diagnostics)
     {
@@ -49,6 +50,9 @@ public sealed class StepModelIndex
                         found.Add(id);
         return found;
     }
+
+    /// <summary>Every styled_item and subtype, in file order.</summary>
+    public IReadOnlyList<int> StyledItems => _styledItems;
 
     /// <summary>Every product_definition, in file order.</summary>
     public IReadOnlyList<int> ProductDefinitions => _productDefinitions;
@@ -93,6 +97,8 @@ public sealed class StepModelIndex
             AddShapeDefinition(e);
         else if (e.Is<IContextDependentShapeRepresentation>())
             AddContextDependentShape(e);
+        else if (e.Is<IStyledItem>())
+            _styledItems.Add(e.Id);
         else if (e.Is<IRepresentationMap>())
             AddId(_mapped, e.Ref(RepresentationMap.Instance.MappedRepresentation));
         else if (e.Is<IShapeRepresentationRelationship>() && !e.Is<IRepresentationRelationshipWithTransformation>())

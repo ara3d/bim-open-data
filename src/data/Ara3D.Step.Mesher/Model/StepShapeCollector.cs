@@ -1,3 +1,4 @@
+using Ara3D.Geometry;
 using Ara3D.Step.Entities;
 using Ara3D.StepTypes;
 using SN = System.Numerics;
@@ -27,20 +28,22 @@ public sealed partial class StepShapeCollector
         _diagnostics = diagnostics;
         _index = new StepModelIndex(model, diagnostics);
         Units = new StepContextUnits(diagnostics);
+        Styles = new StepStyles(model, _index.StyledItems, diagnostics);
     }
 
     public StepContextUnits Units { get; }
+    public StepStyles Styles { get; }
     public IReadOnlyList<StepPlacedItem> Placed => _placed;
     public IReadOnlyList<StepCycle> Cycles => _cycles;
 
     /// <summary>Places the items of a representation and of every representation of the same shape.</summary>
-    public void AddShape(StepEntity representation, SN.Matrix4x4 transform, int depth, int productDefinitionId)
+    public void AddShape(StepEntity representation, SN.Matrix4x4 transform, int depth, int productDefinitionId, Color? colour = null)
     {
         foreach (var id in _index.SameShape(representation.Id))
         {
             _reached.Add(id);
             var rep = _model.Get(id);
-            _diagnostics.Guard(rep, () => AddItems(rep, transform, depth, productDefinitionId));
+            _diagnostics.Guard(rep, () => AddItems(rep, transform, depth, productDefinitionId, Styles.Of(id) ?? colour));
         }
     }
 
@@ -57,7 +60,7 @@ public sealed partial class StepShapeCollector
         }
     }
 
-    void AddItems(StepEntity rep, SN.Matrix4x4 transform, int depth, int productDefinitionId)
+    void AddItems(StepEntity rep, SN.Matrix4x4 transform, int depth, int productDefinitionId, Color? colour)
     {
         var repeat = _mapPath.IndexOf(rep.Id);
         if (repeat >= 0)
@@ -68,21 +71,21 @@ public sealed partial class StepShapeCollector
         _mapPath.Add(rep.Id);
         var units = Units.Of(rep);
         foreach (var item in rep.Refs(Representation.Instance.Items) ?? [])
-            _diagnostics.Guard(item, () => AddItem(item, rep, units, transform, depth, productDefinitionId));
+            _diagnostics.Guard(item, () => AddItem(item, rep, units, transform, depth, productDefinitionId, colour));
         _mapPath.RemoveAt(_mapPath.Count - 1);
     }
 
-    void AddItem(StepEntity item, StepEntity rep, StepUnits units, SN.Matrix4x4 transform, int depth, int productDefinitionId)
+    void AddItem(StepEntity item, StepEntity rep, StepUnits units, SN.Matrix4x4 transform, int depth, int productDefinitionId, Color? colour)
     {
         if (item.Is<IMappedItem>())
-            AddMapped(item, units, transform, depth, productDefinitionId);
+            AddMapped(item, units, transform, depth, productDefinitionId, Styles.Of(item.Id) ?? colour);
         else if (IsShape(item))
-            _placed.Add(new(item.Id, rep.Id, productDefinitionId, transform, depth, units));
+            _placed.Add(new(item.Id, rep.Id, productDefinitionId, transform, depth, units, Styles.OfShape(item) ?? colour));
         else if (!item.Is<IPlacement>())
             _diagnostics.Record(item.EntityName(), StepSupport.Unsupported);
     }
 
-    void AddMapped(StepEntity item, StepUnits units, SN.Matrix4x4 transform, int depth, int productDefinitionId)
+    void AddMapped(StepEntity item, StepUnits units, SN.Matrix4x4 transform, int depth, int productDefinitionId, Color? colour)
     {
         var map = item.Ref(MappedItem.Instance.MappingSource);
         var target = item.Ref(MappedItem.Instance.MappingTarget);
@@ -96,7 +99,7 @@ public sealed partial class StepShapeCollector
         var mapping = StepPlacements.Between(o, Units.Of(rep), t, units);
         _diagnostics.Record(item.EntityName(), mapping is null ? StepSupport.Approximate : StepSupport.Supported,
             mapping is null ? $"#{item.Id}: origin or target is not a placement; placed without a transform" : null);
-        AddShape(rep, (mapping ?? SN.Matrix4x4.Identity) * transform, depth, productDefinitionId);
+        AddShape(rep, (mapping ?? SN.Matrix4x4.Identity) * transform, depth, productDefinitionId, colour);
     }
 
     void AddCycle(string link, List<int> path, int repeat, int id)
