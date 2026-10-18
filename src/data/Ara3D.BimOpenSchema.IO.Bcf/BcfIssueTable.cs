@@ -50,7 +50,8 @@ public static class BcfIssueTable
     /// neither still makes the topic, as a model-level issue). Its description is its rows'
     /// distinct non-empty descriptions joined by line breaks. A row's non-empty comment becomes a
     /// <see cref="BcfComment"/> with that row's <see cref="BcfColumns.CommentAuthor"/> and <see cref="BcfColumns.CommentDate"/>,
-    /// once per distinct text.
+    /// once per distinct author and text pair (the rows of one topic repeat its comment, but a second
+    /// reviewer's identical "Agreed" is a comment of its own).
     /// Status, priority, type, and camera must agree within a title. Null, DBNull, and blank cells
     /// count as empty.</summary>
     /// <exception cref="ArgumentException">The GlobalId or title column is missing, a row has no
@@ -178,7 +179,7 @@ public static class BcfIssueTable
         private readonly List<string> _descriptions = [];
         private readonly HashSet<string> _seenDescriptions = [];
         private readonly List<BcfComment> _comments = [];
-        private readonly HashSet<string> _seenComments = [];
+        private readonly HashSet<(string Author, string Text)> _seenComments = [];
         private BcfCamera? _camera;
         public string Status = "";
         public string Priority = "";
@@ -194,7 +195,7 @@ public static class BcfIssueTable
 
         public void AddComment(string text, string author, DateTimeOffset? date)
         {
-            if (text.Length > 0 && _seenComments.Add(text))
+            if (text.Length > 0 && _seenComments.Add((author, text)))
                 _comments.Add(new BcfComment(author, date, text));
         }
 

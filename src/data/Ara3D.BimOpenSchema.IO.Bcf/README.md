@@ -36,7 +36,7 @@ var summary = BcfWriter.WriteFile("doors.bcf", doors.ToBcfIssues(), new BcfOptio
   row becomes part of a topic. A list of `BcfIssue` records works too.
 - **Comments.** A row's non-empty `Comment` becomes a `BcfComment` on its
   topic, with that row's `CommentAuthor` and `CommentDate` (UTC ISO text), once per
-  distinct text within a title. A comment with no author or date is written with
+  distinct author and text within a title. A comment with no author or date is written with
   `BcfOptions.Author` and `BcfOptions.CreationDate`. Each comment carries a
   deterministic GUID (`BcfGuid.Comment(topicGuid, index)`) and, when the topic
   has a viewpoint, points at it. A list of `BcfIssue` takes

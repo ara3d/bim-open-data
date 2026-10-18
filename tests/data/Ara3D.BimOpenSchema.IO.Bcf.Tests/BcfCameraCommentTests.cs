@@ -149,6 +149,15 @@ public sealed class BcfCameraCommentTests
     }
 
     [Test]
+    public void TheSameCommentTextFromTwoAuthorsIsTwoComments()
+    {
+        var issue = IssueTable(
+            [Wall, Wall], ["Walls", "Walls"], ["", ""],
+            new object?[] { 12.5, 12.5 }, comments: ["Agreed", "Agreed"], authors: ["ann", "bob"], dates: ["", ""]).ToBcfIssues().Single();
+        Assert.That(issue.Comments!.Select(c => c.Author), Is.EqualTo(new[] { "ann", "bob" }));
+    }
+
+    [Test]
     public void TwoCamerasForOneTitleThrowAnArgumentExceptionNamingTheTitle()
     {
         var table = IssueTable(
