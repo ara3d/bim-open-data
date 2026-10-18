@@ -142,7 +142,7 @@ public static class BcfReader
     }
 
     private static string? IsoDate(DateTimeOffset? date)
-        => date?.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture);
+        => date is { } d ? BcfXml.Date(d) : null;
 
     /// <summary>The topic in one markup, or null with a warning when the markup cannot be read
     /// (see <see cref="TryLoad"/>) or has no Topic element. A listed viewpoint that is missing or

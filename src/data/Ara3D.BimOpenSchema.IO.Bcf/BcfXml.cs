@@ -235,6 +235,7 @@ internal static partial class BcfXml
         return (rounded == 0 ? 0 : rounded).ToString("0.######", CultureInfo.InvariantCulture);
     }
 
-    private static string Date(DateTimeOffset date)
+    /// <summary>UTC ISO text to the second, the one date form the library writes and the issues table carries.</summary>
+    internal static string Date(DateTimeOffset date)
         => date.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture);
 }
