@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Ara3D.Step.Decode</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Description>Decodes a parsed STEP file into the Plato library's RawDecodedModel (the B-rep as written, in millimetres and radians) through the generated AP242 types; Plato's PrepareModel finishes it.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ara3D.Step.Entities\Ara3D.Step.Entities.csproj" />
+    <ProjectReference Include="..\Ara3D.StepBrep\Ara3D.StepBrep.csproj" />
+    <PackageReference Include="Ara3D.IO.StepParser" Version="$(Ara3DSdkVersion)" />
+  </ItemGroup>
+
+</Project>
