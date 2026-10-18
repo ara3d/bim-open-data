@@ -112,7 +112,7 @@ public static class BcfReader
         return builder.Build();
     }
 
-    private static readonly (string Name, Func<BcfCamera, double> Value)[] CameraValues =
+    private static readonly (string Name, Func<BcfCamera, double?> Value)[] CameraValues =
     [
         (BcfColumnNames.CameraX, c => c.ViewPoint.X),
         (BcfColumnNames.CameraY, c => c.ViewPoint.Y),
@@ -185,8 +185,9 @@ public static class BcfReader
             ModelFile(markup));
     }
 
-    /// <summary>A viewpoint's perspective camera; null for an orthogonal one, or when its values
-    /// are missing or are not numbers.</summary>
+    /// <summary>A viewpoint's perspective camera; null for an orthogonal one, or when its position,
+    /// direction, or up vector is missing or not numbers. A missing field of view or aspect ratio
+    /// stays null on the camera.</summary>
     private static BcfCamera? Camera(XDocument viewpoint)
     {
         var camera = viewpoint.Root?.Element(Name(viewpoint, "PerspectiveCamera"));
@@ -196,7 +197,7 @@ public static class BcfReader
         var direction = Vector(viewpoint, camera, "CameraDirection");
         var up = Vector(viewpoint, camera, "CameraUpVector");
         return point is { } p && direction is { } d && up is { } u
-            ? new BcfCamera(p, d, u, Number(camera, "FieldOfView") ?? 60, Number(camera, "AspectRatio") ?? 1)
+            ? new BcfCamera(p, d, u, Number(camera, "FieldOfView"), Number(camera, "AspectRatio"))
             : null;
     }
 

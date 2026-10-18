@@ -116,8 +116,9 @@ internal static partial class BcfXml
 
     /// <summary>Selects the topic's elements, shows the rest of the model, and places the camera.
     /// A GlobalId in IFC's 22-character form is a component's IfcGuid; any other id (a Revit
-    /// UniqueId, say) is its AuthoringToolId, since BCF rejects it as an IfcGuid.</summary>
-    public static byte[] Visinfo(BcfTopic topic)
+    /// UniqueId, say) is its AuthoringToolId, since BCF rejects it as an IfcGuid. A camera without
+    /// a field of view or aspect ratio gets the options' (the one place that fallback applies).</summary>
+    public static byte[] Visinfo(BcfTopic topic, BcfOptions options)
     {
         var camera = topic.Camera ?? throw new InvalidOperationException($"Topic '{topic.Title}' has no camera");
         return Write(w =>
@@ -144,8 +145,8 @@ internal static partial class BcfXml
             Vector(w, "CameraViewPoint", camera.ViewPoint);
             Vector(w, "CameraDirection", camera.Direction);
             Vector(w, "CameraUpVector", camera.Up);
-            Element(w, "FieldOfView", Number(camera.FieldOfView));
-            Element(w, "AspectRatio", Number(camera.AspectRatio));
+            Element(w, "FieldOfView", Number(camera.FieldOfView ?? options.FieldOfView));
+            Element(w, "AspectRatio", Number(camera.AspectRatio ?? options.AspectRatio));
             w.WriteEndElement();
             w.WriteEndElement();
         });

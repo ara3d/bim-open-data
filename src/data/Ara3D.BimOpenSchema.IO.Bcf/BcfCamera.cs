@@ -3,13 +3,16 @@ using System.Numerics;
 namespace Ara3D.BimOpenSchema.IO.Bcf;
 
 /// <summary>A BCF perspective camera in model coordinates (z up, metres).
-/// <see cref="FieldOfView"/> is the vertical angle in degrees.</summary>
+/// <see cref="FieldOfView"/> is the vertical angle in degrees. <see cref="FieldOfView"/> and
+/// <see cref="AspectRatio"/> are null when the source gave none (a BCF 2.1 camera has no aspect
+/// ratio); the writer then uses <see cref="BcfOptions.FieldOfView"/> and
+/// <see cref="BcfOptions.AspectRatio"/>, and nothing else fills them in.</summary>
 public readonly record struct BcfCamera(
     Vector3 ViewPoint,
     Vector3 Direction,
     Vector3 Up,
-    double FieldOfView,
-    double AspectRatio)
+    double? FieldOfView,
+    double? AspectRatio)
 {
     /// <summary>The view direction: from above, looking north-west and down, so the camera sits
     /// south-east of the elements. Not parallel to z, which BCF forbids for the up vector.</summary>

@@ -81,7 +81,7 @@ public static class BcfWriter
                 zip.CreateEntry(topic.Guid + "/").LastWriteTime = created;
                 Add(zip, $"{topic.Guid}/{BcfTopic.MarkupFile}", BcfXml.Markup(topic, options, created), created);
                 if (topic.HasViewpoint)
-                    Add(zip, $"{topic.Guid}/{BcfTopic.ViewpointFile}", BcfXml.Visinfo(topic), created);
+                    Add(zip, $"{topic.Guid}/{BcfTopic.ViewpointFile}", BcfXml.Visinfo(topic, options), created);
             }
         }
 

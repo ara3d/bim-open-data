@@ -11,8 +11,8 @@ namespace Ara3D.BimOpenSchema.IO.Bcf;
 /// <see cref="BcfReader.ToTable"/> puts an authoring-tool id in (a Revit UniqueId, say), so a
 /// table read from a BCF writes back with every component it named. The nine camera
 /// position, direction, and up columns are read together: a row has a camera when all nine exist
-/// and are non-empty. Some of the nine columns, or some of a row's nine cells, is an error. <see cref="FieldOfView"/> and <see cref="AspectRatio"/> then fall back to
-/// 60 and 1 when absent or empty.</summary>
+/// and are non-empty. Some of the nine columns, or some of a row's nine cells, is an error. <see cref="FieldOfView"/> and <see cref="AspectRatio"/> stay null when absent or empty, and
+/// the writer then uses the options' values (see <see cref="BcfCamera"/>).</summary>
 public sealed record BcfColumns(
     string GlobalId = IssueColumns.GlobalId,
     string Title = IssueColumns.Title,
@@ -152,8 +152,8 @@ public static class BcfIssueTable
                 new((float)v[0]!.Value, (float)v[1]!.Value, (float)v[2]!.Value),
                 new((float)v[3]!.Value, (float)v[4]!.Value, (float)v[5]!.Value),
                 new((float)v[6]!.Value, (float)v[7]!.Value, (float)v[8]!.Value),
-                Number(fieldOfView, row, title) ?? 60,
-                Number(aspectRatio, row, title) ?? 1);
+                Number(fieldOfView, row, title),
+                Number(aspectRatio, row, title));
         }
 
         /// <summary>The cell as a finite number, null when empty.</summary>

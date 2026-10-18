@@ -22,10 +22,10 @@ public sealed record BcfOptions
     /// <summary>TopicStatus for an issue with an empty <see cref="BcfIssue.Status"/>.</summary>
     public string DefaultTopicStatus { get; init; } = "Open";
 
-    /// <summary>Vertical field of view of each viewpoint's perspective camera, in degrees.</summary>
+    /// <summary>Vertical field of view in degrees of a framed camera, and of a given camera that has none.</summary>
     public double FieldOfView { get; init; } = 60;
 
-    /// <summary>Width over height of each viewpoint. At 1 the camera frames the elements in
+    /// <summary>Width over height of a framed camera, and of a given camera that has none. At 1 the camera frames the elements in
     /// both directions; a reader with a wider view only sees more around them.</summary>
     public double AspectRatio { get; init; } = 1;
 
