@@ -72,16 +72,18 @@ internal static partial class BcfXml
 
     private static void Header(XmlWriter w, BcfOptions options)
     {
-        if (options.ModelFile.Length == 0)
+        var path = options.ModelFile.Trim();
+        if (path.Length == 0)
             return;
         w.WriteStartElement("Header");
         w.WriteStartElement("Files");
         w.WriteStartElement("File");
         Attribute(w, "IsExternal", "true");
-        Element(w, "Filename", options.ModelFile[(options.ModelFile.LastIndexOfAny(['/', '\\']) + 1)..]);
+        if (path[(path.LastIndexOfAny(['/', '\\']) + 1)..] is { Length: > 0 } filename)
+            Element(w, "Filename", filename);
         if (options.ModelDate is { } date)
             Element(w, "Date", Date(date));
-        Element(w, "Reference", options.ModelFile);
+        Element(w, "Reference", path);
         w.WriteEndElement();
         w.WriteEndElement();
         w.WriteEndElement();

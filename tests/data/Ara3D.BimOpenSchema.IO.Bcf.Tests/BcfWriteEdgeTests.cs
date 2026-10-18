@@ -27,4 +27,28 @@ public sealed class BcfWriteEdgeTests
         var comment = archive.Markups.Single().Root!.Element("Topic")!.Element("Comments")!.Element("Comment")!;
         Assert.That((string)comment.Element("Author")!, Is.EqualTo(BcfArchive.Fixed.Author));
     }
+
+    [Test]
+    public void AModelFileEndingInASeparatorWritesNoFilenameButStillValidates()
+    {
+        var (archive, _) = BcfArchive.Write([new BcfIssue("Note", [])], BcfArchive.Fixed with { ModelFile = @" C:\models\ " });
+        var file = archive.Markups.Single().Root!.Element("Header")!.Element("Files")!.Element("File")!;
+        Assert.Multiple(() =>
+        {
+            Assert.That(archive.SchemaErrors(), Is.Empty);
+            Assert.That(file.Element("Filename"), Is.Null);
+            Assert.That((string)file.Element("Reference")!, Is.EqualTo(@"C:\models\"), "the reference is trimmed");
+        });
+    }
+
+    [Test]
+    public void ABlankModelFileWritesNoHeader()
+    {
+        var (archive, _) = BcfArchive.Write([new BcfIssue("Note", [])], BcfArchive.Fixed with { ModelFile = "  " });
+        Assert.Multiple(() =>
+        {
+            Assert.That(archive.SchemaErrors(), Is.Empty);
+            Assert.That(archive.Markups.Single().Root!.Element("Header"), Is.Null);
+        });
+    }
 }
