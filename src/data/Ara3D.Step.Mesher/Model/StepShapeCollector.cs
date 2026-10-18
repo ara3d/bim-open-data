@@ -8,7 +8,8 @@ namespace Ara3D.Step.Mesher;
 /// Walks representations and lists every shape item with its accumulated transform, without meshing anything.
 /// A representation brings in the representations tied to it by a shape_representation_relationship without a
 /// transformation, and each mapped_item places its representation_map's representation so that mapping_origin
-/// lands on mapping_target. Placement items are frames for those transforms and are not shapes.
+/// lands on mapping_target. Placement items are frames for those transforms and are not shapes. The assembly
+/// half, StepShapeCollector.Assembly.cs, walks products.
 /// </summary>
 public sealed partial class StepShapeCollector
 {
@@ -35,8 +36,12 @@ public sealed partial class StepShapeCollector
     /// <summary>Places the items of a representation and of every representation of the same shape.</summary>
     public void AddShape(StepEntity representation, SN.Matrix4x4 transform, int depth, int productDefinitionId)
     {
-        foreach (var rep in SameShape(representation))
+        foreach (var id in _index.SameShape(representation.Id))
+        {
+            _reached.Add(id);
+            var rep = _model.Get(id);
             _diagnostics.Guard(rep, () => AddItems(rep, transform, depth, productDefinitionId));
+        }
     }
 
     /// <summary>Places, at the origin, every shape representation that no product or mapped_item reached.</summary>
@@ -50,19 +55,6 @@ public sealed partial class StepShapeCollector
             _diagnostics.Record(rep.EntityName(), StepSupport.Supported, $"#{id} is reached from no product; placed at the origin");
             AddShape(rep, SN.Matrix4x4.Identity, 0, 0);
         }
-    }
-
-    IReadOnlyList<StepEntity> SameShape(StepEntity representation)
-    {
-        var found = new List<StepEntity> { representation };
-        var seen = new HashSet<int> { representation.Id };
-        for (var i = 0; i < found.Count; i++)
-            foreach (var id in _index.SameShape(found[i].Id))
-                if (seen.Add(id) && _model.Find(id) is { } linked)
-                    found.Add(linked);
-        foreach (var rep in found)
-            _reached.Add(rep.Id);
-        return found;
     }
 
     void AddItems(StepEntity rep, SN.Matrix4x4 transform, int depth, int productDefinitionId)
