@@ -47,16 +47,29 @@ public sealed partial class StepShapeCollector
         }
     }
 
-    /// <summary>Places, at the origin, every shape representation that no product or mapped_item reached.</summary>
+    /// <summary>Places, at the origin, every shape representation that no product or mapped_item reached, unless it
+    /// repeats an item already placed: a shape_aspect's representation (validation properties) lists a solid of
+    /// its part again.</summary>
     public void AddUnreachedShapes()
     {
+        var placedItems = _placed.Select(p => p.ItemId).ToHashSet();
         foreach (var id in _index.ShapeRepresentations)
         {
             if (_reached.Contains(id) || _index.MappedRepresentations.Contains(id))
                 continue;
             var rep = _model.Get(id);
-            _diagnostics.Record(rep.EntityName(), StepSupport.Supported, $"#{id} is reached from no product; placed at the origin");
-            AddShape(rep, SN.Matrix4x4.Identity, 0, 0);
+            _diagnostics.Guard(rep, () =>
+            {
+                if (RepeatsAny(rep, placedItems))
+                    return;
+                var before = _placed.Count;
+                AddShape(rep, SN.Matrix4x4.Identity, 0, 0);
+                if (_placed.Count == before)
+                    return;
+                _diagnostics.Record(rep.EntityName(), StepSupport.Supported, $"#{id} is reached from no product; placed at the origin");
+                for (var i = before; i < _placed.Count; i++)
+                    placedItems.Add(_placed[i].ItemId);
+            });
         }
     }
 
@@ -117,6 +130,14 @@ public sealed partial class StepShapeCollector
         var cycle = new StepCycle(link, [.. path.Skip(repeat), id]);
         _cycles.Add(cycle);
         _diagnostics.Record(link, StepSupport.Unsupported, $"cycle {string.Join(" -> ", cycle.Path.Select(i => $"#{i}"))} not followed");
+    }
+
+    static bool RepeatsAny(StepEntity rep, HashSet<int> placedItems)
+    {
+        foreach (var item in rep.Refs(Representation.Instance.Items) ?? [])
+            if (placedItems.Contains(item.Id))
+                return true;
+        return false;
     }
 
     static bool IsShape(StepEntity item)

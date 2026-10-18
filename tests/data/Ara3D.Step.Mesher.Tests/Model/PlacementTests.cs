@@ -87,4 +87,16 @@ public static class PlacementTests
         Assert.That(collector.Cycles, Has.Count.EqualTo(1));
         Assert.That(collector.Cycles[0].Path, Is.EqualTo(new[] { 20, 25, 20 }));
     }
+
+    [Test]
+    public static void AnUnreachedRepresentationRepeatingAPlacedItemIsSkipped()
+    {
+        var (placed, _) = Collect(Units + Part + """
+            #14=MAPPED_ITEM('',#13,#9);
+            #16=SHAPE_REPRESENTATION('placed',(#14),#2);
+            #17=SHAPE_REPRESENTATION('aspect',(#11),#2);
+            """);
+        Assert.That(placed, Has.Count.EqualTo(1));
+        Assert.That(placed[0].RepresentationId, Is.EqualTo(12));
+    }
 }
