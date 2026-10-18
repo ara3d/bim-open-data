@@ -11,7 +11,8 @@ public sealed record BcfSummary(int Topics, int Viewpoints, int Elements, int El
 /// a folder named by its GUID holding <c>markup.bcf</c> and, when any of its elements has
 /// geometry in <c>bounds</c>, a <c>viewpoint.bcfv</c> that selects them under a perspective
 /// camera framing their box. Without geometry no viewpoint is written: BCF 3.0 requires a
-/// camera in every viewpoint, and this writer does not invent one.</summary>
+/// camera in every viewpoint, and this writer does not invent one. A camera given on the issue
+/// counts as geometry for this: that topic gets a viewpoint with it.</summary>
 public static class BcfWriter
 {
     public const string VersionFile = "bcf.version";
@@ -78,7 +79,7 @@ public static class BcfWriter
             foreach (var topic in topics)
             {
                 zip.CreateEntry(topic.Guid + "/").LastWriteTime = created;
-                Add(zip, $"{topic.Guid}/{BcfTopic.MarkupFile}", BcfXml.Markup(topic, options.Author, created), created);
+                Add(zip, $"{topic.Guid}/{BcfTopic.MarkupFile}", BcfXml.Markup(topic, options, created), created);
                 if (topic.HasViewpoint)
                     Add(zip, $"{topic.Guid}/{BcfTopic.ViewpointFile}", BcfXml.Visinfo(topic), created);
             }

@@ -1,8 +1,9 @@
 namespace Ara3D.BimOpenSchema.IO.Bcf;
 
 /// <summary>One topic as it is written: an issue with its GUIDs, its resolved type and status,
-/// and its camera. <see cref="Camera"/> is null when no element of the issue has geometry, and
-/// then the topic has no viewpoint, because BCF 3.0 requires a camera in every viewpoint.</summary>
+/// its comments, and its camera. <see cref="Camera"/> is the issue's own when it has one, else
+/// framed from its elements' bounds. It is null when neither exists, and then the topic has no
+/// viewpoint, because BCF 3.0 requires a camera in every viewpoint.</summary>
 internal sealed record BcfTopic(
     string Guid,
     string ViewpointGuid,
@@ -12,6 +13,7 @@ internal sealed record BcfTopic(
     string Status,
     string Priority,
     IReadOnlyList<string> GlobalIds,
+    IReadOnlyList<BcfComment> Comments,
     BcfCamera? Camera)
 {
     public const string ViewpointFile = "viewpoint.bcfv";
@@ -25,7 +27,7 @@ internal sealed record BcfTopic(
         var guid = BcfGuid.Topic(options.GuidSeed, title);
         var globalIds = issue.GlobalIds.Select(id => id.Trim()).Where(id => id.Length > 0).Distinct().ToList();
         var box = bounds?.Union(globalIds);
-        var camera = box is { } b ? BcfCamera.Frame(b, options.FieldOfView, options.AspectRatio) : (BcfCamera?)null;
+        var camera = issue.Camera ?? (box is { } b ? BcfCamera.Frame(b, options.FieldOfView, options.AspectRatio) : (BcfCamera?)null);
         return new(
             guid,
             BcfGuid.Viewpoint(guid),
@@ -35,6 +37,7 @@ internal sealed record BcfTopic(
             OrDefault(issue.Status, options.DefaultTopicStatus),
             issue.Priority.Trim(),
             globalIds,
+            issue.Comments ?? [],
             camera);
     }
 

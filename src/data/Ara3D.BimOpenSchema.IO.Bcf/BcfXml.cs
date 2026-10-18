@@ -39,10 +39,14 @@ internal static partial class BcfXml
             w.WriteEndElement();
         });
 
-    public static byte[] Markup(BcfTopic topic, string author, DateTimeOffset created)
+    /// <summary>Header, then the topic; the topic's children follow the order markup.xsd fixes
+    /// (description, comments, viewpoints). A comment's own author and date win over the options'.</summary>
+    public static byte[] Markup(BcfTopic topic, BcfOptions options, DateTimeOffset created)
         => Write(w =>
         {
+            var author = options.Author;
             w.WriteStartElement("Markup");
+            Header(w, options);
             w.WriteStartElement("Topic");
             Attribute(w, "Guid", topic.Guid);
             Attribute(w, "TopicType", topic.Type);
@@ -52,6 +56,7 @@ internal static partial class BcfXml
             Element(w, "CreationDate", Date(created));
             Element(w, "CreationAuthor", author);
             Optional(w, "Description", topic.Description);
+            Comments(w, topic, author, created);
             if (topic.HasViewpoint)
             {
                 w.WriteStartElement("Viewpoints");
@@ -64,6 +69,47 @@ internal static partial class BcfXml
             w.WriteEndElement();
             w.WriteEndElement();
         });
+
+    private static void Header(XmlWriter w, BcfOptions options)
+    {
+        if (options.ModelFile.Length == 0)
+            return;
+        w.WriteStartElement("Header");
+        w.WriteStartElement("Files");
+        w.WriteStartElement("File");
+        Attribute(w, "IsExternal", "true");
+        Element(w, "Filename", options.ModelFile[(options.ModelFile.LastIndexOfAny(['/', '\\']) + 1)..]);
+        if (options.ModelDate is { } date)
+            Element(w, "Date", Date(date));
+        Element(w, "Reference", options.ModelFile);
+        w.WriteEndElement();
+        w.WriteEndElement();
+        w.WriteEndElement();
+    }
+
+    private static void Comments(XmlWriter w, BcfTopic topic, string author, DateTimeOffset created)
+    {
+        if (topic.Comments.Count == 0)
+            return;
+        w.WriteStartElement("Comments");
+        for (var i = 0; i < topic.Comments.Count; i++)
+        {
+            var comment = topic.Comments[i];
+            w.WriteStartElement("Comment");
+            Attribute(w, "Guid", BcfGuid.Comment(topic.Guid, i));
+            Element(w, "Date", Date(comment.Date ?? created));
+            Element(w, "Author", comment.Author.Length > 0 ? comment.Author : author);
+            Element(w, "Comment", comment.Text);
+            if (topic.HasViewpoint)
+            {
+                w.WriteStartElement("Viewpoint");
+                Attribute(w, "Guid", topic.ViewpointGuid);
+                w.WriteEndElement();
+            }
+            w.WriteEndElement();
+        }
+        w.WriteEndElement();
+    }
 
     /// <summary>Selects the topic's elements, shows the rest of the model, and places the camera.
     /// A GlobalId in IFC's 22-character form is a component's IfcGuid; any other id (a Revit

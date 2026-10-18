@@ -28,4 +28,12 @@ public sealed record BcfOptions
     /// <summary>Width over height of each viewpoint. At 1 the camera frames the elements in
     /// both directions; a reader with a wider view only sees more around them.</summary>
     public double AspectRatio { get; init; } = 1;
+
+    /// <summary>The model file the topics refer to, as a path or a file name; "" for none. When set,
+    /// every topic's markup header lists it as an external file: its file name, and the path as
+    /// given as the reference, so a viewer can find the model the camera and components belong to.</summary>
+    public string ModelFile { get; init; } = "";
+
+    /// <summary>The model file's date, written in the header when <see cref="ModelFile"/> is set.</summary>
+    public DateTimeOffset? ModelDate { get; init; }
 }

@@ -23,6 +23,10 @@ public static class BcfGuid
     public static string Topic(string seed, string title)
         => FromName($"topic\u001f{seed}\u001f{title}");
 
+    /// <summary>The GUID of a topic's comment at this position in its comment list.</summary>
+    public static string Comment(string topicGuid, int index)
+        => FromName($"comment\u001f{topicGuid}\u001f{index}");
+
     /// <summary>The GUID of a topic's one viewpoint.</summary>
     public static string Viewpoint(string topicGuid)
         => FromName($"viewpoint\u001f{topicGuid}");
