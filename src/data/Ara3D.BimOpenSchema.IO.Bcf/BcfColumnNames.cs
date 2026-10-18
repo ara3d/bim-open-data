@@ -7,8 +7,14 @@ namespace Ara3D.BimOpenSchema.IO.Bcf;
 public static class BcfColumnNames
 {
     public const string Comment = "Comment";
+    /// <summary>The topic's author and creation date (<see cref="BcfReader.ToTable"/> writes them;
+    /// <see cref="BcfIssueTable.ToBcfIssues"/> ignores them).</summary>
     public const string Author = "Author";
     public const string CreationDate = "CreationDate";
+    /// <summary>The author and date of the comment in <see cref="Comment"/> (read by
+    /// <see cref="BcfIssueTable.ToBcfIssues"/>, written by <see cref="BcfReader.CommentsTable"/>).</summary>
+    public const string CommentAuthor = "CommentAuthor";
+    public const string CommentDate = "CommentDate";
     public const string TopicGuid = "TopicGuid";
     public const string Comments = "Comments";
     public const string CameraX = "CameraX";

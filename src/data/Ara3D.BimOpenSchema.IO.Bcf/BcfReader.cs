@@ -127,7 +127,7 @@ public static class BcfReader
         (BcfColumnNames.AspectRatio, c => c.AspectRatio),
     ];
 
-    /// <summary>One row per comment of every topic: TopicGuid, Title, Author, CreationDate (UTC
+    /// <summary>One row per comment of every topic: TopicGuid, Title, CommentAuthor, CommentDate (UTC
     /// ISO text, null when the comment has none), Comment. A topic without comments adds no row.</summary>
     public static IDataTable CommentsTable(this IReadOnlyList<BcfTopicRecord> topics, string name = "comments")
     {
@@ -135,8 +135,8 @@ public static class BcfReader
         var builder = new DataTableBuilder(name);
         builder.AddColumn(rows.Select(r => (object?)r.t.Guid).ToArray(), BcfColumnNames.TopicGuid, typeof(string));
         builder.AddColumn(rows.Select(r => (object?)r.t.Title).ToArray(), IssueColumns.Title, typeof(string));
-        builder.AddColumn(rows.Select(r => (object?)r.c.Author).ToArray(), BcfColumnNames.Author, typeof(string));
-        builder.AddColumn(rows.Select(r => (object?)IsoDate(r.c.Date)).ToArray(), BcfColumnNames.CreationDate, typeof(string));
+        builder.AddColumn(rows.Select(r => (object?)r.c.Author).ToArray(), BcfColumnNames.CommentAuthor, typeof(string));
+        builder.AddColumn(rows.Select(r => (object?)IsoDate(r.c.Date)).ToArray(), BcfColumnNames.CommentDate, typeof(string));
         builder.AddColumn(rows.Select(r => (object?)r.c.Text).ToArray(), BcfColumnNames.Comment, typeof(string));
         return builder.Build();
     }

@@ -181,7 +181,7 @@ public sealed class BcfCameraCommentTests
             Assert.That(Number(table, "FieldOfView", 0), Is.EqualTo(47.5).Within(1e-5));
             Assert.That(table[table.Columns.ToList().FindIndex(c => c.Descriptor.Name == "Comments"), 0], Is.EqualTo(2));
             Assert.That(comments.Columns.Select(c => c.Descriptor.Name),
-                Is.EqualTo(new[] { "TopicGuid", "Title", "Author", "CreationDate", "Comment" }));
+                Is.EqualTo(new[] { "TopicGuid", "Title", "CommentAuthor", "CommentDate", "Comment" }));
             Assert.That(comments.Rows, Has.Count.EqualTo(2));
             Assert.That(comments[4, 0], Is.EqualTo("Please check the fire rating"));
             Assert.That(comments[3, 0], Is.EqualTo("2026-10-18T12:00:00Z"));
@@ -224,8 +224,8 @@ public sealed class BcfCameraCommentTests
         builder.AddColumn(titles.Cast<object?>().ToArray(), "Title", typeof(string));
         builder.AddColumn(descriptions.Cast<object?>().ToArray(), "Description", typeof(string));
         builder.AddColumn(comments.Cast<object?>().ToArray(), "Comment", typeof(string));
-        builder.AddColumn(authors.Cast<object?>().ToArray(), "Author", typeof(string));
-        builder.AddColumn(dates.Cast<object?>().ToArray(), "CreationDate", typeof(string));
+        builder.AddColumn(authors.Cast<object?>().ToArray(), "CommentAuthor", typeof(string));
+        builder.AddColumn(dates.Cast<object?>().ToArray(), "CommentDate", typeof(string));
         Number(builder, "CameraX", x);
         Number(builder, "CameraY", x.Select(v => v is null ? null : (object?)2.0).ToArray());
         Number(builder, "CameraZ", x.Select(v => v is null ? null : (object?)3.0).ToArray());

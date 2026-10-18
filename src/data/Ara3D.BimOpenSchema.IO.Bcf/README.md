@@ -25,7 +25,7 @@ var summary = BcfWriter.WriteFile("doors.bcf", doors.ToBcfIssues(), new BcfOptio
 - **Input.** `ToBcfIssues(table, columns)` reads the columns named by
   `BcfColumns` (case-insensitive): `GlobalId` and `Title` are required (names come from `IssueColumns`);
   `Description`, `Status`, `Priority`, `Type`, and `AuthoringToolId` are
-  optional, as are `Comment`, `Author`, `CreationDate`, and the camera columns
+  optional, as are `Comment`, `CommentAuthor`, `CommentDate`, and the camera columns
   below. A row with an empty `GlobalId` contributes its `AuthoringToolId`
   instead, so a table `BcfReader.ToTable` made writes back with every component
   it named. Rows group by
@@ -35,7 +35,7 @@ var summary = BcfWriter.WriteFile("doors.bcf", doors.ToBcfIssues(), new BcfOptio
   (`CheckTitle`, `Citation`). Filter it to failing rows first, because every
   row becomes part of a topic. A list of `BcfIssue` records works too.
 - **Comments.** A row's non-empty `Comment` becomes a `BcfComment` on its
-  topic, with that row's `Author` and `CreationDate` (UTC ISO text), once per
+  topic, with that row's `CommentAuthor` and `CommentDate` (UTC ISO text), once per
   distinct text within a title. A comment with no author or date is written with
   `BcfOptions.Author` and `BcfOptions.CreationDate`. Each comment carries a
   deterministic GUID (`BcfGuid.Comment(topicGuid, index)`) and, when the topic
@@ -118,7 +118,7 @@ without geometry, the ids come from the end of its description instead.
   eleven camera columns (numbers, null for a topic without a camera) and
   `Comments`, the topic's comment count.
 - **Comments table.** `CommentsTable(topics)` gives one row per comment:
-  `TopicGuid, Title, Author, CreationDate, Comment`.
+  `TopicGuid, Title, CommentAuthor, CommentDate, Comment`.
 - **Warnings.** A part that cannot be read is skipped, and a warning names its
   zip entry: a markup or viewpoint that is not XML or whose compressed data
   is corrupt, a markup with no `Topic`,

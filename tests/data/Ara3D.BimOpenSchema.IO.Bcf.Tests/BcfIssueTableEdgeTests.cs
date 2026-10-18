@@ -25,7 +25,7 @@ public sealed class BcfIssueTableEdgeTests
     {
         var table = Table(
             Text("GlobalId", Wall), Text("Title", "Wall"), Text("Comment", "Hi"),
-            ("CreationDate", typeof(DateTime), [new DateTime(2026, 10, 18, 12, 0, 0, DateTimeKind.Unspecified)]));
+            ("CommentDate", typeof(DateTime), [new DateTime(2026, 10, 18, 12, 0, 0, DateTimeKind.Unspecified)]));
         var date = table.ToBcfIssues().Single().Comments!.Single().Date;
         Assert.That(date, Is.EqualTo(new DateTimeOffset(2026, 10, 18, 12, 0, 0, TimeSpan.Zero)));
     }
@@ -63,5 +63,31 @@ public sealed class BcfIssueTableEdgeTests
             ("UpX", typeof(double), [0.0, 0.0]), ("UpY", typeof(double), [0.0, 0.0]), ("UpZ", typeof(double), [1.0, null]));
         var e = Assert.Throws<ArgumentException>(() => table.ToBcfIssues())!;
         Assert.That(e.Message, Does.Contain("Row 1").And.Contain("Walls").And.Contain("UpZ").And.Not.Contain("UpY"));
+    }
+
+    [Test]
+    public void AToTableTopicAuthorAndDateAreNotTheNewCommentsAuthorAndDate()
+    {
+        var topics = BcfReader.Read(HandWrittenBcf.Container21()).Topics;
+        Assert.That(topics.Single().Author, Is.EqualTo("ann"));
+        var read = topics.ToTable();
+        var builder = new DataTableBuilder("issues");
+        builder.AddColumn(Column(read, "GlobalId"), "GlobalId", typeof(string));
+        builder.AddColumn(Column(read, "Title"), "Title", typeof(string));
+        builder.AddColumn(Column(read, BcfColumnNames.Author), BcfColumnNames.Author, typeof(string));
+        builder.AddColumn(Column(read, BcfColumnNames.CreationDate), BcfColumnNames.CreationDate, typeof(string));
+        builder.AddColumn(new object?[] { "Agreed" }, BcfColumnNames.Comment, typeof(string));
+        var comment = builder.Build().ToBcfIssues().Single().Comments!.Single();
+        Assert.Multiple(() =>
+        {
+            Assert.That(comment.Author, Is.Empty, "the topic's Author column does not credit a new comment");
+            Assert.That(comment.Date, Is.Null, "nor does the topic's CreationDate");
+        });
+    }
+
+    private static object?[] Column(IDataTable table, string name)
+    {
+        var column = table.Columns.First(c => c.Descriptor.Name == name);
+        return Enumerable.Range(0, table.Rows.Count).Select(row => column[row]).ToArray();
     }
 }

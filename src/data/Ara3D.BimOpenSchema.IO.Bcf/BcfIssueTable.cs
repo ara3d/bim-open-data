@@ -22,8 +22,8 @@ public sealed record BcfColumns(
     string Type = IssueColumns.Type,
     string AuthoringToolId = BcfReader.AuthoringToolIdColumn,
     string Comment = BcfColumnNames.Comment,
-    string Author = BcfColumnNames.Author,
-    string CreationDate = BcfColumnNames.CreationDate,
+    string CommentAuthor = BcfColumnNames.CommentAuthor,
+    string CommentDate = BcfColumnNames.CommentDate,
     string CameraX = BcfColumnNames.CameraX,
     string CameraY = BcfColumnNames.CameraY,
     string CameraZ = BcfColumnNames.CameraZ,
@@ -49,7 +49,8 @@ public static class BcfIssueTable
     /// order: a row's GlobalId, or its AuthoringToolId when the GlobalId is empty (a row with
     /// neither still makes the topic, as a model-level issue). Its description is its rows'
     /// distinct non-empty descriptions joined by line breaks. A row's non-empty comment becomes a
-    /// <see cref="BcfComment"/> with that row's author and creation date, once per distinct text.
+    /// <see cref="BcfComment"/> with that row's <see cref="BcfColumns.CommentAuthor"/> and <see cref="BcfColumns.CommentDate"/>,
+    /// once per distinct text.
     /// Status, priority, type, and camera must agree within a title. Null, DBNull, and blank cells
     /// count as empty.</summary>
     /// <exception cref="ArgumentException">The GlobalId or title column is missing, a row has no
@@ -65,8 +66,8 @@ public static class BcfIssueTable
         var priority = Find(table, columns.Priority);
         var type = Find(table, columns.Type);
         var comment = Find(table, columns.Comment);
-        var author = Find(table, columns.Author);
-        var created = Find(table, columns.CreationDate);
+        var author = Find(table, columns.CommentAuthor);
+        var created = Find(table, columns.CommentDate);
         var camera = CameraColumns.Find(table, columns);
 
         var groups = new Dictionary<string, Group>();
