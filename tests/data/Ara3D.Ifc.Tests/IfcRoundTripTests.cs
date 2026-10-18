@@ -68,9 +68,10 @@ public static class IfcRoundTripTests
         File.WriteAllBytes(tempPath, replaced);
 
         using var removedFile = IfcSourceFile.Load(tempPath);
-        File.WriteAllBytes(tempPath, IfcPatcher.Append(removedFile, new[] { $"#{target}=IFCDIRECTION((0.,0.,1.));" }));
+        var mutatedPath = Path.Combine(TestData.OutputFolder, "duplex-typechange-appended.ifc");
+        File.WriteAllBytes(mutatedPath, IfcPatcher.Append(removedFile, new[] { $"#{target}=IFCDIRECTION((0.,0.,1.));" }));
 
-        using var mutated = IfcSourceFile.Load(tempPath);
+        using var mutated = IfcSourceFile.Load(mutatedPath);
         var diff = IfcDiff.Compare(original, mutated);
         Assert.That(diff.Deleted, Is.EqualTo(new[] { target }));
         Assert.That(diff.Added, Is.EqualTo(new[] { target }));
