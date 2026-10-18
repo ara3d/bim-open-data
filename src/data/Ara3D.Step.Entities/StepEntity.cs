@@ -65,6 +65,11 @@ public readonly struct StepEntity
         return false;
     }
 
+    /// <summary>The declared name of a simple instance, or the part names of a complex one joined by '+'; keys diagnostics.</summary>
+    public string EntityName()
+        => Type?.EntityName
+            ?? (IsComplex ? string.Join("+", Parts.Select(p => p.Partial.NameToken.ToString())) : Definition.NameToken.ToString());
+
     public override string ToString()
         => $"#{Id}={(IsComplex ? "(" + string.Join("", Parts.Select(p => p.Partial.NameToken.ToString())) + ")" : Definition.NameToken.ToString())}";
 }

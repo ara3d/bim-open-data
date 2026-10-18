@@ -25,9 +25,10 @@ descriptor too (`face.Refs(Face.Instance.Bounds)`); where a second supertype mov
 |---|---|
 | `StepModel.cs` | A document's instances by id and in file order |
 | `StepEntity.cs` | One instance: `Is<T>()`, `Parts`, `IsKnown`, and `TryGet(attribute, out token)` |
-| `StepEntityReaders.cs` | Typed reads chosen by the descriptor's type: `Number`, `Integer`, `Boolean`, `Enum`, `Ref`, `Numbers`, `Integers`, `Refs`; null for absent, `$` or `*`, `InvalidDataException` for the wrong kind of value |
+| `StepEntityReaders.cs` | Typed reads chosen by the descriptor's type: `Number`, `Integer`, `Boolean`, `Enum`, `Text`, `Measure` (LENGTH_MEASURE(25.4) or a bare number), `Ref`, `Numbers`, `Integers`, `Refs`; null for absent, `$` or `*`, `InvalidDataException` for the wrong kind of value |
+| `StepStrings.cs` | P21 6.4.3 string decoding: `''`, `\`, `\S\`, `\PA\`, `\X\`, `\X2\`, `\X4\`; other code pages stay raw |
 | `StepEnumItems.cs` | A file's `.ITEM.` to the generated enum member |
 | `StepSchemaIndex.cs` | An entity name token to its descriptor, without allocating |
 | `StepTokenLists.cs` | The n-th element of a list token without building the list |
 
-Strings are not decoded yet (`\X2\` escapes); read them with `Value` and the token. Tests: `tests/data/Ara3D.StepTypes.Tests`.
+Tests: `tests/data/Ara3D.StepTypes.Tests`.

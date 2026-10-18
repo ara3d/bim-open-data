@@ -32,6 +32,14 @@ public static class StepEntityReaders
               ?? throw e.Error(attribute, t, $"an item of {typeof(T).Name}")
             : null;
 
+    /// <summary>The string with its escape directives decoded (<see cref="StepStrings"/>).</summary>
+    public static string? Text(this StepEntity e, StepAttribute<string> attribute)
+        => e.Value(attribute) is { } t ? StepStrings.Decode(e.Expect(attribute, t, t.IsString, "a string").AsString()) : null;
+
+    /// <summary>A measure_value slot: a typed value such as LENGTH_MEASURE(25.4), or a bare number.</summary>
+    public static double? Measure(this StepEntity e, StepAttribute<IMeasureValue> attribute)
+        => e.Value(attribute) is { } t ? e.ToMeasure(attribute, t) : null;
+
     /// <summary>The referenced instance. A SELECT slot that holds a typed value rather than a reference throws.</summary>
     public static StepEntity? Ref<T>(this StepEntity e, StepAttribute<T> attribute) where T : IStepValue
         => e.Value(attribute) is { } t ? e.ToRef(attribute, t) : null;
@@ -59,6 +67,11 @@ public static class StepEntityReaders
 
     private static double ToNumber(this StepEntity e, StepAttribute attribute, StepToken token)
         => e.Expect(attribute, token, token.IsNumber, "a number").AsNumber();
+
+    private static double ToMeasure(this StepEntity e, StepAttribute attribute, StepToken token)
+        => token.IsEntity && token.AsSimpleEntity(e.Model.Document).Item2 is { IsNumber: true } inner
+            ? inner.AsNumber()
+            : e.ToNumber(attribute, token);
 
     private static StepEntity ToRef(this StepEntity e, StepAttribute attribute, StepToken token)
         => e.Model.Get(e.Expect(attribute, token, token.IsId, "a reference").AsId());
