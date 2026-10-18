@@ -44,4 +44,24 @@ public sealed class BcfIssueTableEdgeTests
         var e = Assert.Throws<ArgumentException>(() => table.ToBcfIssues())!;
         Assert.That(e.Message, Does.Contain("Row 0").And.Contain("Walls").And.Contain("CameraX").And.Contain($"'{cell}'"));
     }
+
+    [Test]
+    public void SomeButNotAllNineCameraColumnsThrowNamingTheMissingOnes()
+    {
+        var table = Table(Text("GlobalId", Wall), Text("Title", "Walls"),
+            ("CameraX", typeof(double), [1.0]), ("CameraY", typeof(double), [2.0]), ("CameraZ", typeof(double), [3.0]));
+        var e = Assert.Throws<ArgumentException>(() => table.ToBcfIssues())!;
+        Assert.That(e.Message, Does.Contain("DirectionX").And.Contain("UpZ").And.Not.Contain("CameraX"));
+    }
+
+    [Test]
+    public void ARowWithSomeButNotAllNineCameraCellsThrowsNamingTheEmptyOnes()
+    {
+        var table = Table(Text("GlobalId", Wall, Wall), Text("Title", "Walls", "Walls"),
+            ("CameraX", typeof(double), [1.0, 1.0]), ("CameraY", typeof(double), [2.0, 2.0]), ("CameraZ", typeof(double), [3.0, 3.0]),
+            ("DirectionX", typeof(double), [0.0, 0.0]), ("DirectionY", typeof(double), [1.0, 1.0]), ("DirectionZ", typeof(double), [0.0, 0.0]),
+            ("UpX", typeof(double), [0.0, 0.0]), ("UpY", typeof(double), [0.0, 0.0]), ("UpZ", typeof(double), [1.0, null]));
+        var e = Assert.Throws<ArgumentException>(() => table.ToBcfIssues())!;
+        Assert.That(e.Message, Does.Contain("Row 1").And.Contain("Walls").And.Contain("UpZ").And.Not.Contain("UpY"));
+    }
 }

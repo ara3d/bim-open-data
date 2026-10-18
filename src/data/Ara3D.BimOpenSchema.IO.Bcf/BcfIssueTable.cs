@@ -11,7 +11,7 @@ namespace Ara3D.BimOpenSchema.IO.Bcf;
 /// <see cref="BcfReader.ToTable"/> puts an authoring-tool id in (a Revit UniqueId, say), so a
 /// table read from a BCF writes back with every component it named. The nine camera
 /// position, direction, and up columns are read together: a row has a camera when all nine exist
-/// and are non-empty. <see cref="FieldOfView"/> and <see cref="AspectRatio"/> then fall back to
+/// and are non-empty. Some of the nine columns, or some of a row's nine cells, is an error. <see cref="FieldOfView"/> and <see cref="AspectRatio"/> then fall back to
 /// 60 and 1 when absent or empty.</summary>
 public sealed record BcfColumns(
     string GlobalId = IssueColumns.GlobalId,
@@ -123,22 +123,31 @@ public static class BcfIssueTable
     /// <summary>The nine required camera columns and the two optional ones of a table.</summary>
     private sealed class CameraColumns(IDataColumn[] vectors, IDataColumn? fieldOfView, IDataColumn? aspectRatio)
     {
-        /// <summary>Null when the table lacks any of the nine required columns.</summary>
+        /// <summary>Null when the table has none of the nine required columns.</summary>
+        /// <exception cref="ArgumentException">The table has some of the nine but not all.</exception>
         public static CameraColumns? Find(IDataTable table, BcfColumns c)
         {
-            var vectors = new[] { c.CameraX, c.CameraY, c.CameraZ, c.DirectionX, c.DirectionY, c.DirectionZ, c.UpX, c.UpY, c.UpZ }
-                .Select(name => BcfIssueTable.Find(table, name)).ToArray();
-            return vectors.Any(v => v is null)
-                ? null
-                : new CameraColumns(vectors!, BcfIssueTable.Find(table, c.FieldOfView), BcfIssueTable.Find(table, c.AspectRatio));
+            var names = new[] { c.CameraX, c.CameraY, c.CameraZ, c.DirectionX, c.DirectionY, c.DirectionZ, c.UpX, c.UpY, c.UpZ };
+            var vectors = names.Select(name => BcfIssueTable.Find(table, name)).ToArray();
+            if (vectors.All(v => v is null))
+                return null;
+            var missing = names.Where((_, i) => vectors[i] is null).ToList();
+            if (missing.Count > 0)
+                throw new ArgumentException(
+                    $"Table '{table.Name}' has a partial camera: it lacks the column(s) {string.Join(", ", missing)} of the nine camera position, direction and up columns");
+            return new CameraColumns(vectors!, BcfIssueTable.Find(table, c.FieldOfView), BcfIssueTable.Find(table, c.AspectRatio));
         }
 
-        /// <summary>The row's camera, or null when any of its nine required cells is empty.</summary>
+        /// <summary>The row's camera, or null when all nine of its required cells are empty.</summary>
+        /// <exception cref="ArgumentException">Some of the nine cells are empty, or a cell is not a finite number.</exception>
         public BcfCamera? Read(int row, string title)
         {
             var v = vectors.Select(column => Number(column, row, title)).ToArray();
-            if (v.Any(n => n is null))
+            if (v.All(n => n is null))
                 return null;
+            if (v.Any(n => n is null))
+                throw new ArgumentException(
+                    $"Row {row} (topic '{title}') has a partial camera: the cell(s) {string.Join(", ", vectors.Where((_, i) => v[i] is null).Select(column => column.Descriptor.Name))} are empty");
             return new BcfCamera(
                 new((float)v[0]!.Value, (float)v[1]!.Value, (float)v[2]!.Value),
                 new((float)v[3]!.Value, (float)v[4]!.Value, (float)v[5]!.Value),
