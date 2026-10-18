@@ -1,0 +1,122 @@
+# Regenerates src/data/Ara3D.StepBrep: the C# that Plato's compiler writes from the Plato STEP B-rep library
+# (bim-open-toolkit sandbox/step-brep-mesh, layers 00 to 07) and the stdlib tiers it builds on, plus a copy of
+# Plato's handwritten runtime (src/Plato.Intrinsics) that the generated structs fuse with.
+#
+#   tools/regen-step-brep.ps1 [-PlatoRoot <plato checkout>] [-LibraryRoot <sandbox/step-brep-mesh>] [-OutputRoot <folder>]
+#
+# Inside the toolkit (this repository at bim-open-toolkit/deps/bim-open-data) the roots default to ..\..\..\plato and
+# ..\..\sandbox\step-brep-mesh; anywhere else both are required. OutputRoot defaults to src/data/Ara3D.StepBrep; the
+# test Ara3D.Step.Decode.Tests.StepBrepGenerationTests passes a temporary folder and compares.
+#
+# Every file gets one header line naming the last Plato commit that touched the compiler, the runtime or the stdlib
+# tiers, and the last bim-open-toolkit commit that touched the library layers; "+local" marks uncommitted changes.
+# The namespace Ara3D.Geometry that Plato writes becomes Ara3D.StepBrep, so a project can reference this one and the
+# Ara3D.Geometry package together (TKT-311 found CS0433 between the two Point3D types).
+param(
+    [string]$PlatoRoot,
+    [string]$LibraryRoot,
+    [string]$OutputRoot
+)
+
+$ErrorActionPreference = 'Stop'
+$repo = Split-Path -Parent $PSScriptRoot
+$insideToolkit = (Split-Path -Leaf (Split-Path -Parent $repo)) -eq 'deps'
+if (-not $PlatoRoot) {
+    if (-not $insideToolkit) { throw '-PlatoRoot is required outside bim-open-toolkit/deps' }
+    $PlatoRoot = Join-Path $repo '..\..\..\plato'
+}
+if (-not $LibraryRoot) {
+    if (-not $insideToolkit) { throw '-LibraryRoot is required outside bim-open-toolkit/deps' }
+    $LibraryRoot = Join-Path $repo '..\..\sandbox\step-brep-mesh'
+}
+if (-not $OutputRoot) { $OutputRoot = Join-Path $repo 'src\data\Ara3D.StepBrep' }
+$PlatoRoot = (Resolve-Path $PlatoRoot).Path
+$LibraryRoot = (Resolve-Path $LibraryRoot).Path
+
+# The inputs. Layers 08 and 09 are left out: nothing in 00 to 07 needs them, and 09-tooling has a writer error
+# (CS0305, TKT-315). The stdlib's brep.* files declare B-rep types of their own that the library replaces;
+# remeshing.* and lattices.* hold the two stdlib defects TKT-315 lists (CS0117 Constants.UniformWeights, CS1929
+# Contains on an existential) and nothing in the library calls them.
+$stdlibTiers = @('foundation', 'geometry')
+$stdlibExcluded = @('brep.*', 'remeshing.*', 'lattices.*')
+$layers = @('00-foundation', '01-geometry', '02-topology', '03-step', '04-discretization', '05-face-meshing', '06-mesh', '07-validation')
+$fromNamespace = 'Ara3D.Geometry'
+$toNamespace = 'Ara3D.StepBrep'
+
+function Get-LastCommit([string]$root, [string[]]$paths) {
+    $commit = (& git -C $root log -1 --format=%h -- $paths) | Select-Object -First 1
+    if (-not $commit) { return 'unknown' }
+    $local = & git -C $root status --porcelain -- $paths
+    if ($local) { return "$commit+local" }
+    return $commit
+}
+
+function Get-PlatoFiles([string]$dir, [string[]]$excluded) {
+    Get-ChildItem (Join-Path $dir '*.plato') -File | Where-Object { $name = $_.Name; -not ($excluded | Where-Object { $name -like $_ }) }
+}
+
+function Write-Text([string]$path, [string]$text) {
+    [System.IO.File]::WriteAllText($path, $text, (New-Object System.Text.UTF8Encoding $false))
+}
+
+$stage = Join-Path ([System.IO.Path]::GetTempPath()) ('regen-step-brep-' + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Force $stage | Out-Null
+try {
+    $inputs = @()
+    foreach ($tier in $stdlibTiers) {
+        $dir = Join-Path $stage "in\$tier"
+        New-Item -ItemType Directory -Force $dir | Out-Null
+        Get-PlatoFiles (Join-Path $PlatoRoot "stdlib\$tier") $stdlibExcluded | Copy-Item -Destination $dir
+        $inputs += $dir
+    }
+    $libraryInput = Join-Path $stage 'in\library'
+    New-Item -ItemType Directory -Force $libraryInput | Out-Null
+    foreach ($layer in $layers) {
+        Get-PlatoFiles (Join-Path $LibraryRoot $layer) @('*.spec.plato') | Copy-Item -Destination $libraryInput
+    }
+    $inputs += $libraryInput
+
+    $cliProject = Join-Path $PlatoRoot 'src\Plato.CLI\Plato.CLI.csproj'
+    # The compiler's build is kept between runs, one folder per Plato checkout, so a rerun builds incrementally.
+    $platoKey = [System.BitConverter]::ToString([System.Security.Cryptography.SHA1]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes($PlatoRoot.ToLowerInvariant()))).Replace('-', '').Substring(0, 12)
+    $cliBuild = Join-Path ([System.IO.Path]::GetTempPath()) "regen-step-brep-cli\$platoKey"
+    Write-Host "dotnet build $cliProject -c Release --artifacts-path $cliBuild -nodeReuse:false"
+    & dotnet build $cliProject -c Release --artifacts-path $cliBuild -nodeReuse:false | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "building Plato.CLI failed ($LASTEXITCODE)" }
+    $cli = Get-ChildItem $cliBuild -Recurse -Filter Plato.CLI.dll | Where-Object { $_.FullName -match '\\bin\\' } | Select-Object -First 1
+    if (-not $cli) { throw "Plato.CLI.dll not found under $cliBuild" }
+
+    $out = Join-Path $stage 'out'
+    New-Item -ItemType Directory -Force $out | Out-Null
+    $arguments = @($cli.FullName) + $inputs + @("--out=$out", '--profile=cpu64')
+    Write-Host ("dotnet " + ($arguments -join ' '))
+    $log = & dotnet @arguments 2>&1
+    if ($LASTEXITCODE -ne 0) { $log | Select-Object -Last 30 | Write-Host; throw "Plato.CLI failed ($LASTEXITCODE)" }
+    $log | Where-Object { "$_" -match 'DEGRADED|degraded:' } | Write-Host
+
+    $platoCommit = Get-LastCommit $PlatoRoot @('stdlib/foundation', 'stdlib/geometry', 'src', 'writers')
+    $libraryCommit = Get-LastCommit $LibraryRoot $layers
+    $header = "// Generated by tools/regen-step-brep.ps1 from Plato $platoCommit and bim-open-toolkit $libraryCommit (sandbox/step-brep-mesh layers 00 to 07). Do not edit.`r`n"
+
+    $generated = Join-Path $OutputRoot 'Generated'
+    $intrinsics = Join-Path $OutputRoot 'Intrinsics'
+    foreach ($dir in @($generated, $intrinsics)) {
+        if (Test-Path $dir) { Get-ChildItem $dir -Filter *.cs -File | Remove-Item }
+        New-Item -ItemType Directory -Force $dir | Out-Null
+    }
+    $files = Get-ChildItem $out -Filter *.g.cs -File
+    foreach ($f in $files) {
+        Write-Text (Join-Path $generated $f.Name) ($header + [System.IO.File]::ReadAllText($f.FullName).Replace($fromNamespace, $toNamespace))
+    }
+    $runtime = Join-Path $PlatoRoot 'src\Plato.Intrinsics'
+    $runtimeFiles = ([xml](Get-Content (Join-Path $runtime 'Plato.Intrinsics.projitems'))).Project.ItemGroup.Compile.Include |
+        ForEach-Object { $_.Replace('$(MSBuildThisFileDirectory)', '') }
+    foreach ($name in $runtimeFiles) {
+        Write-Text (Join-Path $intrinsics $name) ($header + [System.IO.File]::ReadAllText((Join-Path $runtime $name)).Replace($fromNamespace, $toNamespace))
+    }
+    Write-Host "wrote $($files.Count) generated files to $generated and $($runtimeFiles.Count) runtime files to $intrinsics"
+    Write-Host "Plato $platoCommit, bim-open-toolkit $libraryCommit"
+}
+finally {
+    Remove-Item -Recurse -Force $stage -ErrorAction SilentlyContinue
+}
