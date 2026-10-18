@@ -111,11 +111,12 @@ public static class BcfIssueTable
             ? Convert.ToString(value, CultureInfo.InvariantCulture)?.Trim() ?? ""
             : "";
 
+    /// <summary>A DateTime cell of unspecified kind (a DuckDB TIMESTAMP) is UTC, as the text form is.</summary>
     private static DateTimeOffset? Date(IDataColumn? column, int row)
         => column?[row] switch
         {
             DateTimeOffset d => d,
-            DateTime d => new DateTimeOffset(d.ToUniversalTime()),
+            DateTime d => new DateTimeOffset(d.Kind == DateTimeKind.Local ? d.ToUniversalTime() : DateTime.SpecifyKind(d, DateTimeKind.Utc)),
             _ => DateTimeOffset.TryParse(Text(column, row), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var parsed) ? parsed : null,
         };
 
