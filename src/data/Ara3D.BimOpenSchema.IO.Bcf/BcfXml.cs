@@ -98,8 +98,9 @@ internal static partial class BcfXml
             w.WriteStartElement("Comment");
             Attribute(w, "Guid", BcfGuid.Comment(topic.Guid, i));
             Element(w, "Date", Date(comment.Date ?? created));
-            Element(w, "Author", comment.Author.Length > 0 ? comment.Author : author);
-            Element(w, "Comment", comment.Text);
+            Element(w, "Author", comment.Author.Trim() is { Length: > 0 } own ? own : author);
+            if (comment.Text.Trim().Length > 0)
+                Element(w, "Comment", comment.Text);
             if (topic.HasViewpoint)
             {
                 w.WriteStartElement("Viewpoint");
