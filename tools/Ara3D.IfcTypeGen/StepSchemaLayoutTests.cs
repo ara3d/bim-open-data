@@ -10,14 +10,18 @@ namespace Ara3D.IfcTypeGen;
 /// </summary>
 public static class StepSchemaLayoutTests
 {
+    private static readonly ConcurrentDictionary<string, ExpressSchema> Schemas = new();
     private static readonly ConcurrentDictionary<string, IReadOnlyDictionary<string, ExpressEntity>> Lookups = new();
 
-    public static IReadOnlyDictionary<string, ExpressEntity> LoadOrIgnore(string edition)
+    public static ExpressSchema LoadSchemaOrIgnore(string edition)
     {
         if (StepSchemaFiles.Find(edition) == null)
             Assert.Ignore($"No {edition} schema. {StepSchemaFiles.FetchHint}");
-        return Lookups.GetOrAdd(edition, e => StepSchemaFiles.Load(e).GetSchema().ToEntityLookup());
+        return Schemas.GetOrAdd(edition, e => StepSchemaFiles.Load(e).GetSchema());
     }
+
+    public static IReadOnlyDictionary<string, ExpressEntity> LoadOrIgnore(string edition)
+        => Lookups.GetOrAdd(edition, e => LoadSchemaOrIgnore(e).ToEntityLookup());
 
     public static string Record(this IEnumerable<AttributeSlot> slots)
         => string.Join(", ", slots.Select(s => (s.IsDerived ? "*" : "") + s.Attribute.Name));

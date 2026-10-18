@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>5b0c9a51-7c1e-4f0e-9d3a-2f6e8b4c7a12</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>Ara3D.StepTypes</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Core.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Entities.g.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Enums.g.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Interfaces.g.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Schema.g.cs" />
+  </ItemGroup>
+</Project>
