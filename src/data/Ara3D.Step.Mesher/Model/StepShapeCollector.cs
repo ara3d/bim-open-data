@@ -60,6 +60,16 @@ public sealed partial class StepShapeCollector
         }
     }
 
+    /// <summary>Reads the units of every context that assigns them, reached or not.</summary>
+    public void AddUnitContexts()
+    {
+        foreach (var id in _index.UnitContexts)
+        {
+            var context = _model.Get(id);
+            _diagnostics.Guard(context, () => Units.OfContext(context));
+        }
+    }
+
     void AddItems(StepEntity rep, SN.Matrix4x4 transform, int depth, int productDefinitionId, Color? colour)
     {
         var repeat = _mapPath.IndexOf(rep.Id);
