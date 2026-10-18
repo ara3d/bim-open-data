@@ -5,7 +5,9 @@ two harnesses: `Ara3D.DoorClearance.Tests` (a rules-based compliance check
 over IFC) and `Ara3D.IfcMeshingComparison` (the pure C# mesher over model
 files and against web-ifc; CI runs it with the solution, and every test
 ignores itself when its model file is absent). `Ara3D.Ifc.Mesher.Tests`
-holds the mesher's fast tests, built from STEP snippets with no model files.
+holds the mesher's fast tests, built from STEP snippets with no model files. `Ara3D.StepTypes.Tests`,
+`Ara3D.Step.Mesher.Tests` and `Ara3D.MeshKernel.Tests` cover the STEP projects and the shared kernel
+from committed fixtures and inline STEP text.
 
 Fixtures resolve from the repository `data/` folder (populate it with
 `data/get-test-data.ps1`); tests that need a file they cannot find are skipped

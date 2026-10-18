@@ -1,7 +1,7 @@
 # src/data
 
 The BIM data layer: the C# reference implementation of BIM Open Schema and the
-IFC stack. Nothing here references `src/flow` or `src/mcp`; those build on this.
+IFC and STEP stacks. Nothing here references `src/flow` or `src/mcp`; those build on this.
 
 | Project | Role |
 |---|---|
@@ -24,5 +24,9 @@ IFC stack. Nothing here references `src/flow` or `src/mcp`; those build on this.
 | `Ara3D.Ifc.Editing` | Byte-exact property-set patching |
 | `Ara3D.Ifc.Bos` | IFC to BOS conversion |
 | `Ara3D.Ifc.Conventions` | Portable (net8.0) IFC rules shared by the IFC and Fragments readers: hidden classes, parameter and relation names, material sets |
+| `Ara3D.StepTypes` | Generated STEP AP242 entity descriptors (shared project, see `tools/Ara3D.IfcTypeGen`) |
+| `Ara3D.Step.Entities` | The STEP entity model over a parsed document, simple and complex instances; portable (net8.0) |
+| `Ara3D.Step.Mesher` | STEP to a placed, coloured `Model3D`: units, placements, assemblies, colours; shape mesher pending |
+| `Ara3D.MeshKernel` | Schema-free mesh kernel shared by the IFC and STEP meshers |
 
 Tests are under `tests/data`.

@@ -38,7 +38,7 @@ The tables load straight into DuckDB, an in-process analytical database, which i
 
 ## Projects
 
-These are the 27 projects in `src/data`, grouped by what they do. Most target `net8.0-windows` because the IFC loader does; the schema libraries, `Ara3D.Ifc.Conventions`, `Ara3D.Ifc.Entities`, and `Ara3D.Ifc.Mesher` target plain `net8.0`.
+These are the 31 projects in `src/data`, grouped by what they do. Most target `net8.0-windows` because the IFC loader does; the schema libraries, `Ara3D.Ifc.Conventions`, `Ara3D.Ifc.Entities`, `Ara3D.Ifc.Mesher`, and the STEP projects target plain `net8.0`.
 
 ### BIM Open Schema
 
@@ -72,6 +72,15 @@ These are the 27 projects in `src/data`, grouped by what they do. Most target `n
 | `Ara3D.Ifc.DuckDb` | One call from an IFC file to a queryable DuckDB database: convert to BOS, load the tables, create the text views |
 | `Ara3D.Ids` | Evaluates buildingSMART IDS 1.0 specifications over BOS entities and parameters (a `.bos` document or the `EntityText` and `ParameterText` tables), as a verdict table with the `IssueColumns` names; entity, property and attribute facets, parity with ifctester on the Duplex |
 
+### STEP and the shared mesh kernel
+
+| Project | Role |
+|---|---|
+| `Ara3D.StepTypes` | Generated descriptors for every entity of the STEP AP242 long form (shared project), produced by `Ara3D.IfcTypeGen`; reads AP203 and AP214 files too |
+| `Ara3D.Step.Entities` | The STEP entity model over a parsed document: `StepModel`, `StepEntity`, typed attribute readers, simple and complex instances; portable (net8.0) |
+| `Ara3D.Step.Mesher` | A STEP file as a placed, coloured `Model3D`: units, placements, mapped items, assemblies, styled colours (`StepMesher.Mesh`); the B-rep shape mesher is pending |
+| `Ara3D.MeshKernel` | Schema-free geometry shared by the IFC and STEP meshers: surface maps, B-spline evaluation, face triangulation |
+
 ### Applications and servers
 
 | Project | Role |
@@ -80,7 +89,7 @@ These are the 27 projects in `src/data`, grouped by what they do. Most target `n
 | `Ara3D.BimOpenSchema.Browser` | A WPF data-grid viewer for `.bos` files with glTF and Excel export (`net10.0-windows`) |
 | `Ara3D.IfcTypeGen` | The generator behind `Ara3D.IfcTypes` |
 
-Seventeen test projects in `tests/data` and one in `tests/mcp` cover them; `tests/BimOpenData.TestSupport` holds the shared paths and the mini IFC fixture.
+Twenty-one test projects in `tests/data` and one in `tests/mcp` cover them; `tests/BimOpenData.TestSupport` holds the shared paths and the mini IFC fixture.
 
 ## Dependencies
 
