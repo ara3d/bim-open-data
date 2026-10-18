@@ -6,8 +6,9 @@ namespace Ara3D.MeshKernel;
 /// Triangulates a face's rings in its surface's 2D domain. Thin 3- and 4-vertex rings (common on
 /// helix shell facets) are kept as one or two triangles, or dropped when their doubled area is
 /// below <see cref="Tolerance.Eps"/>; one hole with the outer ring's vertex count is joined by a
-/// band of quads; other rings go to <see cref="Earcut"/>, and are dropped when its triangles' area
-/// is more than <see cref="MaxAreaDeviation"/> from the rings'.
+/// band of quads when the band is sound (<see cref="PolygonWithHoles.TryTriangulateCongruentRing"/>);
+/// other rings go to <see cref="Earcut"/>. Either result is dropped when its triangles' area is more
+/// than <see cref="MaxAreaDeviation"/> from the rings'.
 /// </summary>
 public static class FaceRingTriangulation
 {
@@ -37,20 +38,35 @@ public static class FaceRingTriangulation
         }
 
         if (holes.Count == 1 && PolygonWithHoles.TryTriangulateCongruentRing(outer, holes[0], out var ringTris))
-        {
-            tris = ringTris;
-            return null;
-        }
+            return Keep(ringTris, Deviation(outer, holes[0], ringTris), out tris);
 
         // A projected ring can double back on itself without crossing (a parameter-space ring that
         // folds over); earcut's triangles then overlap and cover more than the face. Leave such a
         // face out rather than emit area it does not have.
         var indices = Earcut.Triangulate(outer, holes);
-        var deviation = Earcut.Deviation(outer, holes, indices);
+        return Keep(PolygonWithHoles.ToTriangles(outer, holes, indices), Earcut.Deviation(outer, holes, indices), out tris);
+    }
+
+    /// <summary>Null with <paramref name="candidate"/> when its area is within <see cref="MaxAreaDeviation"/>
+    /// of the rings' and it has a triangle, else the reason it is not kept.</summary>
+    static FaceDrop? Keep(IReadOnlyList<Triangle2D> candidate, double deviation, out IReadOnlyList<Triangle2D> tris)
+    {
+        tris = [];
         if (deviation > MaxAreaDeviation)
             return new FaceDrop(FaceDropKind.AreaOff, deviation);
-        tris = PolygonWithHoles.ToTriangles(outer, holes, indices);
-        return tris.Count > 0 ? null : failed;
+        if (candidate.Count == 0)
+            return new FaceDrop(FaceDropKind.TriangulationFailed);
+        tris = candidate;
+        return null;
+    }
+
+    /// <summary>The relative difference between the area of a ring with one hole and its triangles' area,
+    /// as <see cref="Earcut.Deviation(IReadOnlyList{Vector2}, IReadOnlyList{IReadOnlyList{Vector2}}, IReadOnlyList{Integer3})"/> measures it.</summary>
+    static double Deviation(IReadOnlyList<Vector2> outer, IReadOnlyList<Vector2> hole, IReadOnlyList<Triangle2D> tris)
+    {
+        var ringArea = Math.Abs(new SimplePolygon2D(outer).SignedArea()) - Math.Abs(new SimplePolygon2D(hole).SignedArea());
+        var trisArea = tris.Sum(t => Math.Abs(PolygonWithHoles.TriangleSignedArea(t)));
+        return ringArea == 0 && trisArea == 0 ? 0 : Math.Abs((trisArea - ringArea) / ringArea);
     }
 
     /// <summary>True with the triangles of a thin ring, false when a thin triangle is too small to

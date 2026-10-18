@@ -39,7 +39,7 @@ public sealed partial class PolygonWithHoles
         return Math.Abs(sum - expected) <= 1e-3 * Math.Abs(expected);
     }
 
-    static double TriangleSignedArea(Triangle2D t)
+    internal static double TriangleSignedArea(Triangle2D t)
         => ((t.B.X.Value - t.A.X.Value) * (t.C.Y.Value - t.A.Y.Value)
             - (t.C.X.Value - t.A.X.Value) * (t.B.Y.Value - t.A.Y.Value)) / 2.0;
 
@@ -84,6 +84,13 @@ public sealed partial class PolygonWithHoles
         return result;
     }
 
+    /// <summary>
+    /// Joins two rings of the same vertex count by a band of quads, outer vertex i to inner vertex i.
+    /// True only when the band is sound: no triangle winds against the band as a whole (a hole that
+    /// runs the other way from the outer ring twists the band) and the triangles cover exactly the
+    /// area between the rings (<see cref="CoversRing"/>). The triangles are counter-clockwise
+    /// whichever way the rings run.
+    /// </summary>
     public static bool TryTriangulateCongruentRing(
         IReadOnlyList<Vector2> outer,
         IReadOnlyList<Vector2> inner,
@@ -100,7 +107,11 @@ public sealed partial class PolygonWithHoles
             tris.Add(new Triangle2D(outer[i], outer[j], inner[j]));
             tris.Add(new Triangle2D(outer[i], inner[j], inner[i]));
         }
-        triangles = tris;
+        var areas = tris.Select(TriangleSignedArea).ToList();
+        var sign = Math.Sign(areas.Sum());
+        if (sign == 0 || areas.Exists(a => Math.Sign(a) == -sign) || !CoversRing(tris, outer, inner))
+            return false;
+        triangles = sign > 0 ? tris : tris.Select(t => new Triangle2D(t.A, t.C, t.B)).ToList();
         return true;
     }
 }

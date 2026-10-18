@@ -33,6 +33,26 @@ public sealed class PolygonWithHolesTests
     }
 
     [Test]
+    public void CongruentRing_HoleRunningAgainstTheOuterRing_IsRefused()
+    {
+        var clockwiseHole = TestShapes.CentredHole.Reverse().ToList();
+        Assert.That(PolygonWithHoles.TryTriangulateCongruentRing(TestShapes.BigSquare, clockwiseHole, out var tris), Is.False);
+        Assert.That(tris, Is.Empty);
+    }
+
+    [Test]
+    public void CongruentRing_BothRingsClockwise_GivesCounterClockwiseTrianglesCoveringTheBand()
+    {
+        var outer = TestShapes.BigSquare.Reverse().ToList();
+        var hole = TestShapes.CentredHole.Reverse().ToList();
+        Assert.That(PolygonWithHoles.TryTriangulateCongruentRing(outer, hole, out var tris), Is.True);
+        Assert.That(tris, Has.Count.EqualTo(8));
+        Assert.That(tris.Sum(t => new SimplePolygon2D([t.A.Vector2, t.B.Vector2, t.C.Vector2]).SignedArea()), Is.EqualTo(3).Within(1e-5));
+        foreach (var t in tris)
+            Assert.That(new SimplePolygon2D([t.A.Vector2, t.B.Vector2, t.C.Vector2]).SignedArea(), Is.GreaterThan(0));
+    }
+
+    [Test]
     public void SelfIntersection_SquareIsNotSelfIntersecting()
         => Assert.That(PolygonWithHoles.HasSelfIntersection(TestShapes.UnitSquare), Is.False);
 

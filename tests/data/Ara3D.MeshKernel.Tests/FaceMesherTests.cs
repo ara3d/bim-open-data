@@ -19,9 +19,12 @@ public sealed class FaceMesherTests
     static readonly IReadOnlyList<Vector3> SquareOuter = [V(0, 0, 1), V(4, 0, 1), V(4, 4, 1), V(0, 4, 1)];
 
     /// <summary>2 by 2 square hole running the same way as <see cref="SquareOuter"/>, vertex i
-    /// beside outer vertex i: the ring band's case. The band twists for a hole that runs the
-    /// other way, and the face mesher does not check it.</summary>
+    /// beside outer vertex i: the ring band's case.</summary>
     static readonly IReadOnlyList<Vector3> AlignedSquareHole = [V(1, 1, 1), V(3, 1, 1), V(3, 3, 1), V(1, 3, 1)];
+
+    /// <summary>The same hole running clockwise, against <see cref="SquareOuter"/>: a band joining
+    /// vertex i to vertex i twists and covers 24, twice the face (TKT-308), so earcut must take it.</summary>
+    static readonly IReadOnlyList<Vector3> ClockwiseSquareHole = [V(1, 1, 1), V(1, 3, 1), V(3, 3, 1), V(3, 1, 1)];
 
     /// <summary>Clockwise triangular hole of area 2: earcut's case.</summary>
     static readonly IReadOnlyList<Vector3> TriangleHole = [V(1, 1, 1), V(1, 3, 1), V(3, 1, 1)];
@@ -47,6 +50,10 @@ public sealed class FaceMesherTests
     [Test]
     public void AddFace_PlanarQuadWithQuadHole_BandCoversTheRingAndWeldsItsCorners()
         => AssertPlanarFaceWithHole(MeshPlanar(AlignedSquareHole, sameSense: true), 8, 12f, 1f);
+
+    [Test]
+    public void AddFace_PlanarQuadWithClockwiseQuadHole_CoversTheRingOnceFacingOneWay()
+        => AssertPlanarFaceWithHole(MeshPlanar(ClockwiseSquareHole, sameSense: true), 8, 12f, 1f);
 
     [Test]
     public void AddFace_PlanarQuadWithTriangleHole_EarcutCoversTheRingAndWeldsItsCorners()
