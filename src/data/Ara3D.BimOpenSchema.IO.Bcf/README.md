@@ -25,7 +25,8 @@ var summary = BcfWriter.WriteFile("doors.bcf", doors.ToBcfIssues(), new BcfOptio
 - **Input.** `ToBcfIssues(table, columns)` reads the columns named by
   `BcfColumns` (case-insensitive): `GlobalId` and `Title` are required (names come from `IssueColumns`);
   `Description`, `Status`, `Priority`, `Type`, and `AuthoringToolId` are
-  optional. A row with an empty `GlobalId` contributes its `AuthoringToolId`
+  optional, as are `Comment`, `Author`, `CreationDate`, and the camera columns
+  below. A row with an empty `GlobalId` contributes its `AuthoringToolId`
   instead, so a table `BcfReader.ToTable` made writes back with every component
   it named. Rows group by
   title in order of first appearance. A topic lists each id once, and
@@ -33,6 +34,26 @@ var summary = BcfWriter.WriteFile("doors.bcf", doors.ToBcfIssues(), new BcfOptio
   type must agree within a title. `BcfColumns.Verdicts` reads a verdict table
   (`CheckTitle`, `Citation`). Filter it to failing rows first, because every
   row becomes part of a topic. A list of `BcfIssue` records works too.
+- **Comments.** A row's non-empty `Comment` becomes a `BcfComment` on its
+  topic, with that row's `Author` and `CreationDate` (UTC ISO text), once per
+  distinct text within a title. A comment with no author or date is written with
+  `BcfOptions.Author` and `BcfOptions.CreationDate`. Each comment carries a
+  deterministic GUID (`BcfGuid.Comment(topicGuid, index)`) and, when the topic
+  has a viewpoint, points at it. A list of `BcfIssue` takes
+  `Comments: [new BcfComment(author, date, text)]` directly.
+- **Camera.** A camera a viewer captured travels as eleven numeric columns,
+  named in `BcfColumnNames`: `CameraX, CameraY, CameraZ` (position),
+  `DirectionX, DirectionY, DirectionZ` (view direction), `UpX, UpY, UpZ`, then
+  `FieldOfView` (vertical, degrees; 60 when empty) and `AspectRatio` (width over
+  height; 1 when empty). The nine vector columns must all be present and
+  non-empty for a row to have a camera; the rows of one title must agree on it, or
+  `ToBcfIssues` throws `ArgumentException` naming the title. The camera becomes
+  the topic's viewpoint in place of the framed one, and gives a topic with no
+  geometry a viewpoint too (it selects the topic's ids, if any).
+  A `BcfIssue` takes it as `Camera:`.
+- **Model file.** `BcfOptions.ModelFile` (a path or file name) and `ModelDate`
+  add `Header/Files/File` to every topic's markup, with `IsExternal="true"`, the
+  file name, the date when given, and the path as given as `Reference`.
 - **Viewpoints.** With `ElementBounds`, each topic whose elements have geometry
   gets one `viewpoint.bcfv`. The viewpoint selects the elements, keeps the rest
   of the model visible, and holds a perspective camera that frames their
@@ -47,7 +68,7 @@ var summary = BcfWriter.WriteFile("doors.bcf", doors.ToBcfIssues(), new BcfOptio
   `IfcGuid`.
 - **No geometry, no camera.** BCF 3.0 requires a camera in every viewpoint
   (`visinfo.xsd`), and this writer does not invent one. A topic with no
-  geometry for any of its elements therefore has no viewpoint. Its GlobalIds
+  geometry for any of its elements, and no camera given, therefore has no viewpoint. Its GlobalIds
   are appended to its description, the only other place BCF can hold them.
   `BcfSummary.ElementsWithoutGeometry` counts such elements.
 - **Determinism.** Topic GUIDs are name-based (UUID version 5) from
@@ -76,7 +97,9 @@ the BCF encoding guide asks.
 `BcfReader.ReadFile` (or `Read` over a stream) returns a `BcfContents`: the
 topics, and a list of warnings. Each `BcfTopicRecord` holds a topic's GUID,
 title, description, type, status, priority, author, and creation date, the ids
-its viewpoints select, and whether a viewpoint was read. For a topic written
+its viewpoints select, whether a viewpoint was read, the first viewpoint's
+perspective `Camera` (null when none), the `Comments` in file order, and the
+`ModelFile` name from the markup header ("" when none). For a topic written
 without geometry, the ids come from the end of its description instead.
 
 - **Two kinds of id.** A component's `IfcGuid` goes in `GlobalIds`. A component
@@ -91,22 +114,25 @@ without geometry, the ids come from the end of its description instead.
   column, `AuthoringToolId` (`BcfReader.AuthoringToolIdColumn`), holds an
   authoring-tool id; that row's `GlobalId` is empty. A topic that selects
   nothing has one row with both empty. `ToBcfIssues` reads either column, so
-  reading a BCF and writing it again keeps both kinds of id.
+  reading a BCF and writing it again keeps both kinds of id. After it come the
+  eleven camera columns (numbers, null for a topic without a camera) and
+  `Comments`, the topic's comment count.
+- **Comments table.** `CommentsTable(topics)` gives one row per comment:
+  `TopicGuid, Title, Author, CreationDate, Comment`.
 - **Warnings.** A part that cannot be read is skipped, and a warning names its
   zip entry: a markup or viewpoint that is not XML or whose compressed data
   is corrupt, a markup with no `Topic`,
   or a viewpoint a markup lists that the container does not hold. The other
   topics still read. Only a file that is not a zip throws.
 
-BCF 2.1 markup has the same shape and reads too; comments, snapshots and
-cameras are not read.
+BCF 2.1 markup has the same shape and reads too; its viewpoint cameras read,
+but its comments (siblings of the topic, not children) and snapshots do not.
 
 ## What it does not do
 
-- Talk to a BCF API server, or read comments, snapshots, or cameras.
-- Comments, snapshots (no renderer here), clipping planes, colouring,
-  `project.bcfp`, `documents.xml`, labels, assignees, due dates, or the
-  markup header naming the model file.
+- Talk to a BCF API server.
+- Snapshots (no renderer here), orthogonal cameras, clipping planes, colouring,
+  `project.bcfp`, `documents.xml`, labels, assignees, or due dates.
 - Warn when a topic selects more than 1,000 components, where the BCF guide
   asks readers to alert the user.
 - Map a Revit UniqueId to the ElementId that Revit reads as `AuthoringToolId`.
