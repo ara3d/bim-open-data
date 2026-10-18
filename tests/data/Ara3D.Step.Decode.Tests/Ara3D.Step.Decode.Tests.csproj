@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Ara3D.Step.Decode.Tests</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="$(Ara3DCoverletCollectorVersion)" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(Ara3DMicrosoftNetTestSdkVersion)" />
+    <PackageReference Include="NUnit" Version="$(Ara3DNUnitVersion)" />
+    <PackageReference Include="NUnit.Analyzers" Version="$(Ara3DNUnitAnalyzersVersion)" />
+    <PackageReference Include="NUnit3TestAdapter" Version="$(Ara3DNUnit3TestAdapterVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\data\Ara3D.Step.Decode\Ara3D.Step.Decode.csproj" />
+    <PackageReference Include="Ara3D.IO.StepParser" Version="$(Ara3DSdkVersion)" />
+    <PackageReference Include="Ara3D.Memory" Version="$(Ara3DSdkVersion)" />
+  </ItemGroup>
+
+  <!-- The mesher's fixtures, byte-exact copies of bim-open-toolkit sandbox/step-brep-mesh/adapter/fixtures. -->
+  <ItemGroup>
+    <None Include="..\Ara3D.Step.Mesher.Tests\fixtures\*.stp" Link="fixtures\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="NUnit.Framework" />
+  </ItemGroup>
+
+</Project>
