@@ -44,4 +44,25 @@ public sealed class BcfReadOldFormatTests
             Assert.That((double)camera.Element("AspectRatio")!, Is.EqualTo(2), "the options' value fills the gap");
         });
     }
+
+    [Test]
+    public void BcfTwoPointOneCommentsBesideTheTopicAndHeaderFilesWithoutAFilesWrapperAreRead()
+    {
+        var topic = Read21().Single();
+        Assert.Multiple(() =>
+        {
+            Assert.That(topic.Comments.Select(c => (c.Author, c.Text)), Is.EqualTo(new[] { ("bob", "Agreed"), ("cy", "") }));
+            Assert.That(topic.Comments[0].Date, Is.EqualTo(new DateTimeOffset(2026, 10, 18, 12, 30, 0, TimeSpan.Zero)));
+            Assert.That(topic.ModelFile, Is.EqualTo("duplex.ifc"));
+            Assert.That(topic.HasViewpoint, Is.True);
+        });
+    }
+
+    [Test]
+    public void TheCommentCountColumnCountsBcfTwoPointOneComments()
+    {
+        var table = Read21().ToTable();
+        var column = table.Columns.ToList().FindIndex(c => c.Descriptor.Name == BcfColumnNames.Comments);
+        Assert.That(table[column, 0], Is.EqualTo(2));
+    }
 }

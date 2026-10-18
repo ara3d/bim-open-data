@@ -210,18 +210,25 @@ public static class BcfReader
     private static double? Number(XElement parent, string name)
         => double.TryParse((string?)parent.Element(parent.Name.Namespace + name), NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ? value : null;
 
-    /// <summary>The topic's comments in file order. A comment without text is kept with empty text,
-    /// since BCF allows one (a comment that only carries a viewpoint).</summary>
+    /// <summary>The topic's comments in file order. BCF 3.0 puts them under <c>Topic/Comments</c>;
+    /// BCF 2.1 puts one <c>Comment</c> element per comment beside the topic, under Markup. Both are
+    /// read. A comment without text is kept with empty text, since BCF allows one (a comment that
+    /// only carries a viewpoint).</summary>
     private static List<BcfComment> Comments(XElement topic, XDocument markup)
         => (topic.Element(Name(markup, "Comments"))?.Elements(Name(markup, "Comment")) ?? [])
+            .Concat(markup.Root?.Elements(Name(markup, "Comment")) ?? [])
             .Select(c => new BcfComment(
                 Text(c, markup, "Author"),
                 DateTimeOffset.TryParse(Text(c, markup, "Date"), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var date) ? date : null,
                 Text(c, markup, "Comment")))
             .ToList();
 
+    /// <summary>The first file name in the header. BCF 3.0 lists files under <c>Header/Files</c>;
+    /// BCF 2.1 lists them directly under <c>Header</c>. Both are read.</summary>
     private static string ModelFile(XDocument markup)
-        => (markup.Root?.Element(Name(markup, "Header"))?.Element(Name(markup, "Files"))?.Elements(Name(markup, "File")) ?? [])
+        => (markup.Root?.Element(Name(markup, "Header")) is { } header
+                ? (header.Element(Name(markup, "Files"))?.Elements(Name(markup, "File")) ?? []).Concat(header.Elements(Name(markup, "File")))
+                : [])
             .Select(f => Text(f, markup, "Filename")).FirstOrDefault(n => n.Length > 0) ?? "";
 
     private static XDocument? Missing(string viewpoint, string markupName, List<string> warnings)
