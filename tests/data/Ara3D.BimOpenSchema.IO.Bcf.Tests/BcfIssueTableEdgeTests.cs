@@ -29,4 +29,19 @@ public sealed class BcfIssueTableEdgeTests
         var date = table.ToBcfIssues().Single().Comments!.Single().Date;
         Assert.That(date, Is.EqualTo(new DateTimeOffset(2026, 10, 18, 12, 0, 0, TimeSpan.Zero)));
     }
+
+    [TestCase("n/a")]
+    [TestCase("Infinity")]
+    [TestCase("1e400")]
+    [TestCase("NaN")]
+    public void ACameraCellThatIsNotAFiniteNumberThrowsNamingRowTitleColumnAndText(string cell)
+    {
+        var table = Table(
+            Text("GlobalId", Wall), Text("Title", "Walls"),
+            ("CameraX", typeof(string), [cell]), ("CameraY", typeof(double), [2.0]), ("CameraZ", typeof(double), [3.0]),
+            ("DirectionX", typeof(double), [0.0]), ("DirectionY", typeof(double), [1.0]), ("DirectionZ", typeof(double), [0.0]),
+            ("UpX", typeof(double), [0.0]), ("UpY", typeof(double), [0.0]), ("UpZ", typeof(double), [1.0]));
+        var e = Assert.Throws<ArgumentException>(() => table.ToBcfIssues())!;
+        Assert.That(e.Message, Does.Contain("Row 0").And.Contain("Walls").And.Contain("CameraX").And.Contain($"'{cell}'"));
+    }
 }

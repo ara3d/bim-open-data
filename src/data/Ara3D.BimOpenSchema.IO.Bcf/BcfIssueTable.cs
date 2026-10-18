@@ -88,7 +88,7 @@ public static class BcfIssueTable
             group.Agree(nameof(BcfIssue.Priority), ref group.Priority, Text(priority, row));
             group.Agree(nameof(BcfIssue.Type), ref group.Type, Text(type, row));
             group.AddComment(Text(comment, row), Text(author, row), Date(created, row));
-            group.AgreeCamera(camera?.Read(row));
+            group.AgreeCamera(camera?.Read(row, key));
         }
 
         return order.Select(g => g.ToIssue()).ToList();
@@ -134,23 +134,31 @@ public static class BcfIssueTable
         }
 
         /// <summary>The row's camera, or null when any of its nine required cells is empty.</summary>
-        public BcfCamera? Read(int row)
+        public BcfCamera? Read(int row, string title)
         {
-            var v = vectors.Select(column => Number(column, row)).ToArray();
+            var v = vectors.Select(column => Number(column, row, title)).ToArray();
             if (v.Any(n => n is null))
                 return null;
             return new BcfCamera(
                 new((float)v[0]!.Value, (float)v[1]!.Value, (float)v[2]!.Value),
                 new((float)v[3]!.Value, (float)v[4]!.Value, (float)v[5]!.Value),
                 new((float)v[6]!.Value, (float)v[7]!.Value, (float)v[8]!.Value),
-                Number(fieldOfView, row) ?? 60,
-                Number(aspectRatio, row) ?? 1);
+                Number(fieldOfView, row, title) ?? 60,
+                Number(aspectRatio, row, title) ?? 1);
         }
 
-        private static double? Number(IDataColumn? column, int row)
-            => Text(column, row) is { Length: > 0 } text
-                ? double.Parse(text, CultureInfo.InvariantCulture)
-                : null;
+        /// <summary>The cell as a finite number, null when empty.</summary>
+        /// <exception cref="ArgumentException">The text is not a finite number (BCF's xs:double
+        /// has no NaN or infinity).</exception>
+        private static double? Number(IDataColumn? column, int row, string title)
+        {
+            if (Text(column, row) is not { Length: > 0 } text)
+                return null;
+            if (double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var value) && double.IsFinite(value))
+                return value;
+            throw new ArgumentException(
+                $"Row {row} (topic '{title}'), column '{column!.Descriptor.Name}': '{text}' is not a finite number");
+        }
     }
 
     private sealed class Group(string title)
