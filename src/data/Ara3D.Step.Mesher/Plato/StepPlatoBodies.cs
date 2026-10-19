@@ -14,7 +14,8 @@ public static class StepPlatoBodies
         var faces = file.FacesOf(body);
         var restricted = file.Mesh.RestrictedToFaces(faces).ToTriangleMesh3D();
         var meshed = faces.Count(f => file.IsMeshed(f));
-        return new(restricted.ToItemMetres(file.OccurrenceOf(body).Placement, units.MetresPerUnit), meshed, faces.Count - meshed);
+        var pending = faces.Count(f => file.IsPending(f));
+        return new(restricted.ToItemMetres(file.OccurrenceOf(body).Placement, units.MetresPerUnit), meshed, faces.Count - meshed, pending);
     }
 
     /// <summary>The library mesh's used vertices, mapped by the inverse of <paramref name="placement"/> (the item's

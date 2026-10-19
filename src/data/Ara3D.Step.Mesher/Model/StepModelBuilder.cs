@@ -1,27 +1,31 @@
 using Ara3D.Models;
 using Ara3D.Step.Entities;
+using Ara3D.Step.Mesher.Plato;
 
 namespace Ara3D.Step.Mesher;
 
-/// <summary>Meshes each placed item once, through <see cref="StepShapeMesher.MeshItem"/>, and adds one instance per
-/// placement, sharing the item's mesh. An item whose mesher throws NotImplementedException counts as geometry
-/// pending; any other exception is recorded against the item.</summary>
+/// <summary>Takes each placed item's mesh once from the file's meshes, through <see cref="StepShapeMesher.MeshItem"/>, and
+/// adds one instance per placement, sharing the item's mesh. An item every face of which is pending in the library
+/// counts as geometry pending, and so does every item when the file could not be meshed at all (a null file, recorded
+/// by the caller); any other exception is recorded against the item.</summary>
 public sealed class StepModelBuilder
 {
     readonly StepModel _model;
+    readonly StepPlatoMesh? _file;
     readonly StepMeshingOptions _options;
     readonly StepMeshingDiagnostics _diagnostics;
     readonly Dictionary<int, int?> _meshOfItem = new();
     readonly Model3DBuilder _builder = new();
 
-    public StepModelBuilder(StepModel model, StepMeshingOptions options, StepMeshingDiagnostics diagnostics)
+    public StepModelBuilder(StepModel model, StepPlatoMesh? file, StepMeshingOptions options, StepMeshingDiagnostics diagnostics)
     {
         _model = model;
+        _file = file;
         _options = options;
         _diagnostics = diagnostics;
     }
 
-    /// <summary>Items whose shape mesher is not written yet.</summary>
+    /// <summary>Items whose every face waits on library code not written yet.</summary>
     public int GeometryPending { get; private set; }
 
     public Model3D Build(IReadOnlyList<StepPlacedItem> placements)
@@ -44,12 +48,11 @@ public sealed class StepModelBuilder
         int? index = null;
         try
         {
-            if (_model.MeshItem(item, p.Units, _diagnostics, _options.MaxDeviation) is { Mesh.FaceIndices.Count: > 0 } shape)
+            var shape = _file is { } file ? file.MeshItem(_model, item, p.Units, _diagnostics) : null;
+            if (_file is null || shape is { IsPending: true })
+                GeometryPending++;
+            else if (shape is { Mesh.FaceIndices.Count: > 0 })
                 index = _builder.AddMeshWithoutInstance(shape.Mesh);
-        }
-        catch (NotImplementedException)
-        {
-            GeometryPending++;
         }
         catch (Exception ex)
         {

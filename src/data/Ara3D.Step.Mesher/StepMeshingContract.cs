@@ -45,5 +45,11 @@ public sealed class StepMeshingDiagnostics
         => _dropped.Add(new(faceId, reason));
 }
 
-/// <summary>One shape item meshed in its own coordinate system, lengths in metres.</summary>
-public sealed record StepShapeMesh(TriangleMesh3D Mesh, int FacesMeshed, int FacesDropped);
+/// <summary>One shape item meshed in its own coordinate system, lengths in metres. <see cref="FacesPending"/> counts the
+/// dropped faces whose library code is declared without a body yet; an item all of whose faces are pending counts as
+/// geometry pending.</summary>
+public sealed record StepShapeMesh(TriangleMesh3D Mesh, int FacesMeshed, int FacesDropped, int FacesPending)
+{
+    public bool IsPending
+        => FacesPending > 0 && FacesPending == FacesMeshed + FacesDropped;
+}

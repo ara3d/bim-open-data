@@ -2,6 +2,7 @@ using Ara3D.Geometry;
 using Ara3D.IO.StepParser;
 using Ara3D.Models;
 using Ara3D.Step.Entities;
+using Ara3D.Step.Mesher.Plato;
 using Ara3D.Utils;
 
 namespace Ara3D.Step.Mesher;
@@ -39,7 +40,8 @@ public static class StepMesher
             collector.AddProducts();
             collector.AddUnreachedShapes();
             collector.AddUnitContexts();
-            var builder = new StepModelBuilder(model, options ?? new StepMeshingOptions(), diagnostics);
+            options ??= new StepMeshingOptions();
+            var builder = new StepModelBuilder(model, MeshWithPlato(model, options, diagnostics), options, diagnostics);
             var built = builder.Build(collector.Placed);
             var placed = collector.Placed;
             return new StepMeshingResult(Name, true, built, built.Meshes.Count, built.Instances.Count, TriangleCount(built),
@@ -52,6 +54,23 @@ public static class StepMesher
             return StepMeshingResult.Failed(Name, $"{ex.GetType().Name}: {ex.Message}", document.Diagnostics);
         }
     }
+
+    /// <summary>The file meshed once by the Plato library, the chordal bound converted to the decoded model's
+    /// millimetres; null, recorded, when the library throws before any face is meshed.</summary>
+    static StepPlatoMesh? MeshWithPlato(StepModel model, StepMeshingOptions options, StepMeshingDiagnostics diagnostics)
+    {
+        try
+        {
+            return model.MeshFile(options.MaxDeviation * MillimetresPerMetre);
+        }
+        catch (Exception ex)
+        {
+            diagnostics.Record(nameof(StepPlatoMesher), StepSupport.Unsupported, $"{ex.GetType().Name}: {ex.Message}");
+            return null;
+        }
+    }
+
+    const double MillimetresPerMetre = 1000;
 
     static int TriangleCount(Model3D model)
     {

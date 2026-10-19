@@ -38,7 +38,6 @@ public static class StepMesherTests
     }
 
     [Test]
-    [Ignore("Needs StepShapeMesher.MeshItem, whose body comes from the Plato STEP library (TKT-299); remove when it lands.")]
     public static void AssemblyModelHasTwoInstancesOfOneMesh()
     {
         var result = StepMesher.Mesh(StepText.Fixture("two-cubes-assembly.stp"));
@@ -48,13 +47,16 @@ public static class StepMesherTests
         Assert.That((float)result.Bounds.Max.X, Is.EqualTo(0.003f).Within(1e-7f));
     }
 
+    /// <summary>The unit sphere's one face reaches a function the Plato library declares without a body.</summary>
     [Test]
-    public static void ItemsWithoutAShapeMesherAreCountedAsPending()
+    public static void ItemsWhoseFacesArePendingInTheLibraryAreCountedAsPending()
     {
-        var result = StepMesher.Mesh(StepText.Fixture("two-cubes-assembly.stp"));
-        Assume.That(result.MeshCount, Is.Zero, "the shape mesher has landed");
-        Assert.That(result.GeometryPending, Is.EqualTo(1));
+        var result = StepMesher.Mesh(StepText.Fixture("unit-sphere.stp"));
+        Assert.That(result.Success, Is.True, string.Join("; ", result.Errors));
+        Assert.That((result.MeshCount, result.GeometryPending), Is.EqualTo((0, 1)));
         Assert.That(result.Diagnostics.Messages, Has.Some.Contains("geometry pending for 1 shape items"));
+        Assert.That(result.Diagnostics.EntityStatus["SPHERICAL_SURFACE"], Is.EqualTo(StepSupport.Unsupported));
+        Assert.That(result.Diagnostics.DroppedFaces.Select(f => f.FaceId), Is.EqualTo(new[] { 18 }));
     }
 
     [Test]

@@ -28,9 +28,9 @@ public static class StepPlatoMesher
         var criteria = Criteria(chordalMillimetres);
         var failures = new List<StepPlatoFailure>();
         var d = new EdgeDiscretizations(Rows(m.Edges.Count, i => m.Discretized(new BrepEdgeIndex(i), criteria.Discretization),
-            (i, _) => new BrepEdgeIndex(i).Undiscretized(), "edge", failures));
+            (i, _) => new BrepEdgeIndex(i).Undiscretized(), StepPlatoFailure.Edge, failures));
         var outcomes = Rows(m.Faces.Count, i => m.FaceOutcome(new BrepFaceIndex(i), d, criteria),
-            (i, failure) => Unmeshed(new BrepFaceIndex(i), failure), "face", failures);
+            (i, failure) => Unmeshed(new BrepFaceIndex(i), failure), StepPlatoFailure.Face, failures);
         var faceMeshes = outcomes.Select(o => o.Mesh).ToArray();
         var mesh = m.AssembleModelMesh(faceMeshes, m.NumberMeshVertices(d, faceMeshes));
         return new(raw, prepared, outcomes, mesh, failures);
