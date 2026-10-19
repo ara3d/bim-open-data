@@ -19,7 +19,7 @@ var result = StepMesher.Mesh(@"C:\models\part.step");   // or StepMesher.Mesh(st
 | Shapes | `Model/StepShapeCollector.cs` | items of every `shape_representation` subtype; `shape_representation_relationship` without a transformation brings in the B-rep representation; `mapped_item` places a `representation_map` origin onto target, sharing the mesh |
 | Assemblies | `Model/StepShapeCollector.Assembly.cs` | `product_definition` → `next_assembly_usage_occurrence` → `context_dependent_shape_representation` → `representation_relationship_with_transformation` → `item_defined_transformation`, composed from the root down, one instance per occurrence |
 | Colours | `Model/StepColours.cs`, `StepStyles.cs` | `styled_item` → `presentation_style_assignment` → `surface_style_usage` → `surface_side_style` → `surface_style_fill_area` → `fill_area_style` → `fill_area_style_colour` → `colour_rgb` or `draughting_pre_defined_colour`; `surface_style_rendering` colour and transparency |
-| Meshing | `Model/StepModelBuilder.cs` | each placed item meshed once by `StepShapeMesher.MeshItem` |
+| Meshing | `StepMesher.cs`, `Plato/StepPlatoMesher.cs`, `Model/StepModelBuilder.cs` | the whole file meshed once by `StepPlatoMesher.MeshFile`; each placed item's mesh taken from it by `StepShapeMesher.MeshItem` |
 
 `StepMeshingResult` carries the model and its counts and bounds (metres), every placement (meshed or not), the units
 of each context, the assembly depth, cycles refused, the meshing diagnostics (entity counts, worst support status,
@@ -28,9 +28,11 @@ is meshed as far as it was read.
 
 ## Pending, approximate and unsupported
 
-- **The shape mesher is pending.** `StepShapeMesher.MeshItem` throws `NotImplementedException`; its body will come
-  from the Plato STEP library (`sandbox/step-brep-mesh` in bim-open-toolkit, TKT-299) compiled to C#. Until then
-  every result has placements and no triangles, and `GeometryPending` counts the shape items waiting for it.
+- **Geometry comes from the Plato STEP library compiled to C#** (`Ara3D.StepBrep`; library in bim-open-toolkit
+  `sandbox/step-brep-mesh`, TKT-299 and TKT-313): `StepMesher.Mesh` meshes the whole file once through
+  `Plato/StepPlatoMesher.MeshFile`, and `StepShapeMesher.MeshItem` takes each item's mesh from it by its body's
+  instance id. Faces whose library code is not written yet (spheres, tori, cones and B-splines in the committed
+  generation) are dropped and recorded; an item all of whose faces are pending counts in `GeometryPending`.
 - **One colour per item.** `Model3D` gives an instance one material, so a solid whose faces carry several colours
   takes the most common one, recorded as approximate. Per-face colour needs a mesh split by colour.
 - **Occurrence colours** (`over_riding_styled_item` on an assembly occurrence) and invisibility are not read.
@@ -50,4 +52,4 @@ dotnet test tests/data/Ara3D.Step.Mesher.Tests --artifacts-path artifacts/builde
 ```
 
 Fixtures are in `tests/data/Ara3D.Step.Mesher.Tests/fixtures` (sources in its README); the model tests in `Model/`
-also build STEP text inline. The test of the assembly's two mesh instances is ignored until `MeshItem` has a body.
+also build STEP text inline.
