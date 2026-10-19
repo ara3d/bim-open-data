@@ -12,6 +12,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Ara3D.Step.Entities\Ara3D.Step.Entities.csproj" />
     <ProjectReference Include="..\Ara3D.MeshKernel\Ara3D.MeshKernel.csproj" />
+    <ProjectReference Include="..\Ara3D.Step.Decode\Ara3D.Step.Decode.csproj" />
     <PackageReference Include="Ara3D.Geometry" Version="$(Ara3DSdkVersion)" />
     <PackageReference Include="Ara3D.IO.StepParser" Version="$(Ara3DSdkVersion)" />
     <PackageReference Include="Ara3D.Models" Version="$(Ara3DSdkVersion)" />
