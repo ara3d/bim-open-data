@@ -8,8 +8,10 @@ namespace Ara3D.Step.Mesher.Plato;
 /// Meshes a whole STEP file through the Plato STEP library compiled to C# (Ara3D.StepBrep): the decoder's DecodeRaw,
 /// the library's PrepareModel, then what layer 8's MeshModel does before its refinement loop: every edge discretized
 /// once (layer 4's DiscretizeAll), every face given layer 8's FaceOutcome (layer 5's MeshFace when its edges are
-/// discretized), and the face meshes numbered and assembled (layer 6). The committed generation holds layers 00 to 07,
-/// so layer 8 is restated here; when it is generated this becomes one call to MeshModel. Library code that throws on
+/// discretized), and the face meshes numbered and assembled (layer 6). Layer 8's MeshModel is generated but not
+/// called: the C# runtime's MapRange lists are lazy and recompute on every read, so its loop meshes each face again
+/// at every read of a face outcome (the unit cylinder ran over 10 minutes against about 4.5 s here, TKT-313 log
+/// 2026-10-19); when generated lists are computed once this becomes one call to MeshModel. Library code that throws on
 /// one edge or face is caught here and becomes an empty outcome and a <see cref="StepPlatoFailure"/>, so a surface the
 /// library cannot mesh yet leaves every other face meshed. Decoding is per file because DecodeRaw and PrepareModel
 /// are: the tolerances come from the whole model's size, and mirrored occurrences are folded in place.

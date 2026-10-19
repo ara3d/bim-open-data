@@ -10,10 +10,17 @@ namespace Ara3D.Step.Mesher.Tests.Plato;
 /// a body, which the bridge turns into a pending failure and an Error at the face instead of an exception.</summary>
 public static class PlatoOtherSurfaceTests
 {
+    /// <summary>The mesher's default chordal bound (StepMeshingOptions.MaxDeviation, 1 mm): on the unit cylinder,
+    /// 24 segments per circle, the 15 degree angle governing. A bound of 0.001 mm (72 segments) took over 90 s in face
+    /// meshing after the regeneration of 2026-10-19 (TKT-313 log).</summary>
+    const double ChordalMillimetres = 1;
+
+    const int SegmentsPerCircle = 24;
+
     static StepPlatoMesh MeshFixture(string name)
     {
         using var document = new StepDocument(StepText.Fixture(name));
-        return new StepModel(document).MeshFile(0.001);
+        return new StepModel(document).MeshFile(ChordalMillimetres);
     }
 
     [Test]
@@ -25,7 +32,8 @@ public static class PlatoOtherSurfaceTests
         Assert.That((bool)mesh.IsClosed(), Is.True, "IsClosed");
         Assert.That((bool)mesh.IsConsistentlyOriented(), Is.True, "IsConsistentlyOriented");
         Assert.That((int)mesh.ReferencedEulerCharacteristic(), Is.EqualTo(2));
-        Assert.That((double)mesh.SignedVolume(), Is.InRange(Math.PI * 0.99, Math.PI), "inscribed in the cylinder, mm^3");
+        var prism = SegmentsPerCircle / 2.0 * Math.Sin(2 * Math.PI / SegmentsPerCircle);
+        Assert.That((double)mesh.SignedVolume(), Is.InRange(prism, Math.PI), "between the inscribed 24-gon prism and the cylinder, mm^3");
         var shape = file.ToShapeMesh(new BodyIndex(0), new StepUnits(0.001, 1e-6));
         Assert.That(MeshChecks.UnpairedEdges(shape.Mesh), Is.Empty);
         Assert.That(MeshChecks.SignedVolume(shape.Mesh), Is.EqualTo((double)mesh.SignedVolume() * 1e-9).Within(1e-15));
