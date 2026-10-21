@@ -116,7 +116,9 @@ try {
     New-Item -ItemType Directory -Force $out | Out-Null
     $arguments = @($cli.FullName) + $inputs + @("--out=$out", '--profile=cpu64')
     Write-Step ("dotnet " + ($arguments -join ' '))
-    $log = & dotnet @arguments 2>&1
+    # Windows PowerShell 5.1 turns each stderr line of a native command into an ErrorRecord, which under
+    # $ErrorActionPreference = 'Stop' ends the script before the log is shown; the compiler writes its errors there.
+    $log = & { $ErrorActionPreference = 'Continue'; & dotnet @arguments 2>&1 | ForEach-Object { "$_" } }
     if ($LASTEXITCODE -ne 0) { $log | Select-Object -Last 30 | Write-Host; throw "Plato.CLI failed ($LASTEXITCODE)" }
     $log | Where-Object { "$_" -match 'DEGRADED|degraded:' } | Write-Host
 
