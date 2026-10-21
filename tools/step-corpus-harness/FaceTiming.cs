@@ -54,9 +54,9 @@ public static class FaceTiming
             var grid = Stage(FaceStage.Grid, () => m.FaceQuadGridIn(f, d, r, tol, c));
             var useGrid = !grid.IsNoGrid() && !grid.IsCountsDiffer();
             path = useGrid ? "grid" : "cdt";
-            var t = useGrid
-                ? grid.Grid_Mesh
-                : Stage(FaceStage.Refine, () => m.RefineToSurface(f, r, chart, Stage(FaceStage.Triangulate, () => r.TriangulateRegion(chart)), c));
+            var t = useGrid ? grid.Grid_Mesh : Stage(FaceStage.Triangulate, () => r.TriangulateRegion(chart));
+            if (!useGrid)
+                t = Stage(FaceStage.Refine, () => m.RefineToSurface(f, r, chart, t, c));
             var advisory = Stage(FaceStage.Advisory, () => m.CoarseSegmentRequests(f, d, r, c).Concatenate(m.QuadCountRequests(d, grid, c)));
             var mesh = Stage(FaceStage.Lift, () => m.Lift(f, d, t));
             var diagnostics = Stage(FaceStage.Advisory, () => advisory.Map(q => q.RequestDiagnostic()).Concatenate(m.ReversalDiagnostics(f, raw)));
