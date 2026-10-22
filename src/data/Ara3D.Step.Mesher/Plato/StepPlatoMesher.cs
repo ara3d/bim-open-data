@@ -53,12 +53,15 @@ public static class StepPlatoMesher
     static FaceMeshOutcome Unmeshed(BrepFaceIndex f, StepPlatoFailure failure)
         => f.UnmeshedOutcome("HOST-LIBRARY-THREW", $"The library threw {failure.Exception} meshing this face: {failure.Message}");
 
-    /// <summary>One row per index, each computed by <paramref name="row"/>; a row that throws is recorded in
-    /// <paramref name="failures"/> and replaced by <paramref name="fallback"/>.</summary>
+    /// <summary>One row per index, each computed by <paramref name="row"/> on every core (owner decision 2 of
+    /// docs/plans/step-mesher-brainstorm-2026-10-21.md; the library is pure and the tables are read-only); a row that
+    /// throws is recorded in <paramref name="failures"/>, in row order, and replaced by <paramref name="fallback"/>.
+    /// </summary>
     static T[] Rows<T>(int count, Func<int, T> row, Func<int, StepPlatoFailure, T> fallback, string kind, List<StepPlatoFailure> failures)
     {
         var rows = new T[count];
-        for (var i = 0; i < count; i++)
+        var failed = new StepPlatoFailure?[count];
+        Parallel.For(0, count, i =>
         {
             try
             {
@@ -67,10 +70,13 @@ public static class StepPlatoMesher
             catch (Exception ex)
             {
                 var failure = new StepPlatoFailure(kind, i, ex.GetType().Name, ex.Message);
-                failures.Add(failure);
+                failed[i] = failure;
                 rows[i] = fallback(i, failure);
             }
-        }
+        });
+        for (var i = 0; i < count; i++)
+            if (failed[i] is { } failure)
+                failures.Add(failure);
         return rows;
     }
 }
