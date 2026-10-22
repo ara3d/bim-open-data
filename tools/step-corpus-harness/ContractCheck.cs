@@ -11,7 +11,10 @@ namespace Ara3D.Step.CorpusHarness;
 /// the worse split counts, since a renderer may draw either. <see cref="CornerGap"/>
 /// is the largest distance between an element corner's position and the surface at its parameter point, which a
 /// file's edge-to-surface gap explains and the mesher does not; <see cref="Flipped"/> counts elements whose 3D normal
-/// points against the face normal at their parameter centroid, <see cref="Degenerate"/> those of zero area.</summary>
+/// points against the face normal at their parameter centroid, <see cref="Degenerate"/> the slivers: twice the area
+/// over the longest side squared below <see cref="ContractCheck.SliverRatio"/>. A sliver's normal and its distance to
+/// a point are rounding noise, so it is left out of the flip test and of both distance measures (TKT-463: RCB-F9T face
+/// 874's collinear triangle read as 8.53 over a 1.00 bound, and slivers on NEO, PAM and NORA read as flipped).</summary>
 public sealed record FaceContract(int Face, string Surface, int Elements, double Deviation, double CornerGap, int Flipped, int Degenerate, bool Explained)
 {
     /// <summary>Chordal is broken when the deviation exceeds the bound by more than the corner gap: the measure is a
@@ -36,6 +39,10 @@ public sealed record ContractCheck(int FacesChecked, double Bound, int OverChord
     double WorstExcess, IReadOnlyList<FaceContract> Failing)
 {
     public bool Holds => OverChordal == 0 && WithFlipped == 0 && WithDegenerate == 0 && Unexplained == 0;
+
+    /// <summary>Twice a triangle's area over its longest side squared, below which it is a sliver: its corners are
+    /// collinear to within about 1e-9 of its length (an equilateral triangle has 0.87).</summary>
+    public const double SliverRatio = 1e-9;
 
     /// <summary>Barycentric sample points of a triangle: the centroid, the side midpoints, and three points between
     /// the centroid and the corners. A flat element over a curved surface deviates most near its centroid, and a side
@@ -78,22 +85,29 @@ public sealed record ContractCheck(int FacesChecked, double Bound, int OverChord
             var normals = fm.Normals.Select(n => V(n.Vector)).ToArray();
             double deviation = 0, gap = 0;
             int flipped = 0, degenerate = 0;
+            bool Sliver(int a, int b, int c)
+            {
+                var n = Cross(Sub(corner[b], corner[a]), Sub(corner[c], corner[a]));
+                var longest = Math.Max(Dist(corner[a], corner[b]), Math.Max(Dist(corner[b], corner[c]), Dist(corner[c], corner[a])));
+                return Math.Sqrt(Dot(n, n)) <= SliverRatio * longest * longest;
+            }
             // Corner checks, orientation and the mesh-to-surface direction of one drawn triangle; its
-            // surface-to-mesh samples are measured by the caller, against the triangle or its split.
+            // surface-to-mesh samples are measured by the caller, against the triangle or its split. A sliver
+            // counts as degenerate and is measured no further.
             void Triangle(int a, int b, int c)
             {
                 gap = Math.Max(gap, Math.Max(Dist(at[a], corner[a]), Math.Max(Dist(at[b], corner[b]), Dist(at[c], corner[c]))));
                 var n = Cross(Sub(corner[b], corner[a]), Sub(corner[c], corner[a]));
-                if (Dot(n, n) == 0)
-                    degenerate++;
-                else
+                if (Sliver(a, b, c))
                 {
-                    var mid = Mix(uv[a], uv[b], uv[c], (1.0 / 3, 1.0 / 3, 1.0 / 3));
-                    var fallback = Add(Add(normals[a], normals[b]), normals[c]);
-                    var face = V(m.FaceNormalAt(f, new UvCoordinate(mid.U, mid.V), new Vector3D(fallback.X, fallback.Y, fallback.Z)));
-                    if (Dot(n, face) < 0)
-                        flipped++;
+                    degenerate++;
+                    return;
                 }
+                var mid = Mix(uv[a], uv[b], uv[c], (1.0 / 3, 1.0 / 3, 1.0 / 3));
+                var fallback = Add(Add(normals[a], normals[b]), normals[c]);
+                var face = V(m.FaceNormalAt(f, new UvCoordinate(mid.U, mid.V), new Vector3D(fallback.X, fallback.Y, fallback.Z)));
+                if (Dot(n, face) < 0)
+                    flipped++;
                 foreach (var w in Samples)
                 {
                     var p = Mix3(corner[a], corner[b], corner[c], w);
@@ -101,9 +115,11 @@ public sealed record ContractCheck(int FacesChecked, double Bound, int OverChord
                 }
             }
             // The largest distance from the surface at the samples of the parameter triangles listed to the
-            // nearest of the 3D triangles listed: one triangle, or one split of a quad.
-            double SurfaceToMesh((int A, int B, int C)[] parts)
+            // nearest of the 3D triangles listed: one triangle, or one split of a quad; slivers left out (the other
+            // part of a split covers a quad's area).
+            double SurfaceToMesh((int A, int B, int C)[] all)
             {
+                var parts = all.Where(t => !Sliver(t.A, t.B, t.C)).ToArray();
                 double worst = 0;
                 foreach (var (a, b, c) in parts)
                     foreach (var w in Samples)
