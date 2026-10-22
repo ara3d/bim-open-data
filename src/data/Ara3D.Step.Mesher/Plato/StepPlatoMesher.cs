@@ -22,6 +22,13 @@ public static class StepPlatoMesher
     /// edge.</summary>
     public const double SurfaceAngleDegrees = 15;
 
+    /// <summary>Layer 5's structured quad grid meshes the faces it fits (four-edge and two-loop cylinder faces,
+    /// rectangles) as quads, which <see cref="StepPlatoBodies.ToItemMetres"/> splits for the contract; the grid skips
+    /// the 15 degree side-normal criterion, which refinement could never meet on a chord over 30 degrees of arc, and
+    /// keeps the chordal bound. Owner decision of 2026-10-21 (TKT-405): about 48% of face time on the baseline
+    /// files.</summary>
+    public const bool PreferQuads = true;
+
     public static StepPlatoMesh MeshFile(this StepModel model, double chordalMillimetres)
     {
         var raw = model.DecodeRaw();
@@ -41,7 +48,7 @@ public static class StepPlatoMesher
 
     /// <summary>Layer 8's DefaultMeshingOptions criteria for an absolute chordal bound in model units.</summary>
     public static FaceMeshingCriteria Criteria(double chordal)
-        => new(((Number)chordal).DefaultCriteria(), chordal, ((Number)SurfaceAngleDegrees).Degrees(), false);
+        => new(((Number)chordal).DefaultCriteria(), chordal, ((Number)SurfaceAngleDegrees).Degrees(), PreferQuads);
 
     static FaceMeshOutcome Unmeshed(BrepFaceIndex f, StepPlatoFailure failure)
         => f.UnmeshedOutcome("HOST-LIBRARY-THREW", $"The library threw {failure.Exception} meshing this face: {failure.Message}");
