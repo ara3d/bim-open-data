@@ -16,7 +16,8 @@ namespace Ara3D.Step.CorpusHarness;
 /// over the longest side squared below <see cref="ContractCheck.SliverRatio"/>. A sliver's normal and its distance to
 /// a point are rounding noise, so it is left out of the flip test and of both distance measures (TKT-463: RCB-F9T face
 /// 874's collinear triangle read as 8.53 over a 1.00 bound, and slivers on NEO, PAM and NORA read as flipped).</summary>
-public sealed record FaceContract(int Face, string Surface, int Elements, double Deviation, double CornerGap, int Flipped, int Degenerate, bool Explained)
+public sealed record FaceContract(int Face, string Surface, int Elements, double Deviation, double CornerGap, int Flipped, int Degenerate, bool Explained,
+    int Excused = 0)
 {
     /// <summary>Chordal is broken when the deviation exceeds the bound by more than the corner gap: the measure is a
     /// lower bound on the true deviation, so an excess is real, and the gap is the part the file is answerable for.</summary>
@@ -24,11 +25,11 @@ public sealed record FaceContract(int Face, string Surface, int Elements, double
 
     public bool Fails(double bound) => OverChordal(bound) || Flipped > 0 || Degenerate > 0 || !Explained;
 
-    public const string CsvHeader = "face,surface,elements,deviation,corner_gap,bound,flipped,degenerate,explained";
+    public const string CsvHeader = "face,surface,elements,deviation,corner_gap,bound,flipped,degenerate,explained,excused";
 
     public string Csv(double bound)
         => TimeTables.Join(Face.ToString(), Surface, Elements.ToString(), Format.Number(Deviation), Format.Number(CornerGap), Format.Number(bound),
-            Flipped.ToString(), Degenerate.ToString(), Explained.ToString());
+            Flipped.ToString(), Degenerate.ToString(), Explained.ToString(), Excused.ToString());
 }
 
 /// <summary>The version 1 contract on every face of one file, checked from the face meshes and the surfaces alone,
@@ -37,8 +38,15 @@ public sealed record FaceContract(int Face, string Surface, int Elements, double
 /// face meshed or explained by a diagnostic. With <see cref="MeshCheck"/> (closed, oriented across faces) it covers
 /// the contract's closed, watertight, oriented, covering and chordal bullets on the mesh the host assembles.</summary>
 public sealed record ContractCheck(int FacesChecked, double Bound, int OverChordal, int WithFlipped, int WithDegenerate, int Unexplained,
-    double WorstExcess, IReadOnlyList<FaceContract> Failing)
+    double WorstExcess, IReadOnlyList<FaceContract> Failing, int WithExcused = 0)
 {
+    /// <summary>The face diagnostics that explain degenerate or flipped elements the file forces on a face: layer 7's
+    /// ForcedDegenerateExplanations (v1-gate, V1G-19). On a face whose outcome carries one, its slivers and flipped
+    /// elements are counted as <see cref="FaceContract.Excused"/>, not failures; its deviation and corner gap are
+    /// still checked. A copy until the regenerated library has the function; then read
+    /// ForcedDegenerateExplanations(0).Select(r => (string)r.Code).</summary>
+    public static readonly string[] ForcedDegenerateCodes = ["FACE-ZERO-WIDTH", "FACE-CUSP"];
+
     public bool Holds => OverChordal == 0 && WithFlipped == 0 && WithDegenerate == 0 && Unexplained == 0;
 
     /// <summary>Twice a triangle's area over its longest side squared, below which it is a sliver: its corners are
@@ -72,7 +80,7 @@ public sealed record ContractCheck(int FacesChecked, double Bound, int OverChord
         var failing = rows.Where(r => r.Fails(bound)).ToArray();
         return new(rows.Length, bound, rows.Count(r => r.OverChordal(bound)), rows.Count(r => r.Flipped > 0),
             rows.Count(r => r.Degenerate > 0), rows.Count(r => !r.Explained),
-            rows.Select(r => r.Deviation - r.CornerGap - bound).DefaultIfEmpty(0).Max(), failing);
+            rows.Select(r => r.Deviation - r.CornerGap - bound).DefaultIfEmpty(0).Max(), failing, rows.Count(r => r.Excused > 0));
     }
 
     static FaceContract Face(BrepModel m, FaceRow row, double bound)
@@ -164,7 +172,9 @@ public sealed record ContractCheck(int FacesChecked, double Bound, int OverChord
                 Triangle(b, c, d);
                 deviation = Math.Max(deviation, Math.Max(SurfaceToMesh([(a, b, c), (a, c, d)]), SurfaceToMesh([(a, b, d), (b, c, d)])));
             }
-            return new(row.Index, row.Surface, elements, deviation, gap, flipped, degenerate, explained);
+            return Enumerable.Any(row.Outcome.Diagnostics, x => ForcedDegenerateCodes.Contains((string)x.Code))
+                ? new(row.Index, row.Surface, elements, deviation, gap, 0, 0, explained, flipped + degenerate)
+                : new(row.Index, row.Surface, elements, deviation, gap, flipped, degenerate, explained);
         }
         catch (Exception)
         {
@@ -218,5 +228,5 @@ public sealed record ContractCheck(int FacesChecked, double Bound, int OverChord
     }
 
     public override string ToString()
-        => $"contract {(Holds ? "holds" : "broken")} faces {FacesChecked} over-chordal {OverChordal} flipped {WithFlipped} degenerate {WithDegenerate} unexplained {Unexplained} worst-excess {WorstExcess:G3}";
+        => $"contract {(Holds ? "holds" : "broken")} faces {FacesChecked} over-chordal {OverChordal} flipped {WithFlipped} degenerate {WithDegenerate} unexplained {Unexplained} worst-excess {WorstExcess:G3} excused {WithExcused}";
 }
