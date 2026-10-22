@@ -5,13 +5,13 @@ namespace Ara3D.Step.CorpusHarness;
 /// <summary>The time mode's two CSV tables, one row per edge and one per face.</summary>
 public static class TimeTables
 {
-    public const string EdgeHeader = "index,curve,surfaces,segments,check_ms,ms,exception,message";
+    public const string EdgeHeader = "index,curve,surfaces,segments,ms,exception,message";
 
     public static readonly string FaceHeader =
         $"index,surface,loops,edges,all_lines,segments,triangles,quads,path,{FaceStages.Header},ms,exception,message";
 
     public static string Csv(this EdgeRow e)
-        => Join(e.Index.ToString(), e.Curve, e.Surfaces, e.Segments.ToString(), Format.Ms(e.CheckMs), Format.Ms(e.Ms),
+        => Join(e.Index.ToString(), e.Curve, e.Surfaces, e.Segments.ToString(), Format.Ms(e.Ms),
             e.Exception, e.Message);
 
     public static string Csv(this FaceRow f)

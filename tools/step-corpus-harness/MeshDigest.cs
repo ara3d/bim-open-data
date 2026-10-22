@@ -4,7 +4,7 @@ using Ara3D.StepBrep;
 namespace Ara3D.Step.CorpusHarness;
 
 /// <summary>Counts and a SHA-256 of an assembled model mesh (positions' bits, then triangle and quad indices), so two
-/// runs, sequential and parallel or host and hoisted, can be shown to give the same mesh.</summary>
+/// runs, sequential and parallel, or the time mode and MeshFile, can be shown to give the same mesh.</summary>
 public sealed record MeshDigest(int Vertices, int Triangles, int Quads, string Hash)
 {
     public static MeshDigest Of(ModelMesh mesh)

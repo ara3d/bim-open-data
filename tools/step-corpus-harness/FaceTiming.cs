@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Ara3D.Step.Mesher.Plato;
 using Ara3D.StepBrep;
 
 namespace Ara3D.Step.CorpusHarness;
@@ -11,7 +12,7 @@ public sealed record FaceRow(
 
 public static class FaceTiming
 {
-    /// <summary>StepPlatoMesher.FaceOutcome restated stage by stage: the path's discretized-face test, then layer 5's
+    /// <summary>StepPlatoTables.FaceOutcome restated stage by stage: the host's discretized-face test, then layer 5's
     /// MeshFace, MeshRegion and MeshRegionOnce and MeshedOutcomeIn, inlined from the generated C#
     /// (FaceMeshingDomainOnce.g.cs) so each stage has its own clock. The outcome is the one MeshFace returns; the
     /// harness's one mode, which calls MeshFile itself, gives the same mesh digest.</summary>
@@ -34,9 +35,8 @@ public static class FaceTiming
         }
         try
         {
-            if (!Stage(FaceStage.Check, () => meshPath.IsDiscretized(f, d)))
-                return Row(f.UnmeshedOutcome("PIPELINE-FACE-UNDISCRETIZED",
-                    "This face is not intact or cites an edge that has no discretization; it is not meshed."), path = "undiscretized");
+            if (!Stage(FaceStage.Check, () => meshPath.Tables.IsDiscretized(m, f, d)))
+                return Row(StepPlatoTables.UndiscretizedOutcome(f), path = "undiscretized");
             if (m.HasPolyLoop(f))
                 return Row(f.UnmeshedOutcome("FACE-POLY-LOOP",
                     "This face is bounded by a poly loop, which version 1 does not mesh; the decoder should give it edges."), path = "poly-loop");
