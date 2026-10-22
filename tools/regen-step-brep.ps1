@@ -13,6 +13,10 @@
 # %TEMP%\regen-step-brep\plato-<commit>; Parakeet finds Ara3D.Utils and Ara3D.Logging through a sibling ara3d-sdk
 # checkout, so the export's references that point outside it are rewritten to where they point from PlatoRoot.
 #
+# Before writing anything, the library's tools/check_generated.py (from the same commit as the layers) scans the
+# compiler's output and log; a degraded body, or a throwing stub not listed in tools/generated-stubs.txt, stops
+# the run with a non-zero exit (TKT-433).
+#
 # Inside the toolkit (this repository at bim-open-toolkit/deps/bim-open-data) the roots default to ..\..\..\plato and
 # ..\..\sandbox\step-brep-mesh; anywhere else both are required. OutputRoot defaults to src/data/Ara3D.StepBrep; the
 # test Ara3D.Step.Decode.Tests.StepBrepGenerationTests passes a temporary folder and compares.
@@ -58,6 +62,8 @@ $LibraryRoot = (Resolve-Path $LibraryRoot).Path
 $stdlibTiers = @('foundation', 'geometry')
 $stdlibExcluded = @('brep.*', 'remeshing.*', 'lattices.*')
 $layers = @('00-foundation', '01-geometry', '02-topology', '03-step', '04-discretization', '05-face-meshing', '06-mesh', '07-validation', '08-pipeline')
+# The stub check and its baseline, read from the same library commit as the layers.
+$checkFiles = @('tools/check_generated.py', 'tools/generated-stubs.txt')
 $fromNamespace = 'Ara3D.Geometry'
 $toNamespace = 'Ara3D.StepBrep'
 
@@ -160,7 +166,7 @@ try {
         $inputs += $dir
     }
     $libraryExport = Join-Path $stage 'library'
-    Export-Tree $libraryTop "${librarySha}:$libraryPrefix" $libraryExport $layers
+    Export-Tree $libraryTop "${librarySha}:$libraryPrefix" $libraryExport ($layers + $checkFiles)
     $libraryInput = Join-Path $stage 'in\library'
     New-Item -ItemType Directory -Force $libraryInput | Out-Null
     foreach ($layer in $layers) {
@@ -177,6 +183,16 @@ try {
     $log = & { $ErrorActionPreference = 'Continue'; & dotnet @arguments 2>&1 | ForEach-Object { "$_" } }
     if ($LASTEXITCODE -ne 0) { $log | Select-Object -Last 30 | Write-Host; throw "Plato.CLI failed ($LASTEXITCODE)" }
     $log | Where-Object { "$_" -match 'DEGRADED|degraded:' } | Write-Host
+
+    # Nothing is written while the compiler's output holds a degraded body or a throwing stub that
+    # generated-stubs.txt does not list (TKT-433; TKT-410's one DEGRADED line cost the corpus 22,410 faces).
+    $compilerLog = Join-Path $stage 'compiler.log'
+    Write-Text $compilerLog ($log -join "`n")
+    $check = Join-Path $libraryExport $checkFiles[0]
+    Write-Step "python -I $check $out --log $compilerLog"
+    $checkLog = & { $ErrorActionPreference = 'Continue'; & python -I $check $out --log $compilerLog 2>&1 | ForEach-Object { "$_" } }
+    $checkLog | Write-Host
+    if ($LASTEXITCODE -ne 0) { throw "check_generated.py failed ($LASTEXITCODE): the generated C# is not written" }
 
     $generated = Join-Path $OutputRoot 'Generated'
     $intrinsics = Join-Path $OutputRoot 'Intrinsics'
