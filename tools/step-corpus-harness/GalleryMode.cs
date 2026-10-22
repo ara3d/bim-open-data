@@ -50,7 +50,7 @@ public static class GalleryMode
     }
 
     /// <summary>The library's parameterless Witness_&lt;name&gt;() model, found in any of the generated static classes.</summary>
-    static BrepModel Witness(string spec)
+    internal static BrepModel Witness(string spec)
     {
         var parts = spec.Split(':');
         var name = parts[0];

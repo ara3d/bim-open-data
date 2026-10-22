@@ -40,6 +40,7 @@ public sealed record Options(bool Parallel, string Path, bool Warmup, string[] R
             step-corpus-harness all <corpus folder> <out folder> <seconds per file> [--path ...] [--parallel] [--warmup]
             step-corpus-harness time <file.step> <out prefix> [--path host] [--parallel] [--warmup]
             step-corpus-harness gallery <file.step | witness:Name[:x]> <out.glb> [--faces a,b,c] [--ring n] [--chordal x] [--parallel] [--warmup]
+            step-corpus-harness extract <file.step | witness:Name[:x]> <face,face,...> <out.plato> [--ring n] [--name Name] [--chordal x] [--parallel]
             """);
         return 2;
     }
