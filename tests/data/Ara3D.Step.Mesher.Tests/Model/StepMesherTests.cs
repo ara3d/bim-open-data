@@ -47,16 +47,16 @@ public static class StepMesherTests
         Assert.That((float)result.Bounds.Max.X, Is.EqualTo(0.003f).Within(1e-7f));
     }
 
-    /// <summary>The unit sphere's one face reaches a function the Plato library declares without a body.</summary>
+    /// <summary>The unit sphere's one face, bounded by a seam between its poles, meshes since the library's sphere
+    /// chart landed (TKT-313 chunk E1, library 8984df4b): one mesh, nothing pending, no dropped face.</summary>
     [Test]
-    public static void ItemsWhoseFacesArePendingInTheLibraryAreCountedAsPending()
+    public static void SphereMeshesAsOneSupportedItem()
     {
         var result = StepMesher.Mesh(StepText.Fixture("unit-sphere.stp"));
         Assert.That(result.Success, Is.True, string.Join("; ", result.Errors));
-        Assert.That((result.MeshCount, result.GeometryPending), Is.EqualTo((0, 1)));
-        Assert.That(result.Diagnostics.Messages, Has.Some.Contains("geometry pending for 1 shape items"));
-        Assert.That(result.Diagnostics.EntityStatus["SPHERICAL_SURFACE"], Is.EqualTo(StepSupport.Unsupported));
-        Assert.That(result.Diagnostics.DroppedFaces.Select(f => f.FaceId), Is.EqualTo(new[] { 18 }));
+        Assert.That((result.MeshCount, result.GeometryPending), Is.EqualTo((1, 0)));
+        Assert.That(result.Diagnostics.EntityStatus["SPHERICAL_SURFACE"], Is.EqualTo(StepSupport.Supported));
+        Assert.That(result.Diagnostics.DroppedFaces, Is.Empty);
     }
 
     [Test]

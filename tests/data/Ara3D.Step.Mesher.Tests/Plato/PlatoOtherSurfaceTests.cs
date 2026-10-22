@@ -5,9 +5,9 @@ using Ara3D.StepBrep;
 
 namespace Ara3D.Step.Mesher.Tests.Plato;
 
-/// <summary>Surfaces past the plane in the committed generation of the library: the hand-written unit cylinder
-/// (radius 1 mm, height 1 mm) meshes closed; the unit sphere's face reaches a function the library declares without
-/// a body, which the bridge turns into a pending failure and an Error at the face instead of an exception.</summary>
+/// <summary>Surfaces past the plane: the hand-written unit cylinder (radius 1 mm, height 1 mm) and unit sphere (radius
+/// 1 mm, one face with a pole-to-pole seam) each mesh closed and consistently oriented through the compiled library.
+/// </summary>
 public static class PlatoOtherSurfaceTests
 {
     /// <summary>The mesher's default chordal bound (StepMeshingOptions.MaxDeviation, 1 mm): on the unit cylinder,
@@ -40,15 +40,18 @@ public static class PlatoOtherSurfaceTests
     }
 
     [Test]
-    public static void SphereFaceIsAPendingFailureNotAnException()
+    public static void SphereMeshesClosedAndOriented()
     {
         var file = MeshFixture("unit-sphere.stp");
-        Assert.That(file.Failures, Has.Count.EqualTo(1));
-        Assert.That((file.Failures[0].Kind, file.Failures[0].Index, file.Failures[0].IsPending), Is.EqualTo(("face", 0, true)));
-        Assert.That(file.IsMeshed(new BrepFaceIndex(0)), Is.False);
-        Assert.That(file.Outcomes[0].Diagnostics.Select(d => (string)d.Code), Does.Contain("HOST-LIBRARY-THREW"));
-        Assert.That((int)file.Mesh.Triangles.Count, Is.Zero);
+        var mesh = file.Mesh;
+        Assert.That(file.Failures, Is.Empty);
+        Assert.That(file.IsMeshed(new BrepFaceIndex(0)), Is.True);
+        Assert.That((bool)mesh.IsClosed(), Is.True, "IsClosed");
+        Assert.That((bool)mesh.IsConsistentlyOriented(), Is.True, "IsConsistentlyOriented");
+        Assert.That((int)mesh.ReferencedEulerCharacteristic(), Is.EqualTo(2));
+        Assert.That((double)mesh.SignedVolume(), Is.InRange(0.8 * 4 * Math.PI / 3, 4 * Math.PI / 3), "within 20% below the sphere, mm^3");
         var shape = file.ToShapeMesh(new BodyIndex(0), new StepUnits(0.001, 1e-6));
-        Assert.That((shape.Mesh.FaceIndices.Count, shape.FacesMeshed, shape.FacesDropped), Is.EqualTo((0, 0, 1)));
+        Assert.That(MeshChecks.UnpairedEdges(shape.Mesh), Is.Empty);
+        Assert.That((shape.FacesMeshed, shape.FacesDropped, shape.FacesPending), Is.EqualTo((1, 0, 0)));
     }
 }
