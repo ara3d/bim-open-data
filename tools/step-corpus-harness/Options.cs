@@ -39,6 +39,7 @@ public sealed record Options(bool Parallel, string Path, bool Warmup, string[] R
             step-corpus-harness one <file.step> <out.json> [--path host|meshfile] [--parallel] [--warmup]
             step-corpus-harness all <corpus folder> <out folder> <seconds per file> [--path ...] [--parallel] [--warmup]
             step-corpus-harness time <file.step> <out prefix> [--path host] [--parallel] [--warmup]
+            step-corpus-harness gallery <file.step | witness:Name[:x]> <out.glb> [--faces a,b,c] [--ring n] [--chordal x] [--parallel] [--warmup]
             """);
         return 2;
     }

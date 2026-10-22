@@ -14,7 +14,8 @@ namespace Ara3D.Step.CorpusHarness;
 public sealed record TimedMesh(
     string File, string Path, bool Parallel, int Edges, int Faces,
     double ParseMs, double DecodeMs, double PrepareMs, double TablesMs, double EdgesMs, double FacesMs, double AssembleMs,
-    IReadOnlyList<EdgeRow> EdgeRows, IReadOnlyList<FaceRow> FaceRows, MeshDigest Digest, MeshCheck Check)
+    IReadOnlyList<EdgeRow> EdgeRows, IReadOnlyList<FaceRow> FaceRows, MeshDigest Digest, MeshCheck Check,
+    IReadOnlyList<BrepEdgeIndex>[] EdgesByFace)
 {
     public double TotalMs
         => ParseMs + DecodeMs + PrepareMs + TablesMs + EdgesMs + FacesMs + AssembleMs;
@@ -22,14 +23,14 @@ public sealed record TimedMesh(
     public static double ChordalMillimetres
         => new StepMeshingOptions().MaxDeviation * 1000.0;
 
-    public static TimedMesh Run(string file, Options options)
+    public static TimedMesh Run(string file, Options options, double? chordal = null)
     {
         if (options.Warmup)
-            Run(file, options.Path, options.Parallel);
-        return Run(file, options.Path, options.Parallel);
+            Run(file, options.Path, options.Parallel, chordal);
+        return Run(file, options.Path, options.Parallel, chordal);
     }
 
-    public static TimedMesh Run(string file, string path, bool parallel)
+    public static TimedMesh Run(string file, string path, bool parallel, double? chordal = null)
     {
         Progress.Report("parse");
         var (model, parseMs) = Clock.Time(() => new StepModel(new StepDocument(new FilePath(file))));
@@ -37,8 +38,15 @@ public sealed record TimedMesh(
         var (raw, decodeMs) = Clock.Time(() => model.DecodeRaw());
         Progress.Report("prepare");
         var (prepared, prepareMs) = Clock.Time(() => raw.PrepareModel());
-        var m = prepared.Model;
-        var criteria = StepPlatoMesher.Criteria(ChordalMillimetres);
+        return RunModel(file, prepared.Model, path, parallel, parseMs, decodeMs, prepareMs, chordal ?? ChordalMillimetres);
+    }
+
+    /// <summary>The stages after PrepareModel on a prepared model: the host's tables, the edges, the faces and the
+    /// assembly, under the chordal bound <paramref name="chordal"/> in model units. The gallery mode starts here with one of
+    /// the library's witness models.</summary>
+    public static TimedMesh RunModel(string file, BrepModel m, string path, bool parallel, double parseMs, double decodeMs, double prepareMs, double chordal)
+    {
+        var criteria = StepPlatoMesher.Criteria(chordal);
         Progress.Report("tables");
         var meshPath = MeshPath.Of(path, m);
         var edgesByFace = m.EdgesByFace();
@@ -53,6 +61,6 @@ public sealed record TimedMesh(
         var (mesh, assembleMs) = Clock.Time(() => m.AssembleModelMesh(faceMeshes, m.NumberMeshVertices(d, faceMeshes)));
         Progress.Report("done");
         return new(file, path, parallel, m.Edges.Count, m.Faces.Count, parseMs, decodeMs, prepareMs, meshPath.TablesMs,
-            edgesMs, facesMs, assembleMs, edges, faces, MeshDigest.Of(mesh), MeshCheck.Of(mesh));
+            edgesMs, facesMs, assembleMs, edges, faces, MeshDigest.Of(mesh), MeshCheck.Of(mesh), edgesByFace);
     }
 }
