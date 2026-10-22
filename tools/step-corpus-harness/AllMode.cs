@@ -28,7 +28,7 @@ public static class AllMode
         var name = Path.GetRelativePath(corpus, file);
         var prefix = Path.Combine(outDir, name.Replace(Path.DirectorySeparatorChar, '_'));
         var start = new ProcessStartInfo(Environment.ProcessPath!) { RedirectStandardOutput = true, RedirectStandardError = true };
-        foreach (var a in new[] { "time", file, prefix }.Concat(options.Flags))
+        foreach (var a in new[] { options.Child, file, prefix }.Concat(options.Flags))
             start.ArgumentList.Add(a);
         var clock = Stopwatch.GetTimestamp();
         using var p = Process.Start(start)!;
