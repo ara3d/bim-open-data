@@ -1,80 +1,104 @@
-"""Writes the STEP mesher gallery page from the GLB and JSON sidecars the harness's gallery mode produced.
+"""The STEP mesher gallery: meshes every case with the harness's gallery mode, then writes the three.js page.
 
-    python gallery-page.py <folder with the .glb and .json files> [index.html]
+    python gallery-page.py run <folder> --harness <step-corpus-harness.exe> [--corpus <u-blox library>] [--samples <data/step-samples>] [--only stem,stem]
+    python gallery-page.py page <folder> [out.html] [--previous <folder of an earlier run's .json>] [--label <text>] [--compare-time]
 
-The cases are listed in CASES below: the GLB's stem, the group, the verdict, the ticket, and a sentence on what the
-case shows. The counts, times and checks come from each case's JSON sidecar, so the page never carries a number the
-mesher did not produce. The page loads three.js from jsDelivr and each GLB from a base64 .glb.txt beside itself, which this script also writes
-(the artifact host serves text files, not model/gltf-binary).
+Each case in CASES names its GLB stem, its source and flags, its group, verdict, ticket, title, and a sentence on what
+it shows. A source is `witness:<Name>[:x]`, `corpus:<path in the u-blox library>` or `sample:<path in data/step-samples>`,
+then any gallery-mode flags; corpus and sample cases run with --warmup. `run` writes <stem>.glb and <stem>.json per case.
+`page` reads the sidecars, so the page never carries a count the mesher did not produce; with --previous it adds what
+changed since that run (faces meshed, edges and checks, and with --compare-time the warm whole-file time when both
+runs were warm). The page loads three.js
+from jsDelivr and each GLB from a base64 .glb.txt beside itself, which `page` also writes (the artifact host serves
+text files, not model/gltf-binary).
 """
+import argparse
 import base64
 import json
+import shlex
+import subprocess
 import sys
+import time
 from pathlib import Path
 
-# (stem, group, verdict, ticket, title, what it shows)
+TOOLKIT = Path(__file__).resolve().parents[4]
+DEFAULT_CORPUS = Path("C:/Users/cdigg/git/3d-format-shootout/data/submodules/3D-Step-Models-Library")
+DEFAULT_SAMPLES = TOOLKIT / "data" / "step-samples"
+
+# (stem, source and flags, group, verdict, ticket, title, what it shows)
 CASES = [
-    ("w-UnitBox", "witness", "ok", "TKT-314", "Unit box",
+    ("w-UnitBox", "witness:UnitBox --chordal 0.01", "witness", "ok", "TKT-314", "Unit box",
      "Chunk A, the cube through every layer. Six faces, one quad each: the grid path with no refinement."),
-    ("w-Cylinder", "witness", "ok", "TKT-324", "Cylinder",
+    ("w-Cylinder", "witness:Cylinder --chordal 0.01", "witness", "ok", "TKT-324", "Cylinder",
      "The seam cut and the two circles. The side is a quad strip (TKT-405); the caps are refined triangles."),
-    ("w-Sphere", "witness", "ok", "TKT-325", "Sphere",
+    ("w-Sphere", "witness:Sphere --chordal 0.01", "witness", "ok", "TKT-325", "Sphere",
      "Closed in two directions with two poles, where the chart collapses a line to a point."),
-    ("w-Torus", "witness", "ok", "TKT-325", "Torus",
+    ("w-Torus", "witness:Torus --chordal 0.01", "witness", "ok", "TKT-325", "Torus",
      "Closed both ways with no pole: the periodic chart needs two seam cuts and the grid meshes it in quads."),
-    ("w-Cone", "witness", "ok", "TKT-325", "Cone",
+    ("w-Cone", "witness:Cone --chordal 0.01", "witness", "ok", "TKT-325", "Cone",
      "The apex is a degenerate line of the chart; the triangles meet it without a sliver."),
-    ("w-BlockWithThroughHole", "witness", "ok", "TKT-328", "Block with a through hole",
+    ("w-BlockWithThroughHole", "witness:BlockWithThroughHole --chordal 0.01", "witness", "ok", "TKT-328", "Block with a through hole",
      "Genus one: two faces carry an inner loop; the hole's cylinder faces close the shell."),
-    ("w-HollowBox", "witness", "ok", "TKT-328", "Hollow box",
+    ("w-HollowBox", "witness:HollowBox --chordal 0.01", "witness", "ok", "TKT-328", "Hollow box",
      "A void: an inner shell whose faces point inward, so the solid's volume is the shell difference."),
-    ("w-BoxWithFlippedFace", "witness", "caught", "TKT-328", "Box with a flipped face",
+    ("w-BoxWithFlippedFace", "witness:BoxWithFlippedFace --chordal 0.01", "witness", "caught", "TKT-328", "Box with a flipped face",
      "One face reversed in the file. The mesh is closed but the check reports four misoriented edges: the defect is found, not hidden."),
-    ("w-TwoBoxesSharingCorner", "witness", "caught", "TKT-328", "Two boxes sharing a corner",
+    ("w-TwoBoxesSharingCorner", "witness:TwoBoxesSharingCorner --chordal 0.01", "witness", "caught", "TKT-328", "Two boxes sharing a corner",
      "A pinched vertex. The edge checks pass (closed, oriented); only the vertex-component check sees the pinch."),
-    ("w-BumpSolid", "witness", "wrong", "new", "Bump solid, bump 0.3",
-     "A cube whose top is a B-spline patch raised 0.3 in the middle. The four-edge face takes the quad-grid path and comes out as one flat quad: the mesh hash equals the unit box's. The chordal bound is tested along the straight edges, where the deviation is zero, so the bump vanishes. Not ticketed before this run; TKT-401 is the nearby defect."),
-
-    ("c-emmy-w1", "part", "ok", "TKT-323", "EMMY-W1",
-     "The smallest fully meshed part. Closed and oriented; 10.6 s on Oct 19, now a quarter of a second."),
-    ("c-nina-b400", "part", "ok", "TKT-323", "NINA-B400",
+    ("w-BumpSolid", "witness:BSplinePatchSolid:0.3 --chordal 0.01", "witness", "wrong", "TKT-415", "Bump solid, bump 0.3",
+     "A cube whose top is a B-spline patch raised 0.3 in the middle. The four-edge face takes the quad-grid path and comes out as one flat quad: the mesh hash equals the unit box's. The chordal bound is tested along the straight edges, where the deviation is zero, so the bump vanishes. Filed from this gallery as TKT-415; the fix (F1, a grid kept only within the surface chordal bound) is staged, not yet in the library."),
+    ("c-emmy-w1", "corpus:SHO/EMMY-W1.STEP", "part", "ok", "TKT-323", "EMMY-W1",
+     "The smallest fully meshed part, closed and oriented. It took 10.6 s on Oct 19."),
+    ("c-nina-b400", "corpus:SHO/NINA-B400.STEP", "part", "ok", "TKT-323", "NINA-B400",
      "A shielded module with many pins. Every face meshed, most by the quad grid."),
-    ("c-odin-w160", "part", "ok", "TKT-409", "ODIN-W160",
-     "Hung for 358 s on Oct 19 on a 212-edge plane; now under a second, closed and oriented. Its four ellipse-bounded oblique cylinder cuts fall back to CDT (TKT-409)."),
-    ("z-odin-plane212", "part", "slow", "TKT-349", "ODIN-W260, the two 212-edge planes",
-     "The faces of TKT-349 (86 s to over 8 minutes before the complexity sweep). Face 34 still takes 1.2 s for 2,328 triangles: the slowest plane in the corpus."),
-    ("z-odin-slowcyl", "part", "slow", "TKT-349", "ODIN-W260, the slowest cylinder faces",
-     "Twelve-edge cylinder faces that the grid refuses and CDT refines to about 950 triangles each, 1.2 to 1.3 s apiece: where face time goes now."),
-
-    ("c-lena-r8", "failure", "holes", "TKT-410", "LENA-R8",
+    ("c-odin-w160", "corpus:SHO/ODIN-W160.STEP", "part", "ok", "TKT-409", "ODIN-W160",
+     "Hung for 358 s on Oct 19; now closed and oriented in a couple of seconds. Its slowest faces are two 80-edge planes. Four ellipse-bounded oblique cylinder cuts fall back to CDT (TKT-409)."),
+    ("z-odin-plane212", "corpus:SHO/ODIN-W260.STEP --faces 3,34", "part", "slow", "TKT-349", "ODIN-W260, the two 212-edge planes",
+     "The faces of TKT-349 (86 s to over 8 minutes before the complexity sweep). Face 34 took 1.2 s on Oct 21 and 0.2 s now, the same 2,328 triangles: TKT-407's allocation-free inside test."),
+    ("z-odin-slowcyl", "corpus:SHO/ODIN-W260.STEP --faces 2584,2579 --ring 1", "part", "slow", "TKT-349", "ODIN-W260, the slowest cylinder faces",
+     "Twelve-edge cylinder faces that the grid refuses and CDT refines. On Oct 21 they took 1.2 to 1.3 s and about 970 triangles each; now about 0.1 s and 805 triangles, since TKT-406 stops insertions the 15 degree test can never satisfy."),
+    ("c-lena-r8", "corpus:CEL/LENA-R8.STEP", "failure", "holes", "TKT-410", "LENA-R8",
      "488 of its 562 B-spline edges throw the compiler's stub for SagittaByHullBoundGiven, so 355 faces have no boundary to mesh. The red outlines are the edges of unmeshed faces that did discretize; the stubbed edges leave nothing to draw."),
-    ("z-lena-r8-spheres", "failure", "threw", "TKT-411", "LENA-R8, three-edge sphere faces",
+    ("z-lena-r8-spheres", "corpus:CEL/LENA-R8.STEP --faces 202,203,204,205,216,217,218,219 --ring 1", "failure", "threw", "TKT-411", "LENA-R8, three-edge sphere faces",
      "Eight sphere faces bounded by one loop of three edges throw an index-out-of-range in layer 5. Shown with their neighbours; the red triangles are the unmeshed faces."),
-    ("c-lara", "failure", "holes", "TKT-410", "LARA",
+    ("c-lara", "corpus:CEL/LARA.STEP", "failure", "holes", "TKT-410", "LARA",
      "566 B-spline edges throw the stub; 347 faces unmeshed. The same cause as LENA-R8 on a different antenna."),
-    ("c-rcb-f9tap214", "failure", "holes", "TKT-410", "RCB-F9T (AP214)",
-     "The largest and slowest file: 8,475 faces in 8.6 s warm. 824 faces lost to the stub; everything else meshes."),
-    ("c-m2-zed-f9t-25b-00", "failure", "holes", "TKT-410", "M2-ZED-F9T-25B-00",
+    ("c-rcb-f9tap214", "corpus:\"POS/RCB-F9T(AP214).STEP\"", "failure", "holes", "TKT-410", "RCB-F9T (AP214)",
+     "The largest file, 8,475 faces. 824 are lost to the stub; everything else meshes. Its slowest face is now a 559-edge plane at about 2 s."),
+    ("c-m2-zed-f9t-25b-00", "corpus:POS/M2-ZED-F9T-25B-00.STEP", "failure", "holes", "TKT-410", "M2-ZED-F9T-25B-00",
      "1,004 edges throw the stub and 648 faces go unmeshed; one cone face throws TKT-411's index error."),
-    ("z-m2zed-cone", "failure", "threw", "TKT-411", "M2-ZED-F9T-25B-00, cone face 753",
+    ("z-m2zed-cone", "corpus:POS/M2-ZED-F9T-25B-00.STEP --faces 753 --ring 1", "failure", "threw", "TKT-411", "M2-ZED-F9T-25B-00, cone face 753",
      "A single three-edge cone face that throws, with its two neighbours meshed around it."),
-    ("c-nora-b100", "failure", "holes", "TKT-410", "NORA-B100",
+    ("c-nora-b100", "corpus:SHO/NORA-B100.step", "failure", "holes", "TKT-410", "NORA-B100",
      "153 faces lost to the stub and one three-edge cone face to TKT-411."),
-    ("c-maya-w260_revc", "failure", "bad-edges", "TKT-413", "MAYA-W260_REVC",
+    ("c-maya-w260_revc", "corpus:SHO/MAYA-W260_REVC.step", "failure", "bad-edges", "TKT-413", "MAYA-W260_REVC",
      "The only kind of file whose meshed faces disagree: 4 non-manifold and 4 misoriented edges in the assembled mesh (TKT-413), plus 13 planes reported not simple (TKT-412) and 7 faces that throw (TKT-411)."),
-    ("z-maya-notsimple", "failure", "not-simple", "TKT-412", "MAYA-W260_REVC, planes reported not simple",
+    ("z-maya-notsimple", "corpus:SHO/MAYA-W260_REVC.step --faces 1481,1483,1499,1504,1509,1510 --ring 1", "failure", "not-simple", "TKT-412", "MAYA-W260_REVC, planes reported not simple",
      "Six 12-edge planes whose boundary segments come within the parameter tolerance of each other in UV. Whether the file self-intersects or the tolerance is too loose is the ticket's question. Nothing meshed: only the red loops."),
-    ("z-maya-cylinders", "failure", "threw", "TKT-411", "MAYA-W260_REVC, eight-edge cylinder faces",
+    ("z-maya-cylinders", "corpus:SHO/MAYA-W260_REVC.step --faces 1566,1577 --ring 1", "failure", "threw", "TKT-411", "MAYA-W260_REVC, eight-edge cylinder faces",
      "Two cylinder faces with one loop of eight edges that throw the same index error as the three-edge spheres and cones."),
-    ("c-odin-w260", "failure", "not-simple", "TKT-412", "ODIN-W260",
-     "2,710 of 2,714 faces; the four missing planes are reported not simple. Hung in October, 1.1 s now."),
-    ("z-odin-notsimple", "failure", "not-simple", "TKT-412", "ODIN-W260, the four not-simple planes",
+    ("c-odin-w260", "corpus:SHO/ODIN-W260.STEP", "failure", "not-simple", "TKT-412", "ODIN-W260",
+     "2,710 of 2,714 faces; the four missing planes are reported not simple. It hung in October."),
+    ("z-odin-notsimple", "corpus:SHO/ODIN-W260.STEP --faces 2613,2615,2616,2625 --ring 1", "failure", "not-simple", "TKT-412", "ODIN-W260, the four not-simple planes",
      "Tiny planes with 2 to 6 edges at the board's edge, with their neighbours. Red loops mark the four."),
+    ("p-io1-tc-214", "sample:steptools-ap214/io1-tc-214.stp", "public", "ok", "TKT-323", "STEP Tools io1-tc-214 (AP214)",
+     "The public AP214 sample the epic's fourth criterion names. 48 surfaces of revolution and 10 planes, closed and outward."),
+    ("p-nist_ftc_06_asme1_rd", "sample:\"nist/NIST-PMI-STEP-Files/AP203 geometry only/nist_ftc_06_asme1_rd.stp\"", "public", "ok", "TKT-323", "NIST FTC 06",
+     "A NIST test part with planes, cylinders, tori, spheres and cones, meshed closed and oriented."),
+    ("p-cubcylso", "sample:steptools-ap203/cubcylso.stp", "public", "ok", "TKT-323", "STEP Tools cube and cylinder",
+     "A cube with a cylinder: planes on the quad grid, the cylinder by CDT."),
+    ("p-nist_ctc_01_asme1_rd", "sample:\"nist/NIST-PMI-STEP-Files/AP203 geometry only/nist_ctc_01_asme1_rd.stp\"", "public", "holes", "TKT-410", "NIST CTC 01",
+     "A few cylinder faces lose an edge to the compiler stub; the rest of the part meshes."),
+    ("p-moon_buggy_asm", "sample:steptools-ap203/moon_buggy_asm.stp --faces 14,21,23", "public", "slow", "new", "STEP Tools moon buggy, three full spheres",
+     "Whole spheres with no boundary edges, each refined to about 19,000 triangles in about 6 s: the whole assembly's mesh is too large to publish. The full file also loses 20 faces to the stub (TKT-410) and has 180 misoriented edges, more than any corpus file; neither is ticketed yet."),
+    ("p-block", "sample:steptools-ap203/block.stp", "public", "holes", "TKT-410", "STEP Tools block",
+     "A plain box, and nothing meshes: its 12 line edges are wrapped in INTERSECTION_CURVE, a surface-curve kind that throws the stub on every edge."),
 ]
 
 GROUPS = [
     ("witness", "Primitives the library proves itself on", "The library's own witness models, meshed at a chordal bound of 0.01 on a one-unit model. Each is a law's subject."),
     ("part", "Real parts that mesh completely", "u-blox antenna and module models from the corpus, every face meshed, closed and oriented."),
+    ("public", "Public samples", "Files from STEP Tools and NIST, fetched by scripts/fetch-step-samples.ps1: the first files outside the u-blox corpus."),
     ("failure", "Failures, each with a ticket", "Corpus files and close-ups where faces are missing or wrong. Red lines are the discretized edges of faces that did not mesh."),
 ]
 
@@ -90,12 +114,56 @@ VERDICTS = {
 }
 
 
-def manifest(folder: Path):
+def command(source: str, glb: Path, harness: str, corpus: Path, samples: Path):
+    """The harness command line for one case's source."""
+    target, *flags = shlex.split(source)
+    kind, _, rest = target.partition(":")
+    if kind == "witness":
+        return [harness, "gallery", target, str(glb), "--parallel", *flags]
+    root = corpus if kind == "corpus" else samples
+    return [harness, "gallery", str(root / rest), str(glb), "--parallel", "--warmup", *flags]
+
+
+def run(folder: Path, harness: str, corpus: Path, samples: Path, only: set):
+    folder.mkdir(parents=True, exist_ok=True)
+    for stem, source, *_ in CASES:
+        if only and stem not in only:
+            continue
+        start = time.time()
+        result = subprocess.run(command(source, folder / f"{stem}.glb", harness, corpus, samples), capture_output=True, text=True, timeout=600)
+        lines = [l for l in result.stdout.splitlines() if l.startswith("gallery ")] or result.stderr.strip().splitlines()[-1:] or ["no output"]
+        print(f"{stem:28} {time.time() - start:6.1f} s  exit {result.returncode}  {lines[0]}", flush=True)
+
+
+def change(j: dict, p, compare_time: bool):
+    """What moved between an earlier sidecar p and this one j, or None when there is no earlier run of the case."""
+    if p is None:
+        return None
+    warm = j.get("warm", False) and p.get("warm", False)
+
+    def pair(a, b):
+        return None if a == b else [a, b]
+
+    return {
+        "sameMesh": (j.get("digest") or {}).get("Hash") == (p.get("digest") or {}).get("Hash"),
+        "faces": pair(p["faces"], j["faces"]), "meshed": pair(p["meshedFaces"], j["meshedFaces"]),
+        "triangles": pair(p["triangles"], j["triangles"]), "edgesThrew": pair(p["edgesThrew"], j["edgesThrew"]),
+        "boundary": pair(p["check"]["BoundaryEdges"], j["check"]["BoundaryEdges"]),
+        "nonmanifold": pair(p["check"]["NonManifoldEdges"], j["check"]["NonManifoldEdges"]),
+        "misoriented": pair(p["check"]["MisorientedEdges"], j["check"]["MisorientedEdges"]),
+        "ms": [p["ms"]["total"], j["ms"]["total"]] if warm and compare_time else None,
+    }
+
+
+def manifest(folder: Path, previous, compare_time: bool):
     out = []
-    for stem, group, verdict, ticket, title, blurb in CASES:
+    for stem, source, group, verdict, ticket, title, blurb in CASES:
         j = json.loads((folder / f"{stem}.json").read_text(encoding="utf-8"))
+        prev = previous / f"{stem}.json" if previous else None
         c = j["check"]
         out.append({
+            "source": source, "warm": j.get("warm", False), "drawnMs": j.get("drawnMs"),
+            "change": change(j, json.loads(prev.read_text(encoding="utf-8")) if prev and prev.exists() else None, compare_time),
             "id": stem, "file": f"{stem}.glb", "group": group, "verdict": verdict, "ticket": ticket, "title": title, "blurb": blurb,
             "faces": j["faces"], "drawn": j["drawnFaces"], "meshed": j["meshedFaces"], "edgesThrew": j["edgesThrew"],
             "triangles": j["triangles"], "ms": j["ms"]["total"], "size": j["size"],
@@ -161,6 +229,10 @@ section>p{margin:0;color:var(--fg2);max-width:90ch}
 .stats b{font-weight:500;color:var(--fg2);font-family:var(--mono)}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11.5px;color:var(--fg2)}
 .legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px;background:var(--c)}
+.chg{font-size:11.5px;color:var(--fg2);border-top:1px dashed var(--line);padding-top:5px;margin-top:2px}
+.chg b{font-family:var(--mono);font-weight:500}
+.chg .up{color:var(--ok)}.chg .down{color:var(--bad)}
+.label{font-size:12px;color:var(--fg3);margin:6px 0 0}
 footer{font-size:11.5px;color:var(--fg3);border-top:1px solid var(--line);padding-top:10px;line-height:1.6}
 footer code{font-family:var(--mono)}
 @media (max-width:760px){.viewer{grid-template-columns:1fr}.side{border-left:0;border-top:1px solid var(--line)}.stage{height:40vh;min-height:260px}}
@@ -174,6 +246,7 @@ footer code{font-family:var(--mono)}
   <div class="legend" style="margin-top:8px">
     <span style="--c:#b8c2d1">plane</span><span style="--c:#eb6834">cylinder</span><span style="--c:#eda100">cone</span><span style="--c:#1baf7a">sphere</span><span style="--c:#e87ba4">torus</span><span style="--c:#008300">revolution</span><span style="--c:#6250d6">extrusion</span><span style="--c:#2a78d6">B-spline</span><span style="--c:#e34948">edges of unmeshed faces</span>
   </div>
+  <p class="label">__LABEL__</p>
 </header>
 
 <div class="viewer" id="viewer">
@@ -183,6 +256,7 @@ footer code{font-family:var(--mono)}
     <h3 id="vtitle">Nothing loaded</h3>
     <p id="vblurb"></p>
     <div class="kv" id="vkv"></div>
+    <div id="vchg"></div>
     <div class="toggles">
       <label><input type="checkbox" id="tFaces" checked>faces</label>
       <label><input type="checkbox" id="tEdges" checked>edges</label>
@@ -209,6 +283,25 @@ footer code{font-family:var(--mono)}
   const byId = Object.fromEntries(cases.map(c => [c.id, c]));
   const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   const fmt = n => n.toLocaleString('en-US');
+  // Meshing time of the drawn faces summed over the cores' rows; the whole file's time when an older sidecar lacks it.
+  const ft = c => { const t = c.drawnMs ?? c.ms; return t >= 1000 ? (t / 1000).toFixed(1) + ' s' : t.toFixed(0) + ' ms'; };
+  // What moved since the previous run. "better" says which direction is an improvement for each measure.
+  const better = { meshed: 1, triangles: 0, edgesThrew: -1, boundary: -1, nonmanifold: -1, misoriented: -1, ms: -1, faces: 0 };
+  const names = { faces: 'faces', meshed: 'faces meshed', triangles: 'triangles', edgesThrew: 'edges that threw', boundary: 'boundary edges', nonmanifold: 'non-manifold', misoriented: 'misoriented', ms: 'warm time' };
+  function changeHtml(c) {
+    const ch = c.change;
+    if (!ch) return '<div class="chg">New case: no earlier run.</div>';
+    const parts = [];
+    for (const k of Object.keys(names)) {
+      const v = ch[k]; if (!v) continue;
+      const [a, b] = v, dir = Math.sign(b - a) * better[k];
+      const show = x => k === 'ms' ? (x >= 1000 ? (x / 1000).toFixed(1) + ' s' : x.toFixed(0) + ' ms') : fmt(x);
+      if (k === 'ms' && Math.abs(b - a) < 0.1 * a) continue;
+      parts.push(`<span class="${dir > 0 ? 'up' : dir < 0 ? 'down' : ''}">${names[k]} <b>${show(a)} → ${show(b)}</b></span>`);
+    }
+    const head = ch.sameMesh ? 'Same mesh as Oct 21' : 'Changed since Oct 21';
+    return `<div class="chg">${head}${parts.length ? ': ' + parts.join(', ') : '.'}</div>`;
+  }
 
   // Cards
   const sections = document.getElementById('sections');
@@ -223,7 +316,7 @@ footer code{font-family:var(--mono)}
       const missing = c.drawn - c.meshed;
       el.innerHTML = `<div class="thumb" id="th-${c.id}"><span class="badge ${tone}">${label}</span><span>rendering…</span></div>
         <div class="body"><h3><span>${c.title}</span><span class="tk">${c.ticket}</span></h3><p>${c.blurb}</p>
-        <div class="stats"><span>faces <b>${fmt(c.meshed)}${missing ? ' / ' + fmt(c.drawn) : ''}</b></span><span>triangles <b>${fmt(c.triangles)}</b></span><span>time <b>${c.ms >= 1000 ? (c.ms/1000).toFixed(1)+' s' : c.ms.toFixed(0)+' ms'}</b></span><span>${c.closed ? 'closed' : 'open, ' + fmt(c.boundary) + ' boundary edges'}${c.nonmanifold ? ', ' + c.nonmanifold + ' non-manifold' : ''}${c.misoriented ? ', ' + c.misoriented + ' misoriented' : ''}</span></div></div>`;
+        <div class="stats"><span>faces <b>${fmt(c.meshed)}${missing ? ' / ' + fmt(c.drawn) : ''}</b></span><span>triangles <b>${fmt(c.triangles)}</b></span><span>face time <b>${ft(c)}</b></span><span>${c.closed ? 'closed' : 'open, ' + fmt(c.boundary) + ' boundary edges'}${c.nonmanifold ? ', ' + c.nonmanifold + ' non-manifold' : ''}${c.misoriented ? ', ' + c.misoriented + ' misoriented' : ''}</span></div>${changeHtml(c)}</div>`;
       el.addEventListener('click', () => load(c.id));
       el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); load(c.id); } });
       grid.appendChild(el);
@@ -327,7 +420,8 @@ footer code{font-family:var(--mono)}
     document.getElementById('vtitle').textContent = c.title;
     document.getElementById('vblurb').textContent = c.blurb;
     const br = Object.entries(c.branches).map(([k, v]) => `${k} ${fmt(v)}`).join(', ');
-    document.getElementById('vkv').innerHTML = `<span>faces drawn</span><b>${fmt(c.drawn)} of ${fmt(c.faces)}</b><span>meshed</span><b>${fmt(c.meshed)}</b><span>triangles</span><b>${fmt(c.triangles)}</b><span>edges that threw</span><b>${fmt(c.edgesThrew)}</b><span>branches</span><b>${br}</b><span>time, warm</span><b>${c.ms.toFixed(0)} ms</b><span>check</span><b>${c.closed ? 'closed' : 'boundary ' + fmt(c.boundary)}, ${c.oriented ? 'oriented' : 'misoriented ' + c.misoriented}${c.nonmanifold ? ', non-manifold ' + c.nonmanifold : ''}</b><span>extent</span><b>${c.size.map(x => x.toFixed(1)).join(' × ')}</b>`;
+    document.getElementById('vkv').innerHTML = `<span>faces drawn</span><b>${fmt(c.drawn)} of ${fmt(c.faces)}</b><span>meshed</span><b>${fmt(c.meshed)}</b><span>triangles</span><b>${fmt(c.triangles)}</b><span>edges that threw</span><b>${fmt(c.edgesThrew)}</b><span>branches</span><b>${br}</b><span>face time, drawn faces</span><b>${ft(c)}</b><span>whole file${c.warm ? ', warm' : ''}</span><b>${(c.ms/1000).toFixed(1)} s</b><span>check</span><b>${c.closed ? 'closed' : 'boundary ' + fmt(c.boundary)}, ${c.oriented ? 'oriented' : 'misoriented ' + c.misoriented}${c.nonmanifold ? ', non-manifold ' + c.nonmanifold : ''}</b><span>extent</span><b>${c.size.map(x => x.toFixed(1)).join(' × ')}</b>`;
+    document.getElementById('vchg').innerHTML = changeHtml(c);
     try {
       const src = await fetchCase(id);
       if (current) { scene.remove(current); scene.remove(wire); }
@@ -348,17 +442,41 @@ footer code{font-family:var(--mono)}
 """
 
 
-def main():
-    folder = Path(sys.argv[1])
-    out = Path(sys.argv[2]) if len(sys.argv) > 2 else folder / "index.html"
-    page = (PAGE.replace("__MANIFEST__", json.dumps(manifest(folder)))
+def page(folder: Path, previous, label: str, out: Path, compare_time: bool):
+    html = (PAGE.replace("__MANIFEST__", json.dumps(manifest(folder, previous, compare_time)))
             .replace("__GROUPS__", json.dumps(GROUPS))
-            .replace("__VERDICTS__", json.dumps(VERDICTS)))
-    out.write_text(page, encoding="utf-8")
+            .replace("__VERDICTS__", json.dumps(VERDICTS))
+            .replace("__LABEL__", label))
+    out.write_text(html, encoding="utf-8")
     for stem, *_ in CASES:
         glb = folder / f"{stem}.glb"
         (folder / f"{stem}.glb.txt").write_text(base64.b64encode(glb.read_bytes()).decode("ascii"), encoding="ascii")
     print(f"wrote {out} with {len(CASES)} cases")
+
+
+def main():
+    args = sys.argv[1:]
+    if args and args[0] not in ("run", "page", "-h", "--help"):
+        args = ["page", *args]
+    parser = argparse.ArgumentParser(prog="gallery-page.py")
+    sub = parser.add_subparsers(dest="mode", required=True)
+    r = sub.add_parser("run")
+    r.add_argument("folder", type=Path)
+    r.add_argument("--harness", required=True)
+    r.add_argument("--corpus", type=Path, default=DEFAULT_CORPUS)
+    r.add_argument("--samples", type=Path, default=DEFAULT_SAMPLES)
+    r.add_argument("--only", default="")
+    g = sub.add_parser("page")
+    g.add_argument("folder", type=Path)
+    g.add_argument("out", type=Path, nargs="?")
+    g.add_argument("--previous", type=Path)
+    g.add_argument("--label", default="")
+    g.add_argument("--compare-time", action="store_true", help="show warm whole-file time changes; leave off when the machine was shared")
+    a = parser.parse_args(args)
+    if a.mode == "run":
+        run(a.folder, str(Path(a.harness).resolve()), a.corpus, a.samples, {x for x in a.only.split(",") if x})
+    else:
+        page(a.folder, a.previous, a.label, a.out or a.folder / "index.html", a.compare_time)
 
 
 if __name__ == "__main__":

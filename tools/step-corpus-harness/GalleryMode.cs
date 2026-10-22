@@ -12,7 +12,9 @@ namespace Ara3D.Step.CorpusHarness;
 /// the named faces and, with <c>--ring n</c>, the faces within n shared edges of them, for a close-up of a defect.
 /// <c>--chordal x</c> replaces the host's chordal bound (in model units; a witness model is one unit across, so 0.01 is the
 /// right order). Beside the GLB, <c>out.json</c> records the counts, the centre subtracted from the positions, the time per stage,
-/// and every face that did not mesh with its branch and message.</summary>
+/// and every face that did not mesh with its branch and message; <c>warm</c> says whether <c>--warmup</c> ran first, and
+/// <c>drawnMs</c> is the face-meshing time of the drawn faces alone; <c>edgeFailures</c> groups the edges that threw
+/// by curve kind and message.</summary>
 public static class GalleryMode
 {
     static readonly Dictionary<string, (float, float, float)> Colours = new()
@@ -42,7 +44,7 @@ public static class GalleryMode
         var t = source.StartsWith("witness:")
             ? TimedMesh.RunModel(source, Witness(source[8..]), options.Path, options.Parallel, 0, 0, 0, chordal)
             : TimedMesh.Run(source, options, chordal);
-        Write(t, glb, Chosen(t, faces, ring));
+        Write(t, glb, Chosen(t, faces, ring), options.Warmup);
         Console.WriteLine($"gallery {glb}: {t.Faces} faces, {t.FaceRows.Count(f => f.Triangles + f.Quads > 0)} meshed, {t.Digest}, {t.Check}");
         return 0;
     }
@@ -79,7 +81,7 @@ public static class GalleryMode
 
     static (double, double, double) P(Point3D p) => ((double)p.X, (double)p.Y, (double)p.Z);
 
-    static void Write(TimedMesh t, string glb, HashSet<int> chosen)
+    static void Write(TimedMesh t, string glb, HashSet<int> chosen, bool warm)
     {
         var points = new List<(double x, double y, double z)>();
         foreach (var f in chosen)
@@ -126,6 +128,10 @@ public static class GalleryMode
         var byKind = chosen.Select(f => t.FaceRows[f]).GroupBy(r => r.Surface).OrderByDescending(g => g.Count())
             .Select(g => new { surface = g.Key, faces = g.Count(), meshed = g.Count(r => r.Triangles + r.Quads > 0), ms = Math.Round(g.Sum(r => r.Ms), 1) }).ToArray();
         var branches = chosen.Select(f => t.FaceRows[f]).GroupBy(r => r.Path).ToDictionary(g => g.Key, g => g.Count());
+        var edgeFailures = t.EdgeRows.Where(e => e.Exception != "")
+            .GroupBy(e => (e.Curve, e.Exception, Message: e.Message.Length > 160 ? e.Message[..160] : e.Message))
+            .OrderByDescending(g => g.Count()).Take(6)
+            .Select(g => new { curve = g.Key.Curve, exception = g.Key.Exception, message = g.Key.Message, edges = g.Count() }).ToArray();
         object Brief(FaceRow r) => new { face = r.Index, surface = r.Surface, loops = r.Loops, edges = r.Edges, branch = r.Path, triangles = r.Triangles, quads = r.Quads, ms = Math.Round(r.Ms, 2) };
         var slowest = chosen.Select(f => t.FaceRows[f]).OrderByDescending(r => r.Ms).Take(5).Select(Brief).ToArray();
         var mostEdges = chosen.Select(f => t.FaceRows[f]).OrderByDescending(r => r.Edges).Take(5).Select(Brief).ToArray();
@@ -136,8 +142,9 @@ public static class GalleryMode
             edgesThrew = t.EdgeRows.Count(e => e.Exception != ""),
             triangles = w.Triangles, edgeSegments = w.EdgeSegments, failedSegments = w.FailedSegments,
             centre = w.Centre, size = new[] { max.Item1 - min.Item1, max.Item2 - min.Item2, max.Item3 - min.Item3 },
+            warm, drawnMs = R(chosen.Sum(f => t.FaceRows[f].Ms)),
             ms = new { parse = R(t.ParseMs), decode = R(t.DecodeMs), prepare = R(t.PrepareMs), tables = R(t.TablesMs), edges = R(t.EdgesMs), faces = R(t.FacesMs), assemble = R(t.AssembleMs), total = R(t.TotalMs) },
-            digest = t.Digest, check = t.Check, branches, byKind, slowest, mostEdges, unmeshed,
+            digest = t.Digest, check = t.Check, branches, byKind, edgeFailures, slowest, mostEdges, unmeshed,
         }, new JsonSerializerOptions { WriteIndented = true }));
     }
 
