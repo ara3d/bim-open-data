@@ -18,7 +18,8 @@ public sealed record TimedMesh(
     string File, string Path, bool Parallel, int Edges, int Faces,
     double ParseMs, double DecodeMs, double PrepareMs, double TablesMs, double EdgesMs, double FacesMs, double RefineMs,
     double AssembleMs, IReadOnlyList<EdgeRow> EdgeRows, IReadOnlyList<FaceRow> FaceRows, MeshDigest Digest, MeshCheck Check,
-    IReadOnlyList<BrepEdgeIndex>[] EdgesByFace, ContractCheck Contract, IReadOnlyList<StepPlatoFailure> RefineFailures)
+    IReadOnlyList<BrepEdgeIndex>[] EdgesByFace, ContractCheck Contract, IReadOnlyList<StepPlatoFailure> RefineFailures,
+    BoundaryCheck Boundary)
 {
     public double TotalMs
         => ParseMs + DecodeMs + PrepareMs + TablesMs + EdgesMs + FacesMs + RefineMs + AssembleMs;
@@ -77,6 +78,6 @@ public sealed record TimedMesh(
         Progress.Report("done");
         return new(file, path, parallel, m.Edges.Count, m.Faces.Count, parseMs, decodeMs, prepareMs, meshPath.TablesMs,
             edgesMs, facesMs, refineMs, assembleMs, edges, faces, MeshDigest.Of(mesh), MeshCheck.Of(mesh), edgesByFace, contract,
-            refineFailures);
+            refineFailures, BoundaryCheck.Of(m, mesh, faces, edgesByFace));
     }
 }
