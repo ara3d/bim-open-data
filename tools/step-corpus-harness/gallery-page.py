@@ -89,8 +89,8 @@ CASES = [
      "A cube with a cylinder: planes on the quad grid, the cylinder by CDT."),
     ("p-nist_ctc_01_asme1_rd", "sample:\"nist/NIST-PMI-STEP-Files/AP203 geometry only/nist_ctc_01_asme1_rd.stp\"", "public", "holes", "TKT-410", "NIST CTC 01",
      "A few cylinder faces lose an edge to the compiler stub; the rest of the part meshes."),
-    ("p-moon_buggy_asm", "sample:steptools-ap203/moon_buggy_asm.stp --faces 14,21,23", "public", "slow", "new", "STEP Tools moon buggy, three full spheres",
-     "Whole spheres with no boundary edges, each refined to about 19,000 triangles in about 6 s: the whole assembly's mesh is too large to publish. The full file also loses 20 faces to the stub (TKT-410) and has 180 misoriented edges, more than any corpus file; neither is ticketed yet."),
+    ("p-moon_buggy_asm", "sample:steptools-ap203/moon_buggy_asm.stp --faces 14,21,23", "public", "slow", "TKT-428", "STEP Tools moon buggy, three full spheres",
+     "Whole spheres with no boundary edges, each refined to about 19,000 triangles in about 6 s, most of them near the poles (TKT-428; the units are right). The whole assembly's mesh is too large to publish. The full file also loses 20 faces to the stub (TKT-410), its 180 misoriented edges come from torus bands meshed on the wrong half of the tube (TKT-429), and its axle cylinder misses the quad grid (TKT-430)."),
     ("p-block", "sample:steptools-ap203/block.stp", "public", "holes", "TKT-410", "STEP Tools block",
      "A plain box, and nothing meshes: its 12 line edges are wrapped in INTERSECTION_CURVE, a surface-curve kind that throws the stub on every edge."),
 ]
