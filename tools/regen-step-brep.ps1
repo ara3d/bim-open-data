@@ -32,8 +32,9 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-# The Plato commit the committed files are generated from: e37c032f, the compiled law runner (TKT-354).
-$PinnedPlato = 'e37c032fa679b49e9c4d4055b62ca39fbc25ab28'
+# The Plato commit the committed files are generated from: c8c83c8b, ground TIR for a match on a later library's
+# call (TKT-410) and generated Equals comparing array fields element by element (TKT-355).
+$PinnedPlato = 'c8c83c8b660760d4f79e3f42576703dc684b832a'
 if (-not $PlatoCommit) { $PlatoCommit = $PinnedPlato }
 
 $repo = Split-Path -Parent $PSScriptRoot
