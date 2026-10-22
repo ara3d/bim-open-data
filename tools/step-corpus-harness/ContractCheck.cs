@@ -3,8 +3,12 @@ using Ara3D.StepBrep;
 namespace Ara3D.Step.CorpusHarness;
 
 /// <summary>One face measured against the version 1 mesh contract (bim-open-toolkit's sandbox/step-brep-mesh/README.md,
-/// "Version 1 mesh contract"). <see cref="Deviation"/> is the largest distance from the surface, at sample points of
-/// an element's parameter triangle, to that element in 3D (both diagonal splits of a quad); <see cref="CornerGap"/>
+/// "Version 1 mesh contract"). <see cref="Deviation"/> is the larger of two distances: from the surface, at sample
+/// points of an element's parameter triangles, to the element in 3D, and from sample points of the element in 3D to the
+/// surface (by projection). A triangle's surface samples are measured to the triangle; a quad's, for each of its two
+/// diagonal splits, to that split as a whole (the nearer of its two triangles), so a surface point that a non-uniform
+/// parametrization places beside one triangle of a split, on the other, is not counted against the split (TKT-455);
+/// the worse split counts, since a renderer may draw either. <see cref="CornerGap"/>
 /// is the largest distance between an element corner's position and the surface at its parameter point, which a
 /// file's edge-to-surface gap explains and the mesher does not; <see cref="Flipped"/> counts elements whose 3D normal
 /// points against the face normal at their parameter centroid, <see cref="Degenerate"/> those of zero area.</summary>
@@ -74,6 +78,8 @@ public sealed record ContractCheck(int FacesChecked, double Bound, int OverChord
             var normals = fm.Normals.Select(n => V(n.Vector)).ToArray();
             double deviation = 0, gap = 0;
             int flipped = 0, degenerate = 0;
+            // Corner checks, orientation and the mesh-to-surface direction of one drawn triangle; its
+            // surface-to-mesh samples are measured by the caller, against the triangle or its split.
             void Triangle(int a, int b, int c)
             {
                 gap = Math.Max(gap, Math.Max(Dist(at[a], corner[a]), Math.Max(Dist(at[b], corner[b]), Dist(at[c], corner[c]))));
@@ -90,13 +96,30 @@ public sealed record ContractCheck(int FacesChecked, double Bound, int OverChord
                 }
                 foreach (var w in Samples)
                 {
-                    var p = Mix(uv[a], uv[b], uv[c], w);
-                    var on = V(m.Geometry.Eval(s, new UvCoordinate(p.U, p.V)));
-                    deviation = Math.Max(deviation, DistanceToTriangle(on, corner[a], corner[b], corner[c]));
+                    var p = Mix3(corner[a], corner[b], corner[c], w);
+                    deviation = Math.Max(deviation, (double)m.SurfaceDistance(f, new Point3D(p.X, p.Y, p.Z)));
                 }
             }
+            // The largest distance from the surface at the samples of the parameter triangles listed to the
+            // nearest of the 3D triangles listed: one triangle, or one split of a quad.
+            double SurfaceToMesh((int A, int B, int C)[] parts)
+            {
+                double worst = 0;
+                foreach (var (a, b, c) in parts)
+                    foreach (var w in Samples)
+                    {
+                        var p = Mix(uv[a], uv[b], uv[c], w);
+                        var on = V(m.Geometry.Eval(s, new UvCoordinate(p.U, p.V)));
+                        worst = Math.Max(worst, parts.Min(t => DistanceToTriangle(on, corner[t.A], corner[t.B], corner[t.C])));
+                    }
+                return worst;
+            }
             foreach (var t in fm.Triangles)
-                Triangle((int)t.A.Value, (int)t.B.Value, (int)t.C.Value);
+            {
+                int a = (int)t.A.Value, b = (int)t.B.Value, c = (int)t.C.Value;
+                Triangle(a, b, c);
+                deviation = Math.Max(deviation, SurfaceToMesh([(a, b, c)]));
+            }
             foreach (var q in fm.Quads)
             {
                 int a = (int)q.A.Value, b = (int)q.B.Value, c = (int)q.C.Value, d = (int)q.D.Value;
@@ -104,6 +127,7 @@ public sealed record ContractCheck(int FacesChecked, double Bound, int OverChord
                 Triangle(a, c, d);
                 Triangle(a, b, d);
                 Triangle(b, c, d);
+                deviation = Math.Max(deviation, Math.Max(SurfaceToMesh([(a, b, c), (a, c, d)]), SurfaceToMesh([(a, b, d), (b, c, d)])));
             }
             return new(row.Index, row.Surface, elements, deviation, gap, flipped, degenerate, explained);
         }
@@ -128,6 +152,9 @@ public sealed record ContractCheck(int FacesChecked, double Bound, int OverChord
 
     static (double U, double V) Mix((double U, double V) a, (double U, double V) b, (double U, double V) c, (double A, double B, double C) w)
         => (w.A * a.U + w.B * b.U + w.C * c.U, w.A * a.V + w.B * b.V + w.C * c.V);
+
+    static P Mix3(P a, P b, P c, (double A, double B, double C) w)
+        => new(w.A * a.X + w.B * b.X + w.C * c.X, w.A * a.Y + w.B * b.Y + w.C * c.Y, w.A * a.Z + w.B * b.Z + w.C * c.Z);
 
     /// <summary>The distance from p to the closest point of triangle abc (Ericson, Real-Time Collision Detection, 5.1.5).</summary>
     static double DistanceToTriangle(P p, P a, P b, P c)
