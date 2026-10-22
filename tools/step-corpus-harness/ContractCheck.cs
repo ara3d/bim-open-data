@@ -5,7 +5,8 @@ namespace Ara3D.Step.CorpusHarness;
 /// <summary>One face measured against the version 1 mesh contract (bim-open-toolkit's sandbox/step-brep-mesh/README.md,
 /// "Version 1 mesh contract"). <see cref="Deviation"/> is the larger of two distances: from the surface, at sample
 /// points of an element's parameter triangles, to the element in 3D, and from sample points of the element in 3D to the
-/// surface (by projection). A triangle's surface samples are measured to the triangle; a quad's, for each of its two
+/// surface (by a projection seeded at the sample's own parameters, made only where it could matter: see
+/// <see cref="ContractCheck.ProjectAbove"/>). A triangle's surface samples are measured to the triangle; a quad's, for each of its two
 /// diagonal splits, to that split as a whole (the nearer of its two triangles), so a surface point that a non-uniform
 /// parametrization places beside one triangle of a split, on the other, is not counted against the split (TKT-455);
 /// the worse split counts, since a renderer may draw either. <see cref="CornerGap"/>
@@ -44,6 +45,12 @@ public sealed record ContractCheck(int FacesChecked, double Bound, int OverChord
     /// collinear to within about 1e-9 of its length (an equilateral triangle has 0.87).</summary>
     public const double SliverRatio = 1e-9;
 
+    /// <summary>The fraction of the bound below which a sample is not projected: the distance from a sample of a drawn
+    /// element to the surface point at the sample's own parameters is an upper bound on its distance to the surface,
+    /// so a sample whose bound is under a quarter of the chordal bound cannot decide the verdict. Planes, whose
+    /// parameters are affine, never project; projecting every sample cost 43% of meshing on RCB-F9T.</summary>
+    public const double ProjectAbove = 0.25;
+
     /// <summary>Barycentric sample points of a triangle: the centroid, the side midpoints, and three points between
     /// the centroid and the corners. A flat element over a curved surface deviates most near its centroid, and a side
     /// that is not a boundary segment deviates most near its midpoint.</summary>
@@ -58,17 +65,17 @@ public sealed record ContractCheck(int FacesChecked, double Bound, int OverChord
         double bound = chordal + (double)m.Tolerances.Length.Value;
         var rows = new FaceContract[faces.Count];
         if (parallel)
-            Parallel.For(0, faces.Count, i => rows[i] = Face(m, faces[i]));
+            Parallel.For(0, faces.Count, i => rows[i] = Face(m, faces[i], bound));
         else
             for (var i = 0; i < faces.Count; i++)
-                rows[i] = Face(m, faces[i]);
+                rows[i] = Face(m, faces[i], bound);
         var failing = rows.Where(r => r.Fails(bound)).ToArray();
         return new(rows.Length, bound, rows.Count(r => r.OverChordal(bound)), rows.Count(r => r.Flipped > 0),
             rows.Count(r => r.Degenerate > 0), rows.Count(r => !r.Explained),
             rows.Select(r => r.Deviation - r.CornerGap - bound).DefaultIfEmpty(0).Max(), failing);
     }
 
-    static FaceContract Face(BrepModel m, FaceRow row)
+    static FaceContract Face(BrepModel m, FaceRow row, double bound)
     {
         var fm = row.Outcome.Mesh;
         var elements = fm.Triangles.Count + fm.Quads.Count;
@@ -79,6 +86,21 @@ public sealed record ContractCheck(int FacesChecked, double Bound, int OverChord
         {
             var f = new BrepFaceIndex(row.Index);
             var s = m.SurfaceOf(f);
+            var surface = m.Geometry.SurfaceAt(s);
+            var closedForm = (bool)m.Geometry.HasClosedFormProjection(s);
+            // The distance from p to the surface, measured only when the surface point at p's own parameters (the
+            // same barycentric mix of the corners' parameters) is farther than ProjectAbove of the bound, then by a
+            // projection seeded there (closed form where the surface has one).
+            double ToSurface(P p, (double U, double V) uvAt)
+            {
+                var seed = new UvCoordinate(uvAt.U, uvAt.V);
+                var here = V(m.Geometry.Eval(s, seed));
+                if (Dist(p, here) <= ProjectAbove * bound)
+                    return 0;
+                var q = new Point3D(p.X, p.Y, p.Z);
+                var uv = closedForm ? m.Geometry.Project(s, q) : surface.ProjectNearBySearchCounted(m.Geometry, q, seed).Value;
+                return Dist(p, V(m.Geometry.Eval(s, uv)));
+            }
             var uv = fm.UvPoints.Select(p => ((double)p.U, (double)p.V)).ToArray();
             var at = fm.UvPoints.Select(p => V(m.Geometry.Eval(s, p))).ToArray();
             var corner = Enumerable.Range(0, uv.Length).Select(i => V(fm.Positions[(int)fm.LocalVertex[i].Value])).ToArray();
@@ -109,10 +131,7 @@ public sealed record ContractCheck(int FacesChecked, double Bound, int OverChord
                 if (Dot(n, face) < 0)
                     flipped++;
                 foreach (var w in Samples)
-                {
-                    var p = Mix3(corner[a], corner[b], corner[c], w);
-                    deviation = Math.Max(deviation, (double)m.SurfaceDistance(f, new Point3D(p.X, p.Y, p.Z)));
-                }
+                    deviation = Math.Max(deviation, ToSurface(Mix3(corner[a], corner[b], corner[c], w), Mix(uv[a], uv[b], uv[c], w)));
             }
             // The largest distance from the surface at the samples of the parameter triangles listed to the
             // nearest of the 3D triangles listed: one triangle, or one split of a quad; slivers left out (the other

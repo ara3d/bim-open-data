@@ -19,7 +19,7 @@ public sealed record TimedMesh(
     double ParseMs, double DecodeMs, double PrepareMs, double TablesMs, double EdgesMs, double FacesMs, double RefineMs,
     double AssembleMs, IReadOnlyList<EdgeRow> EdgeRows, IReadOnlyList<FaceRow> FaceRows, MeshDigest Digest, MeshCheck Check,
     IReadOnlyList<BrepEdgeIndex>[] EdgesByFace, ContractCheck Contract, IReadOnlyList<StepPlatoFailure> RefineFailures,
-    BoundaryCheck Boundary)
+    BoundaryCheck Boundary, double ContractMs = 0)
 {
     public double TotalMs
         => ParseMs + DecodeMs + PrepareMs + TablesMs + EdgesMs + FacesMs + RefineMs + AssembleMs;
@@ -74,10 +74,10 @@ public sealed record TimedMesh(
         var faceMeshes = faces.Select(f => f.Outcome.Mesh).ToArray();
         var (mesh, assembleMs) = Clock.Time(() => m.AssembleModelMesh(faceMeshes, m.NumberMeshVertices(d, faceMeshes)));
         Progress.Report("contract");
-        var contract = ContractCheck.Of(m, faces, chordal, parallel);
+        var (contract, contractMs) = Clock.Time(() => ContractCheck.Of(m, faces, chordal, parallel));
         Progress.Report("done");
         return new(file, path, parallel, m.Edges.Count, m.Faces.Count, parseMs, decodeMs, prepareMs, meshPath.TablesMs,
             edgesMs, facesMs, refineMs, assembleMs, edges, faces, MeshDigest.Of(mesh), MeshCheck.Of(mesh), edgesByFace, contract,
-            refineFailures, BoundaryCheck.Of(m, mesh, faces, edgesByFace));
+            refineFailures, BoundaryCheck.Of(m, mesh, faces, edgesByFace), contractMs);
     }
 }

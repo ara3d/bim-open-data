@@ -15,7 +15,7 @@ public static class TimeMode
             TimeTables.Write(prefix + ".faces.csv", TimeTables.FaceHeader, t.FaceRows.Select(f => f.Csv()).ToArray());
             TimeTables.Write(prefix + ".contract.csv", FaceContract.CsvHeader, t.Contract.Failing.Select(f => f.Csv(t.Contract.Bound)).ToArray());
             Summary.Of(t).Write(prefix + ".summary.json");
-            Console.WriteLine($"total {Format.Ms(t.TotalMs)} ms, edges {Format.Ms(t.EdgesMs)}, faces {Format.Ms(t.FacesMs)}, {t.Digest}, {t.Check}, {t.Boundary}, {t.Contract}");
+            Console.WriteLine($"total {Format.Ms(t.TotalMs)} ms, edges {Format.Ms(t.EdgesMs)}, faces {Format.Ms(t.FacesMs)}, contract {Format.Ms(t.ContractMs)} ms, {t.Digest}, {t.Check}, {t.Boundary}, {t.Contract}");
             return 0;
         }
         catch (Exception ex)

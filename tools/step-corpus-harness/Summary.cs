@@ -7,7 +7,7 @@ public sealed record Summary(
     string File, string Path, bool Parallel, string Status, int Edges, int Faces, int EdgesThrew, int FacesThrew,
     int FacesMeshed, double ParseMs, double DecodeMs, double PrepareMs, double TablesMs, double EdgesMs, double FacesMs,
     double RefineMs, double AssembleMs, double TotalMs, MeshDigest? Digest, MeshCheck? Check, IReadOnlyList<string> Failures,
-    string? Contract = null, bool? ClosedShellsClosed = null, string? Boundary = null)
+    string? Contract = null, bool? ClosedShellsClosed = null, string? Boundary = null, double? ContractMs = null)
 {
     static readonly JsonSerializerOptions Indented = new() { WriteIndented = true };
 
@@ -20,7 +20,7 @@ public sealed record Summary(
                 .Concat(t.FaceRows.Where(f => f.Exception != "").Select(f => $"face {f.Index} {f.Surface}: {f.Exception}: {f.Message}"))
                 .Concat(t.RefineFailures.Select(f => $"{f.Kind} round {f.Index}: {f.Exception}: {f.Message}"))
                 .ToArray(),
-            t.Contract.ToString(), t.Boundary.ClosedShellsAreClosed, t.Boundary.ToString());
+            t.Contract.ToString(), t.Boundary.ClosedShellsAreClosed, t.Boundary.ToString(), t.ContractMs);
 
     public static Summary Failed(string file, string path, bool parallel, Exception ex)
         => new(file, path, parallel, "failed", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, null, null, [ex.ToString()]);
