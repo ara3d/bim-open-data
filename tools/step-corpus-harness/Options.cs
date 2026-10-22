@@ -42,6 +42,7 @@ public sealed record Options(bool Parallel, string Path, bool Warmup, string[] R
     {
         Console.Error.WriteLine("""
             step-corpus-harness one <file.step> <out.json> [--path host|meshfile] [--parallel] [--warmup]
+            step-corpus-harness agree <file.step>... [--parallel]
             step-corpus-harness all <corpus folder> <out folder> <seconds per file> [--path ...] [--parallel] [--warmup]
             step-corpus-harness time <file.step> <out prefix> [--path host] [--parallel] [--warmup]
             step-corpus-harness laws <file.step> <out prefix> [--parallel]       (all ... --child laws runs it on every file)

@@ -6,8 +6,8 @@ using Ara3D.Utils;
 namespace Ara3D.Step.CorpusHarness;
 
 /// <summary><c>one file out.json</c>: one file meshed, its <see cref="Summary"/> written. With <c>--path meshfile</c>
-/// the mesh comes from StepPlatoMesher.MeshFile itself (parallel rows since TKT-403), which checks that the time
-/// mode's sequential restatement gives the same <see cref="MeshDigest"/>.</summary>
+/// the mesh comes from StepPlatoMesher.MeshFile itself (parallel rows since TKT-403); the agree mode compares it with
+/// the time mode's face by face.</summary>
 public static class OneMode
 {
     public static int Run(string file, string json, Options options)

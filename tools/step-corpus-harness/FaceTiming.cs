@@ -4,8 +4,11 @@ using Ara3D.StepBrep;
 
 namespace Ara3D.Step.CorpusHarness;
 
-/// <summary>One face's outcome and timing. <see cref="Path"/> names the branch MeshFace took: undiscretized, poly-loop,
-/// not-simple, grid, or cdt (triangulated and refined); "threw" when the library threw.</summary>
+/// <summary>One face's outcome and timing. <see cref="Path"/> names what MeshFace did, read from its outcome: grid, cdt
+/// or grid+cdt for a meshed face (quads, triangles, or both), undiscretized when an edge of the face has no
+/// discretization, the face diagnostic's code without its FACE- prefix and in lower case for an unmeshed face
+/// (poly-loop, loop-not-simple, zero-width, ...), "refined" after the host's refinement loop, "threw" when the library
+/// threw.</summary>
 public sealed record FaceRow(
     int Index, string Surface, int Loops, int Edges, bool AllLines, int Segments, int Triangles, int Quads, string Path,
     FaceStages Stages, double Ms, string Exception, string Message, FaceMeshOutcome Outcome);
@@ -17,10 +20,10 @@ public static class FaceTiming
     public static FaceRow Refined(this FaceRow f, FaceMeshOutcome o)
         => f with { Outcome = o, Path = "refined", Triangles = o.Mesh.Triangles.Count, Quads = o.Mesh.Quads.Count, Exception = "", Message = "" };
 
-    /// <summary>StepPlatoTables.FaceOutcome restated stage by stage: the host's discretized-face test, then layer 5's
-    /// MeshFace, MeshRegion and MeshRegionOnce and MeshedOutcomeIn, inlined from the generated C#
-    /// (FaceMeshingDomainOnce.g.cs) so each stage has its own clock. The outcome is the one MeshFace returns; the
-    /// harness's one mode, which calls MeshFile itself, gives the same mesh digest.</summary>
+    /// <summary>StepPlatoTables.FaceOutcome, the call StepPlatoMesher.MeshFile makes for each face, timed in its two
+    /// parts: the host's discretized-face test (check) and layer 5's MeshFace (mesh). Nothing of MeshFace is restated
+    /// here, so the harness meshes as the library does whatever its face path becomes; the agree mode checks every face
+    /// against MeshFile.</summary>
     public static FaceRow Time(this BrepModel m, int i, IReadOnlyList<BrepEdgeIndex> edges, EdgeDiscretizations d,
         FaceMeshingCriteria c, MeshPath meshPath)
     {
@@ -42,30 +45,9 @@ public static class FaceTiming
         {
             if (!Stage(FaceStage.Check, () => meshPath.Tables.IsDiscretized(m, f, d)))
                 return Row(StepPlatoTables.UndiscretizedOutcome(f), path = "undiscretized");
-            if (m.HasPolyLoop(f))
-                return Row(f.UnmeshedOutcome("FACE-POLY-LOOP",
-                    "This face is bounded by a poly loop, which version 1 does not mesh; the decoder should give it edges."), path = "poly-loop");
-            var dom = Stage(FaceStage.Region, () => m.SurfaceDomainOf(f));
-            var raw = Stage(FaceStage.Region, () => m.UnorientedRegionOfIn(f, dom, d, c));
-            var r = Stage(FaceStage.Region, () => m.OrientRegion(f, raw));
-            var chart = Stage(FaceStage.Chart, () => m.ChartOf(f, r));
-            var tol = Stage(FaceStage.Chart, () => m.RegionToleranceIn(f, dom, chart));
-            var flags = Stage(FaceStage.Simple, () => r.CollidingSegments(tol));
-            if (Enumerable.Any(flags, x => (bool)x))
-            {
-                path = "not-simple";
-                return Row(Stage(FaceStage.Advisory, () => f.NotSimpleOutcome(m.SelfIntersectionRequestsFrom(f, d, r, flags))));
-            }
-            var grid = Stage(FaceStage.Grid, () => m.FaceQuadGridIn(f, d, r, tol, c));
-            var useGrid = !grid.IsNoGrid() && !grid.IsCountsDiffer();
-            path = useGrid ? "grid" : "cdt";
-            var t = useGrid ? grid.Grid_Mesh : Stage(FaceStage.Triangulate, () => r.TriangulateRegion(chart));
-            if (!useGrid)
-                t = Stage(FaceStage.Refine, () => m.RefineToSurface(f, r, chart, t, c));
-            var advisory = Stage(FaceStage.Advisory, () => m.CoarseSegmentRequests(f, d, r, c).Concatenate(m.QuadCountRequests(d, grid, c)));
-            var mesh = Stage(FaceStage.Lift, () => m.Lift(f, d, t));
-            var diagnostics = Stage(FaceStage.Advisory, () => advisory.Map(q => q.RequestDiagnostic()).Concatenate(m.ReversalDiagnostics(f, raw)));
-            return Row(new FaceMeshOutcome(mesh, advisory, diagnostics));
+            var o = Stage(FaceStage.Mesh, () => m.MeshFace(f, d, c));
+            path = PathOf(o);
+            return Row(o);
         }
         catch (Exception ex)
         {
@@ -73,5 +55,15 @@ public static class FaceTiming
             return Row(f.UnmeshedOutcome("HOST-LIBRARY-THREW", $"The library threw {ex.GetType().Name} meshing this face: {ex.Message}"),
                 ex.GetType().Name, ex.Message);
         }
+    }
+
+    /// <summary>What MeshFace did, from its outcome (see <see cref="FaceRow"/>).</summary>
+    public static string PathOf(FaceMeshOutcome o)
+    {
+        int triangles = o.Mesh.Triangles.Count, quads = o.Mesh.Quads.Count;
+        if (triangles + quads > 0)
+            return quads == 0 ? "cdt" : triangles == 0 ? "grid" : "grid+cdt";
+        var code = o.Diagnostics.Select(x => (string)x.Code).FirstOrDefault(x => x.StartsWith("FACE-")) ?? o.Diagnostics.Select(x => (string)x.Code).FirstOrDefault() ?? "unmeshed";
+        return (code.StartsWith("FACE-") ? code[5..] : code).ToLowerInvariant();
     }
 }

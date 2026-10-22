@@ -4,6 +4,7 @@ var options = Options.Parse(args);
 return options.Rest switch
 {
     ["one", var file, var json] => OneMode.Run(file, json, options),
+    ["agree", .. var files] when files.Length > 0 => AgreeMode.Run(files, options),
     ["all", var corpus, var outDir, var seconds] => AllMode.Run(corpus, outDir, int.Parse(seconds), options),
     ["time", var file, var prefix] => TimeMode.Run(file, prefix, options),
     ["laws", var file, var prefix] => LawsMode.Run(file, prefix, options),

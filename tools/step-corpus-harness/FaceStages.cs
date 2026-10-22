@@ -1,10 +1,9 @@
 namespace Ara3D.Step.CorpusHarness;
 
-/// <summary>The stages of layer 5's MeshRegionOnce as restated in <see cref="FaceTiming"/>. Check is layer 8's
-/// IsDiscretizedFace; region builds and orients the UV loops; chart is the chart and its tolerance; simple is the
-/// segment-collision test; grid the quad-grid attempt; triangulate the CDT; refine the insertion refinement; lift the
-/// 3D lift; advisory the refinement requests and diagnostics.</summary>
-public enum FaceStage { Check, Region, Chart, Simple, Grid, Triangulate, Refine, Lift, Advisory }
+/// <summary>The two timed parts of a face's outcome in <see cref="FaceTiming"/>: check is the host's discretized-face
+/// test (layer 8's IsDiscretizedFace), mesh is layer 5's MeshFace, called whole. The stages inside MeshFace are not
+/// restated, so they have no clocks of their own here.</summary>
+public enum FaceStage { Check, Mesh }
 
 /// <summary>Milliseconds per <see cref="FaceStage"/>; a stage not reached is 0.</summary>
 public sealed record FaceStages(IReadOnlyList<double> Ms)
