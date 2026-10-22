@@ -10,12 +10,13 @@ namespace Ara3D.Step.CorpusHarness;
 
 /// <summary>A STEP file meshed the way StepPlatoMesher.MeshFile does it, with every step, edge and face timed:
 /// parse, DecodeRaw, PrepareModel, the host's once-per-model tables, the edges, the faces, and layer 6's numbering
-/// and assembly. The chordal bound is StepMesher's default (StepMeshingOptions.MaxDeviation in millimetres).</summary>
+/// and assembly, then the version 1 contract on every face (<see cref="ContractCheck"/>, untimed). The chordal bound is
+/// StepMesher's default (StepMeshingOptions.MaxDeviation in millimetres).</summary>
 public sealed record TimedMesh(
     string File, string Path, bool Parallel, int Edges, int Faces,
     double ParseMs, double DecodeMs, double PrepareMs, double TablesMs, double EdgesMs, double FacesMs, double AssembleMs,
     IReadOnlyList<EdgeRow> EdgeRows, IReadOnlyList<FaceRow> FaceRows, MeshDigest Digest, MeshCheck Check,
-    IReadOnlyList<BrepEdgeIndex>[] EdgesByFace)
+    IReadOnlyList<BrepEdgeIndex>[] EdgesByFace, ContractCheck Contract)
 {
     public double TotalMs
         => ParseMs + DecodeMs + PrepareMs + TablesMs + EdgesMs + FacesMs + AssembleMs;
@@ -59,8 +60,10 @@ public sealed record TimedMesh(
         Progress.Report("assemble");
         var faceMeshes = faces.Select(f => f.Outcome.Mesh).ToArray();
         var (mesh, assembleMs) = Clock.Time(() => m.AssembleModelMesh(faceMeshes, m.NumberMeshVertices(d, faceMeshes)));
+        Progress.Report("contract");
+        var contract = ContractCheck.Of(m, faces, chordal, parallel);
         Progress.Report("done");
         return new(file, path, parallel, m.Edges.Count, m.Faces.Count, parseMs, decodeMs, prepareMs, meshPath.TablesMs,
-            edgesMs, facesMs, assembleMs, edges, faces, MeshDigest.Of(mesh), MeshCheck.Of(mesh), edgesByFace);
+            edgesMs, facesMs, assembleMs, edges, faces, MeshDigest.Of(mesh), MeshCheck.Of(mesh), edgesByFace, contract);
     }
 }

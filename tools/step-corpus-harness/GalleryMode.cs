@@ -45,7 +45,7 @@ public static class GalleryMode
             ? TimedMesh.RunModel(source, Witness(source[8..]), options.Path, options.Parallel, 0, 0, 0, chordal)
             : TimedMesh.Run(source, options, chordal);
         Write(t, glb, Chosen(t, faces, ring), options.Warmup);
-        Console.WriteLine($"gallery {glb}: {t.Faces} faces, {t.FaceRows.Count(f => f.Triangles + f.Quads > 0)} meshed, {t.Digest}, {t.Check}");
+        Console.WriteLine($"gallery {glb}: {t.Faces} faces, {t.FaceRows.Count(f => f.Triangles + f.Quads > 0)} meshed, {t.Digest}, {t.Check}, {t.Contract}");
         return 0;
     }
 
@@ -144,7 +144,9 @@ public static class GalleryMode
             centre = w.Centre, size = new[] { max.Item1 - min.Item1, max.Item2 - min.Item2, max.Item3 - min.Item3 },
             warm, drawnMs = R(chosen.Sum(f => t.FaceRows[f].Ms)),
             ms = new { parse = R(t.ParseMs), decode = R(t.DecodeMs), prepare = R(t.PrepareMs), tables = R(t.TablesMs), edges = R(t.EdgesMs), faces = R(t.FacesMs), assemble = R(t.AssembleMs), total = R(t.TotalMs) },
-            digest = t.Digest, check = t.Check, branches, byKind, edgeFailures, slowest, mostEdges, unmeshed,
+            digest = t.Digest, check = t.Check,
+            contract = new { verdict = t.Contract.ToString(), bound = t.Contract.Bound, failing = Enumerable.Take(t.Contract.Failing, 20) },
+            branches, byKind, edgeFailures, slowest, mostEdges, unmeshed,
         }, new JsonSerializerOptions { WriteIndented = true }));
     }
 
