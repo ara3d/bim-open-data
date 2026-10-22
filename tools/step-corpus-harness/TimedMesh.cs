@@ -9,17 +9,19 @@ using Ara3D.Utils;
 namespace Ara3D.Step.CorpusHarness;
 
 /// <summary>A STEP file meshed the way StepPlatoMesher.MeshFile does it, with every step, edge and face timed:
-/// parse, DecodeRaw, PrepareModel, the host's once-per-model tables, the edges, the faces, and layer 6's numbering
-/// and assembly, then the version 1 contract on every face (<see cref="ContractCheck"/>, untimed). The chordal bound is
+/// parse, DecodeRaw, PrepareModel, the host's once-per-model tables, the edges, the faces, the host's refinement loop
+/// on blocking requests (StepPlatoMesher.Refined, one clock for the whole loop; the rows of the edges it refined and
+/// the faces it meshed again carry their final discretization and outcome, the face's path "refined", and keep their
+/// first-pass time), and layer 6's numbering and assembly, then the version 1 contract on every face (<see cref="ContractCheck"/>, untimed). The chordal bound is
 /// StepMesher's default (StepMeshingOptions.MaxDeviation in millimetres).</summary>
 public sealed record TimedMesh(
     string File, string Path, bool Parallel, int Edges, int Faces,
-    double ParseMs, double DecodeMs, double PrepareMs, double TablesMs, double EdgesMs, double FacesMs, double AssembleMs,
-    IReadOnlyList<EdgeRow> EdgeRows, IReadOnlyList<FaceRow> FaceRows, MeshDigest Digest, MeshCheck Check,
-    IReadOnlyList<BrepEdgeIndex>[] EdgesByFace, ContractCheck Contract)
+    double ParseMs, double DecodeMs, double PrepareMs, double TablesMs, double EdgesMs, double FacesMs, double RefineMs,
+    double AssembleMs, IReadOnlyList<EdgeRow> EdgeRows, IReadOnlyList<FaceRow> FaceRows, MeshDigest Digest, MeshCheck Check,
+    IReadOnlyList<BrepEdgeIndex>[] EdgesByFace, ContractCheck Contract, IReadOnlyList<StepPlatoFailure> RefineFailures)
 {
     public double TotalMs
-        => ParseMs + DecodeMs + PrepareMs + TablesMs + EdgesMs + FacesMs + AssembleMs;
+        => ParseMs + DecodeMs + PrepareMs + TablesMs + EdgesMs + FacesMs + RefineMs + AssembleMs;
 
     public static double ChordalMillimetres
         => new StepMeshingOptions().MaxDeviation * 1000.0;
@@ -54,9 +56,19 @@ public sealed record TimedMesh(
         var surfaces = m.AdjacentSurfaces(edgesByFace);
         var (edges, edgesMs) = Clock.Time(() =>
             Rows.Build(m.Edges.Count, parallel, i => m.Time(i, surfaces[i], criteria.Discretization, meshPath), new("edges", m.Edges.Count)));
-        var d = new EdgeDiscretizations(edges.Select(e => e.Discretization).ToArray());
-        var (faces, facesMs) = Clock.Time(() =>
-            Rows.Build(m.Faces.Count, parallel, i => m.Time(i, edgesByFace[i], d, criteria, meshPath), new("faces", m.Faces.Count)));
+        var first = new EdgeDiscretizations(edges.Select(e => e.Discretization).ToArray());
+        var (firstFaces, facesMs) = Clock.Time(() =>
+            Rows.Build(m.Faces.Count, parallel, i => m.Time(i, edgesByFace[i], first, criteria, meshPath), new("faces", m.Faces.Count)));
+        Progress.Report("refine");
+        var refineFailures = new List<StepPlatoFailure>();
+        var (final, refineMs) = Clock.Time(() => meshPath.Tables.Refined(m, criteria, StepPlatoMesher.MaxRefinementRounds(chordal), first,
+            firstFaces.Select(f => f.Outcome).ToArray(), refineFailures));
+        var d = final.Discretizations;
+        var changed = d.ChangedEdges(first);
+        var remeshed = m.FacesTouchingByCoedges(Enumerable.Repeat((StepBrep.Boolean)true, m.Faces.Count).ToArray(), changed);
+        edges = edges.Select((e, i) => (bool)changed[i]
+            ? e with { Discretization = d.ByEdge[i], Segments = Math.Max(0, d.ByEdge[i].Parameters.Count - 1) } : e).ToArray();
+        var faces = firstFaces.Select((f, i) => (bool)remeshed[i] ? f.Refined(final.Outcomes[i]) : f).ToArray();
         Progress.Report("assemble");
         var faceMeshes = faces.Select(f => f.Outcome.Mesh).ToArray();
         var (mesh, assembleMs) = Clock.Time(() => m.AssembleModelMesh(faceMeshes, m.NumberMeshVertices(d, faceMeshes)));
@@ -64,6 +76,7 @@ public sealed record TimedMesh(
         var contract = ContractCheck.Of(m, faces, chordal, parallel);
         Progress.Report("done");
         return new(file, path, parallel, m.Edges.Count, m.Faces.Count, parseMs, decodeMs, prepareMs, meshPath.TablesMs,
-            edgesMs, facesMs, assembleMs, edges, faces, MeshDigest.Of(mesh), MeshCheck.Of(mesh), edgesByFace, contract);
+            edgesMs, facesMs, refineMs, assembleMs, edges, faces, MeshDigest.Of(mesh), MeshCheck.Of(mesh), edgesByFace, contract,
+            refineFailures);
     }
 }

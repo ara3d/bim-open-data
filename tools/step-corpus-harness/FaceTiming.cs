@@ -12,6 +12,11 @@ public sealed record FaceRow(
 
 public static class FaceTiming
 {
+    /// <summary>The row of a face the host's refinement loop meshed again: its final outcome, path "refined", and its
+    /// first-pass time and stages.</summary>
+    public static FaceRow Refined(this FaceRow f, FaceMeshOutcome o)
+        => f with { Outcome = o, Path = "refined", Triangles = o.Mesh.Triangles.Count, Quads = o.Mesh.Quads.Count, Exception = "", Message = "" };
+
     /// <summary>StepPlatoTables.FaceOutcome restated stage by stage: the host's discretized-face test, then layer 5's
     /// MeshFace, MeshRegion and MeshRegionOnce and MeshedOutcomeIn, inlined from the generated C#
     /// (FaceMeshingDomainOnce.g.cs) so each stage has its own clock. The outcome is the one MeshFace returns; the

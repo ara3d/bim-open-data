@@ -35,7 +35,7 @@ public static class OneMode
             new StepModel(new StepDocument(new FilePath(file))).MeshFile(TimedMesh.ChordalMillimetres));
         return new(file, Options.MeshFilePath, false, "done", mesh.Model.Edges.Count, mesh.Model.Faces.Count,
             mesh.Failures.Count(f => f.Kind == StepPlatoFailure.Edge), mesh.Failures.Count(f => f.Kind == StepPlatoFailure.Face),
-            mesh.Outcomes.Count(o => o.Mesh.Triangles.Count + o.Mesh.Quads.Count > 0), 0, 0, 0, 0, 0, 0, 0, ms,
+            mesh.Outcomes.Count(o => o.Mesh.Triangles.Count + o.Mesh.Quads.Count > 0), 0, 0, 0, 0, 0, 0, 0, 0, ms,
             MeshDigest.Of(mesh.Mesh), MeshCheck.Of(mesh.Mesh), mesh.Failures.Select(f => $"{f.Kind} {f.Index}: {f.Exception}: {f.Message}").ToArray());
     }
 }

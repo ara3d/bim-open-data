@@ -143,7 +143,7 @@ public static class GalleryMode
             triangles = w.Triangles, edgeSegments = w.EdgeSegments, failedSegments = w.FailedSegments,
             centre = w.Centre, size = new[] { max.Item1 - min.Item1, max.Item2 - min.Item2, max.Item3 - min.Item3 },
             warm, drawnMs = R(chosen.Sum(f => t.FaceRows[f].Ms)),
-            ms = new { parse = R(t.ParseMs), decode = R(t.DecodeMs), prepare = R(t.PrepareMs), tables = R(t.TablesMs), edges = R(t.EdgesMs), faces = R(t.FacesMs), assemble = R(t.AssembleMs), total = R(t.TotalMs) },
+            ms = new { parse = R(t.ParseMs), decode = R(t.DecodeMs), prepare = R(t.PrepareMs), tables = R(t.TablesMs), edges = R(t.EdgesMs), faces = R(t.FacesMs), refine = R(t.RefineMs), assemble = R(t.AssembleMs), total = R(t.TotalMs) },
             digest = t.Digest, check = t.Check,
             contract = new { verdict = t.Contract.ToString(), bound = t.Contract.Bound, failing = Enumerable.Take(t.Contract.Failing, 20) },
             branches, byKind, edgeFailures, slowest, mostEdges, unmeshed,
