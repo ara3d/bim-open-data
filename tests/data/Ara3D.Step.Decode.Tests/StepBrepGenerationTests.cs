@@ -4,8 +4,8 @@ namespace Ara3D.Step.Decode.Tests;
 
 /// <summary>The committed src/data/Ara3D.StepBrep is what tools/regen-step-brep.ps1 writes from the Plato and
 /// library checkouts beside this repository (bim-open-toolkit/deps/bim-open-data, ..\..\..\plato and
-/// ..\..\sandbox\step-brep-mesh). Ignored when either is absent; inconclusive, at once, when either has uncommitted
-/// changes to the inputs, since the committed files name commits; otherwise it regenerates, which takes minutes.</summary>
+/// ..\..\sandbox\step-brep-mesh). Ignored when either is absent; otherwise it regenerates from the pinned Plato commit
+/// and the library's HEAD (never from either working tree), which takes minutes.</summary>
 public static class StepBrepGenerationTests
 {
     const string Script = "tools/regen-step-brep.ps1";
@@ -19,9 +19,6 @@ public static class StepBrepGenerationTests
         var library = Path.GetFullPath(Path.Combine(repo, "..", "..", "sandbox", "step-brep-mesh"));
         if (!Directory.Exists(plato) || !Directory.Exists(library))
             Assert.Ignore($"needs the Plato checkout ({plato}) and the library ({library}); run {Script} with -PlatoRoot and -LibraryRoot to regenerate");
-        var header = RunScript(repo, "-ProvenanceOnly").Trim();
-        if (header.Contains("+local"))
-            Assert.Inconclusive($"the inputs have uncommitted changes ({header}); commit them, then compare");
         var output = Path.Combine(Path.GetTempPath(), "step-brep-" + Guid.NewGuid().ToString("N"));
         try
         {

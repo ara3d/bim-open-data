@@ -5,8 +5,20 @@ compiler: `BrepModel` and its tables, `RawDecodedModel`, `PrepareModel`, the mes
 `Witness_RawTwoCubes`), the comparisons (`SameRawModel`, `SameDecodedModel`) and every law as a Boolean function.
 `Ara3D.Step.Decode` fills a `RawDecodedModel` from a STEP file; this project finishes and checks it.
 
-Nothing here is written by hand. Regenerate with `tools/regen-step-brep.ps1`; the test `Ara3D.Step.Decode.Tests.StepBrepGenerationTests` fails when
-the committed files differ from a fresh run.
+Nothing here is written by hand. Regenerate from the toolkit checkout, with Plato cloned beside it (`..\plato`, with
+its parakeet submodule) and `ara3d-sdk` where Parakeet's project references point:
+
+```
+powershell -File deps/bim-open-data/tools/regen-step-brep.ps1
+```
+
+Every input is read from a commit, never from a working tree: the compiler, the stdlib tiers and the runtime from Plato
+at the commit pinned in the script (`$PinnedPlato`; `-PlatoCommit` overrides it), the layers from the toolkit at `HEAD`
+(`-LibraryCommit` overrides it). Uncommitted edits in either clone change nothing, and a fresh clone writes the same
+bytes. The compiler is built once per Plato commit from a `git archive` export, under `%TEMP%\regen-step-brep`; the
+first run at a new commit spends about 10 minutes on that build. The last line printed names both full commits; each
+file's header names the Plato commit and the last toolkit commit that changed the layers. The test
+`Ara3D.Step.Decode.Tests.StepBrepGenerationTests` fails when the committed files differ from a fresh run.
 
 | Folder or file | Holds |
 |---|---|

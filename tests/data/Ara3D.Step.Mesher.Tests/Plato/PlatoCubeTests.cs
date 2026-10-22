@@ -23,7 +23,7 @@ public static class PlatoCubeTests
         var file = MeshFixture("unit-cube.stp");
         Assert.That(file.Failures, Is.Empty);
         Assert.That(file.Outcomes.SelectMany(o => o.Diagnostics).Where(d => (bool)d.Severity.IsError()).Select(d => (string)d.Code), Is.Empty);
-        Assert.That(((int)file.Mesh.Positions.Count, (int)file.Mesh.Triangles.Count, (int)file.Mesh.Quads.Count), Is.EqualTo((8, 12, 0)));
+        Assert.That(((int)file.Mesh.Positions.Count, (int)file.Mesh.Triangles.Count, (int)file.Mesh.Quads.Count), Is.EqualTo((8, 0, 6)), "one quad per face: the host prefers quads (TKT-405)");
     }
 
     [Test]
@@ -48,7 +48,7 @@ public static class PlatoCubeTests
         var edges = Enumerable.Range(0, table.CountEdges()).Select(k => new UndirectedEdgeIndex(k)).ToArray();
         Assert.Multiple(() =>
         {
-            Assert.That(edges, Has.Length.EqualTo(18), "edges of 12 triangles on 8 vertices");
+            Assert.That(edges, Has.Length.EqualTo(12), "the cube's 12 edges: 6 quads on 8 vertices");
             Assert.That((bool)edges.All(k => table.Law_ClosedMeansEveryEdgeHasTwoSides(k)), Is.True, "Law_ClosedMeansEveryEdgeHasTwoSides");
             Assert.That((bool)edges.All(k => table.Law_ManifoldMeansNoEdgeHasMoreThanTwoSides(k)), Is.True, "Law_ManifoldMeansNoEdgeHasMoreThanTwoSides");
             Assert.That((bool)table.Law_OrientedExactlyWhenNoEdgeIsMisoriented(), Is.True, "Law_OrientedExactlyWhenNoEdgeIsMisoriented");
