@@ -24,7 +24,7 @@ public sealed record TimedMesh(
         => ParseMs + DecodeMs + PrepareMs + TablesMs + EdgesMs + FacesMs + RefineMs + AssembleMs;
 
     public static double ChordalMillimetres
-        => new StepMeshingOptions().MaxDeviation * 1000.0;
+        => new StepMeshingOptions().ChordalMillimetres;
 
     public static TimedMesh Run(string file, Options options, double? chordal = null)
     {
@@ -49,7 +49,8 @@ public sealed record TimedMesh(
     /// the library's witness models.</summary>
     public static TimedMesh RunModel(string file, BrepModel m, string path, bool parallel, double parseMs, double decodeMs, double prepareMs, double chordal)
     {
-        var criteria = StepPlatoMesher.Criteria(chordal);
+        var options = StepPlatoMesher.Options(chordal);
+        var criteria = options.Face;
         Progress.Report("tables");
         var meshPath = MeshPath.Of(path, m);
         var edgesByFace = m.EdgesByFace();
@@ -61,8 +62,7 @@ public sealed record TimedMesh(
             Rows.Build(m.Faces.Count, parallel, i => m.Time(i, edgesByFace[i], first, criteria, meshPath), new("faces", m.Faces.Count)));
         Progress.Report("refine");
         var refineFailures = new List<StepPlatoFailure>();
-        var (final, refineMs) = Clock.Time(() => meshPath.Tables.Refined(m, criteria, StepPlatoMesher.MaxRefinementRounds(chordal), first,
-            firstFaces.Select(f => f.Outcome).ToArray(), refineFailures));
+        var (final, refineMs) = Clock.Time(() => meshPath.Tables.Refined(m, options, first, firstFaces.Select(f => f.Outcome).ToArray(), refineFailures));
         var d = final.Discretizations;
         var changed = d.ChangedEdges(first);
         var remeshed = m.FacesTouchingByCoedges(Enumerable.Repeat((StepBrep.Boolean)true, m.Faces.Count).ToArray(), changed);

@@ -17,10 +17,16 @@ public static class PlatoOtherSurfaceTests
 
     const int SegmentsPerCircle = 24;
 
-    static StepPlatoMesh MeshFixture(string name)
+    /// <summary>The unit sphere's bound. At 1 mm on a 1 mm radius the version 1 contract (closed, oriented, within the
+    /// chordal bound) admits a mesh of 1.498 mm^3, and since the 15 degree angular test no longer governs face
+    /// refinement the mesher returns about that; at 0.05 mm every element lies within 5% of the radius, so the 80%
+    /// volume floor below measures the surface rather than the bound.</summary>
+    const double SphereChordalMillimetres = 0.05;
+
+    static StepPlatoMesh MeshFixture(string name, double chordal = ChordalMillimetres)
     {
         using var document = new StepDocument(StepText.Fixture(name));
-        return new StepModel(document).MeshFile(ChordalMillimetres);
+        return new StepModel(document).MeshFile(chordal);
     }
 
     [Test]
@@ -42,7 +48,7 @@ public static class PlatoOtherSurfaceTests
     [Test]
     public static void SphereMeshesClosedAndOriented()
     {
-        var file = MeshFixture("unit-sphere.stp");
+        var file = MeshFixture("unit-sphere.stp", SphereChordalMillimetres);
         var mesh = file.Mesh;
         Assert.That(file.Failures, Is.Empty);
         Assert.That(file.IsMeshed(new BrepFaceIndex(0)), Is.True);

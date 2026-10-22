@@ -1,3 +1,5 @@
+using Ara3D.Step.Decode;
+using Ara3D.StepBrep;
 using Ara3D.IO.StepParser;
 using Ara3D.Step.Mesher.Plato;
 using Ara3D.Utils;
@@ -11,7 +13,7 @@ namespace Ara3D.Step.Mesher.Tests.Plato;
 /// checkout), and the case is skipped when neither holds it.</summary>
 public static class PlatoRefinementTests
 {
-    static readonly double Chordal = new StepMeshingOptions().MaxDeviation * 1000;
+    static readonly double Chordal = new StepMeshingOptions().ChordalMillimetres;
 
     [TestCase("POS/ANN-MB2.step", new[] { 260, 445, 1606, 1699 })]
     [TestCase("POS/CAM.STEP", new[] { 124, 146 })]
@@ -41,6 +43,33 @@ public static class PlatoRefinementTests
         Assert.That(after.Keys, Is.SubsetOf(before.Keys));
         Assert.That(after.Values.Sum(), Is.LessThan(before.Values.Sum()));
         Assert.That(after.Keys.Intersect(faces), Is.Empty);
+    }
+
+    /// <summary>The host's loop (layer 8's Step in parts, faces on every core) ends where layer 8's own loop does
+    /// (FinalStateAnsweringBlocking, Step in sequence): the same round, discretizations and face meshes.</summary>
+    [TestCase("POS/CAM.STEP")]
+    [TestCase("POS/ANN-MB2.step")]
+    public static void HostLoopIsLayer8Loop(string file)
+    {
+        var m = new StepModel(new StepDocument(new FilePath(Find(file)))).DecodeRaw().PrepareModel().Model;
+        var o = StepPlatoMesher.Options(Chordal);
+        var tables = StepPlatoTables.Of(m);
+        var d = new EdgeDiscretizations(Enumerable.Range(0, m.Edges.Count)
+            .Select(i => Try(() => tables.Discretized(m, new BrepEdgeIndex(i), o.Face.Discretization), () => new BrepEdgeIndex(i).Undiscretized())).ToArray());
+        var outcomes = Enumerable.Range(0, m.Faces.Count)
+            .Select(i => Try(() => tables.FaceOutcome(m, new BrepFaceIndex(i), d, o.Face), () => new BrepFaceIndex(i).UnmeshedOutcome("X", "x"))).ToArray();
+        var host = tables.Refined(m, o, d, outcomes, new List<StepPlatoFailure>());
+        var chosen = m.AllFaces();
+        var library = m.FinalStateAnsweringBlocking(o, chosen, d.BlockingStateOf(outcomes, chosen));
+        Assert.That((int)host.Round, Is.EqualTo((int)library.Round));
+        Assert.That(Enumerable.Range(0, m.Edges.Count).Where(i => !(bool)host.Discretizations.ByEdge[i].SameDiscretization(library.Discretizations.ByEdge[i])), Is.Empty);
+        Assert.That(Enumerable.Range(0, m.Faces.Count).Where(i => !host.Outcomes[i].Mesh.Equals(library.Outcomes[i].Mesh)), Is.Empty);
+        Assert.That(host.Pending.Count, Is.EqualTo(library.Pending.Count));
+    }
+
+    static T Try<T>(Func<T> f, Func<T> fallback)
+    {
+        try { return f(); } catch { return fallback(); }
     }
 
     /// <summary>Boundary edges (undirected edges used once) per B-rep face, over the assembled mesh's shared vertex

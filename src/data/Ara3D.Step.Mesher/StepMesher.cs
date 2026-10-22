@@ -61,7 +61,7 @@ public static class StepMesher
     {
         try
         {
-            return model.MeshFile(options.MaxDeviation * MillimetresPerMetre);
+            return model.MeshFile(options.ChordalMillimetres);
         }
         catch (Exception ex)
         {
@@ -69,8 +69,6 @@ public static class StepMesher
             return null;
         }
     }
-
-    const double MillimetresPerMetre = 1000;
 
     static int TriangleCount(Model3D model)
     {

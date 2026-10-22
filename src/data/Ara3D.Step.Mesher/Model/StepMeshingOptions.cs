@@ -11,4 +11,8 @@ public sealed record StepMeshingOptions(float MaxDeviation = MeshKernel.Toleranc
     public static readonly Material Grey = Material.Default.WithColor(new Color(0.7f, 0.7f, 0.7f, 1f));
 
     public Material UnstyledMaterial => Unstyled ?? Grey;
+
+    /// <summary><see cref="MaxDeviation"/> in the decoded model's millimetres (the Plato library's DecodeRaw scales
+    /// every file to millimetres): the chordal bound StepPlatoMesher.MeshFile takes.</summary>
+    public double ChordalMillimetres => MaxDeviation * 1000.0;
 }
