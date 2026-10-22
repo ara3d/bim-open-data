@@ -2,9 +2,10 @@ using System.Diagnostics;
 
 namespace Ara3D.Step.CorpusHarness;
 
-/// <summary><c>all corpus outdir seconds</c>: every .step and .stp file under the corpus folder meshed by the one mode
-/// in its own process, killed after the wall-clock limit; outdir/all.csv names each file's status, time and the last
-/// stage line it printed (<see cref="Progress"/>).</summary>
+/// <summary><c>all corpus outdir seconds</c>: every .step and .stp file under the corpus folder meshed by the time mode
+/// in its own process, killed after the wall-clock limit, so outdir holds each file's edge and face tables and
+/// summary; outdir/all.csv names each file's status, time and the last stage line it printed (<see cref="Progress"/>).
+/// </summary>
 public static class AllMode
 {
     public static int Run(string corpus, string outDir, int seconds, Options options)
@@ -25,9 +26,9 @@ public static class AllMode
     static string RunOne(string corpus, string file, string outDir, int seconds, Options options)
     {
         var name = Path.GetRelativePath(corpus, file);
-        var json = Path.Combine(outDir, name.Replace(Path.DirectorySeparatorChar, '_') + ".json");
+        var prefix = Path.Combine(outDir, name.Replace(Path.DirectorySeparatorChar, '_'));
         var start = new ProcessStartInfo(Environment.ProcessPath!) { RedirectStandardOutput = true, RedirectStandardError = true };
-        foreach (var a in new[] { "one", file, json }.Concat(options.Flags))
+        foreach (var a in new[] { "time", file, prefix }.Concat(options.Flags))
             start.ArgumentList.Add(a);
         var clock = Stopwatch.GetTimestamp();
         using var p = Process.Start(start)!;
