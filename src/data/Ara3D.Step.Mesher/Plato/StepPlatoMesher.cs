@@ -16,6 +16,9 @@ namespace Ara3D.Step.Mesher.Plato;
 /// caught here and becomes an empty outcome and a <see cref="StepPlatoFailure"/>, so a surface the library cannot
 /// mesh yet leaves every other face meshed. Decoding is per file because DecodeRaw and PrepareModel are: the tolerances
 /// come from the whole model's size, and mirrored occurrences are folded in place.
+/// The version 1 contract check (chordal bound, closed shells, orientation, degenerate elements) is not run here, in any
+/// configuration: it is the corpus harness's ContractCheck, MeshCheck and BoundaryCheck, run on the finished mesh when the
+/// harness or a test asks, and layer 7's validation is never called from this path (TKT-489).
 /// </summary>
 public static class StepPlatoMesher
 {
