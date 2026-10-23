@@ -4,7 +4,7 @@
     python gallery-page.py page <folder> [out.html] [--previous <folder of an earlier run's .json>] [--label <text>] [--compare-time]
 
 Each case in CASES names its GLB stem, its source and flags, its group, verdict, ticket, title, and a sentence on what
-it shows. A verdict of 'auto' is read from the sidecar by auto_verdict (what did not mesh and why, else closed and
+it shows; a case over CASE_SECONDS is stopped and named in the footer. A verdict of 'auto' is read from the sidecar by auto_verdict (what did not mesh and why, else closed and
 oriented and the contract), so the operations group never carries a hand-typed verdict; the page's status table
 (summary) counts cases, passes, faces meshed, triangles and face time per group from the same manifest. A source is `witness:<Name>[:x]`, `corpus:<path in the u-blox library>` or `sample:<path in data/step-samples>`,
 then any gallery-mode flags; corpus and sample cases run with --warmup. `run` writes <stem>.glb and <stem>.json per case.
@@ -26,6 +26,8 @@ from pathlib import Path
 TOOLKIT = Path(__file__).resolve().parents[4]
 DEFAULT_CORPUS = Path("C:/Users/cdigg/git/3d-format-shootout/data/submodules/3D-Step-Models-Library")
 DEFAULT_SAMPLES = TOOLKIT / "data" / "step-samples"
+# A case that runs longer than this is stopped, left without a sidecar, and named in the footer.
+CASE_SECONDS = 600
 
 # (stem, source and flags, group, verdict, ticket, title, what it shows)
 CASES = [
@@ -144,9 +146,9 @@ CASES = [
     ("k-sara", "corpus:CEL/SARA.STEP", "corpus", "auto", "TKT-410", "SARA",
      "A 12 MB cellular module, one of five SARA files that share a body; LENA-R8's cause (the stub on B-spline edges) applies here too."),
     ("k-ella-w1", "corpus:SHO/ELLA-W1.STEP", "corpus", "auto", "TKT-410", "ELLA-W1",
-     "The file where every edge was a surface curve and nothing meshed on 2026-10-21 (TKT-410): 7,754 faces."),
+     "On 2026-10-21 every edge was a surface curve that threw the stub and nothing meshed (TKT-410). Now 7,752 of 7,754 faces mesh in 50 s warm; planes 304 and 305 (v1-edges E5c's witness face among them) are refused as not simple, and the mesh has 2 non-manifold and 4 misoriented edges beside them."),
     ("k-nina-b222-w1x2", "corpus:SHO/NINA-B222-W1x2.STEP", "corpus", "auto", "TKT-414", "NINA-B222-W1x2",
-     "The file whose edge discretization did not finish in 120 s on 2026-10-21 (TKT-414); the gallery gives a case 600 s."),
+     "Its edge discretization did not finish in 120 s on 2026-10-21 (TKT-414). Now all 1,007 faces mesh, closed and oriented, in 12 s warm, the edges in 1.5 s."),
     ("c-lena-r8", "corpus:CEL/LENA-R8.STEP", "failure", "auto", "TKT-410", "LENA-R8",
      "On 2026-10-21, 488 of its 562 B-spline edges threw the compiler's stub and 355 faces had no boundary to mesh (TKT-410). Now every edge discretizes and 3,310 of 3,311 faces mesh in 10 s warm; the one left, plane 258 with 1,017 edges, is refused as not simple, and the 2,026 boundary edges lie around it."),
     ("z-lena-r8-spheres", "corpus:CEL/LENA-R8.STEP --faces 202,203,204,205,216,217,218,219 --ring 1", "failure", "auto", "TKT-411", "LENA-R8, three-edge sphere faces",
@@ -255,7 +257,15 @@ def run(folder: Path, harness: str, corpus: Path, samples: Path, only: set):
         if only and stem not in only:
             continue
         start = time.time()
-        result = subprocess.run(command(source, folder / f"{stem}.glb", harness, corpus, samples), capture_output=True, text=True, timeout=600)
+        marker = folder / f"{stem}.timeout"
+        try:
+            result = subprocess.run(command(source, folder / f"{stem}.glb", harness, corpus, samples), capture_output=True, text=True, timeout=CASE_SECONDS)
+        except subprocess.TimeoutExpired:
+            # The case is left without a sidecar and named in the page's footer; the run goes on to the next one.
+            marker.write_text(str(CASE_SECONDS), encoding="ascii")
+            print(f"{stem:28} {time.time() - start:6.1f} s  timed out after {CASE_SECONDS} s", flush=True)
+            continue
+        marker.unlink(missing_ok=True)
         lines = [l for l in result.stdout.splitlines() if l.startswith("gallery ")] or result.stderr.strip().splitlines()[-1:] or ["no output"]
         print(f"{stem:28} {time.time() - start:6.1f} s  exit {result.returncode}  {lines[0]}", flush=True)
 
@@ -521,7 +531,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     }
     sections.appendChild(s);
   }
-  document.getElementById('foot').innerHTML = `${cases.length} cases, ${(cases.reduce((a, c) => a + c.glbBytes, 0) / 1048576).toFixed(1)} MB of GLB, written by <code>step-corpus-harness gallery</code>: __LABEL__. Corpus files use the host's chordal bound; witnesses and operations use 0.01 on a model one to four units across. Not shown: NASA's RASSOR (78,659 edges, over the case's 600 s) and the moon buggy's full assembly (its GLB is over the artifact host's 16 MB).`;
+  document.getElementById('foot').innerHTML = `${cases.length} cases, ${(cases.reduce((a, c) => a + c.glbBytes, 0) / 1048576).toFixed(1)} MB of GLB, written by <code>step-corpus-harness gallery</code>: __LABEL__. Corpus files use the host's chordal bound; witnesses and operations use 0.01 on a model one to four units across. Not shown: NASA's RASSOR (78,659 edges) and the moon buggy's full assembly (its GLB is over the artifact host's 16 MB).__TIMED_OUT__`;
 
   // Shared loader and cache
   const loader = new GLTFLoader();
@@ -675,7 +685,9 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 def page(folder: Path, previous, label: str, out: Path, compare_time: bool):
     cases = manifest(folder, previous, compare_time)
+    timed_out = [stem for stem, *_ in CASES if (folder / f"{stem}.timeout").exists()]
     html = (PAGE.replace("__MANIFEST__", json.dumps(cases))
+            .replace("__TIMED_OUT__", (" Did not finish within a case's " + str(CASE_SECONDS) + " s and so has no card: " + ", ".join(timed_out) + ".") if timed_out else "")
             .replace("__SUMMARY__", json.dumps(summary(cases)))
             .replace("__GROUPS__", json.dumps(GROUPS))
             .replace("__VERDICTS__", json.dumps(VERDICTS))
