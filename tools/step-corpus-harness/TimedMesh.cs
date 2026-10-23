@@ -1,4 +1,4 @@
-using Ara3D.IO.StepParser;
+﻿using Ara3D.IO.StepParser;
 using Ara3D.Step.Decode;
 using Ara3D.Step.Entities;
 using Ara3D.Step.Mesher;
@@ -19,7 +19,7 @@ public sealed record TimedMesh(
     double ParseMs, double DecodeMs, double PrepareMs, double TablesMs, double EdgesMs, double FacesMs, double RefineMs,
     double AssembleMs, IReadOnlyList<EdgeRow> EdgeRows, IReadOnlyList<FaceRow> FaceRows, MeshDigest Digest, MeshCheck Check,
     IReadOnlyList<BrepEdgeIndex>[] EdgesByFace, ContractCheck Contract, IReadOnlyList<StepPlatoFailure> RefineFailures,
-    BoundaryCheck Boundary, double ContractMs = 0)
+    BoundaryCheck Boundary, double ContractMs = 0, long AllocatedBytes = 0)
 {
     public double TotalMs
         => ParseMs + DecodeMs + PrepareMs + TablesMs + EdgesMs + FacesMs + RefineMs + AssembleMs;
@@ -52,6 +52,9 @@ public sealed record TimedMesh(
     {
         var options = StepPlatoMesher.Options(chordal);
         var criteria = options.Face;
+        // Bytes the meshing stages allocate (tables to assembly, the contract check left out), the figure a change
+        // to the generated library is measured by (TKT-505); the process's own total, so one file per process.
+        var allocatedBefore = GC.GetTotalAllocatedBytes(precise: true);
         Progress.Report("tables");
         var meshPath = MeshPath.Of(path, m);
         var edgesByFace = m.EdgesByFace();
@@ -73,11 +76,12 @@ public sealed record TimedMesh(
         Progress.Report("assemble");
         var faceMeshes = faces.Select(f => f.Outcome.Mesh).ToArray();
         var (mesh, assembleMs) = Clock.Time(() => m.AssembleModelMesh(faceMeshes, m.NumberMeshVertices(d, faceMeshes)));
+        var allocatedBytes = GC.GetTotalAllocatedBytes(precise: true) - allocatedBefore;
         Progress.Report("contract");
         var (contract, contractMs) = Clock.Time(() => ContractCheck.Of(m, faces, chordal, parallel));
         Progress.Report("done");
         return new(file, path, parallel, m.Edges.Count, m.Faces.Count, parseMs, decodeMs, prepareMs, meshPath.TablesMs,
             edgesMs, facesMs, refineMs, assembleMs, edges, faces, MeshDigest.Of(mesh), MeshCheck.Of(mesh), edgesByFace, contract,
-            refineFailures, BoundaryCheck.Of(m, mesh, faces, edgesByFace), contractMs);
+            refineFailures, BoundaryCheck.Of(m, mesh, faces, edgesByFace), contractMs, allocatedBytes);
     }
 }

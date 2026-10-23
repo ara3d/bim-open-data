@@ -1,4 +1,4 @@
-namespace Ara3D.Step.CorpusHarness;
+﻿namespace Ara3D.Step.CorpusHarness;
 
 /// <summary><c>time file prefix</c>: writes prefix.edges.csv, prefix.faces.csv, prefix.contract.csv (the faces that break
 /// the version 1 contract, <see cref="ContractCheck"/>) and prefix.summary.json; the last line printed, which the all mode
@@ -15,7 +15,7 @@ public static class TimeMode
             TimeTables.Write(prefix + ".faces.csv", TimeTables.FaceHeader, t.FaceRows.Select(f => f.Csv()).ToArray());
             TimeTables.Write(prefix + ".contract.csv", FaceContract.CsvHeader, t.Contract.Failing.Select(f => f.Csv(t.Contract.Bound)).ToArray());
             Summary.Of(t).Write(prefix + ".summary.json");
-            Console.WriteLine($"total {Format.Ms(t.TotalMs)} ms, edges {Format.Ms(t.EdgesMs)}, faces {Format.Ms(t.FacesMs)}, contract {Format.Ms(t.ContractMs)} ms, {t.Digest}, {t.Check}, {t.Boundary}, {t.Contract}");
+            Console.WriteLine($"total {Format.Ms(t.TotalMs)} ms, edges {Format.Ms(t.EdgesMs)}, faces {Format.Ms(t.FacesMs)}, contract {Format.Ms(t.ContractMs)} ms, allocated {t.AllocatedBytes / 1048576} MB, {t.Digest}, {t.Check}, {t.Boundary}, {t.Contract}");
             return 0;
         }
         catch (Exception ex)
