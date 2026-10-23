@@ -44,12 +44,14 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-# The Plato commit the committed files are generated from: 60134758 (TKT-479, TKT-445, TKT-446, TKT-447; the
-# generated At(index) of TriangleFace and QuadFace faults on an out-of-range corner), the commit the law server runs.
-$PinnedPlato = '6013475813a711a70d8a91a80996d8254abd2b33'
+# The Plato commit the committed files are generated from: 6ff8c4a7 (TKT-505: the loop lowerer recognises Array<T>
+# and its loops compile and agree with the interpreter on the STEP program), after 60134758 (TKT-479, TKT-445,
+# TKT-446, TKT-447), the commit the law server runs.
+$PinnedPlato = '6ff8c4a7e06d6d6287b5476c1dbfcdfa14c19fae'
 if (-not $PlatoCommit) { $PlatoCommit = $PinnedPlato }
-# The optimizer flags the committed files are generated with (none as of 2026-10-23); see -CompilerFlags above.
-$PinnedFlags = @()
+# The optimizer flags the committed files are generated with: --loops since 2026-10-23 (TKT-505: ODIN-W160 allocates
+# 558 MB instead of 1,382 MB, ELLA-W1 1,638 MB instead of 3,457 MB, same meshes); see -CompilerFlags above.
+$PinnedFlags = @('--loops')
 if ($null -eq $CompilerFlags) { $CompilerFlags = $PinnedFlags }
 if ($Loops -and $CompilerFlags -notcontains '--loops') { $CompilerFlags += '--loops' }
 $flagsNote = if ($CompilerFlags.Count -gt 0) { "; flags $($CompilerFlags -join ' ')" } else { '' }
