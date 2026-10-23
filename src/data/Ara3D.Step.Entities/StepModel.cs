@@ -27,6 +27,21 @@ public sealed class StepModel
     public StepEntity EntityAt(int index)
         => new(this, Document.Definitions[index]);
 
+    /// <summary>How many instances, or parts of complex instances, are written by a short name (CRTPNT).</summary>
+    public int ShortNameCount()
+    {
+        var count = 0;
+        foreach (var definition in Document.Definitions)
+        {
+            if (!definition.IsComplex())
+                count += StepSchemaIndex.IsShortName(definition.NameToken) ? 1 : 0;
+            else
+                foreach (var part in definition.PartialEntities(Document))
+                    count += StepSchemaIndex.IsShortName(part.NameToken) ? 1 : 0;
+        }
+        return count;
+    }
+
     public StepEntity? Find(int id)
         => _indexById.TryGetValue(id, out var index) ? EntityAt(index) : null;
 

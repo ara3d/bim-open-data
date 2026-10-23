@@ -22,6 +22,7 @@ public static class StepDecoder
         var policy = DecodePolicy.StandardPolicy();
         var findings = new DecodeFindings();
         findings.AddParse(model.Document.Diagnostics);
+        ShortNames(model, findings);
         StepCensus.Classify(model, findings);
         var links = new StepLinks(model, (e, ex) => findings.Once(DecodeErrors.FindingOf(ex, e.Id).Code, e.Id));
         var units = links.Contexts3D.Select(id => model.Get(id).ReadContextUnits(policy, findings)).ToArray();
@@ -44,6 +45,15 @@ public static class StepDecoder
         var root = occurrences.Count > 0 ? FactorsOf(occurrences[0].Context) : new ContextFactors(1, 1);
         return new RawDecodedModel(tables.ToModel(), occurrences.Select(o => o.ToPlato()).ToArray(), tables.ToSources(),
             tables.Folds.ToArray(), tables.Repairs.ToArray(), units, root.MillimetresPerUnit, root.RadiansPerUnit, findings.Diagnostics.ToArray());
+    }
+
+    /// <summary>One ShortNamesUsed Info for the input when any instance (or part of a complex one) is written by an
+    /// ISO 10303 short name (CRTPNT); the entity index already maps it to the long name. Measure is their count.</summary>
+    static void ShortNames(StepModel model, DecodeFindings findings)
+    {
+        var count = model.ShortNameCount();
+        if (count > 0)
+            findings.Whole(StepDiagnosticCode.ShortNamesUsed(), count);
     }
 
     /// <summary>One InstancesUnreferenced Info per type of kernel element (vertex, edge, loop, face, shell, body,

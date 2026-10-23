@@ -14,5 +14,9 @@
     <PackageReference Include="Ara3D.Utils" Version="$(Ara3DSdkVersion)" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="StepShortNames.tsv" LogicalName="StepShortNames.tsv" />
+  </ItemGroup>
+
   <Import Project="..\Ara3D.StepTypes\Ara3D.StepTypes.projitems" Label="Shared" />
 </Project>

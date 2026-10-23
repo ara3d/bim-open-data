@@ -28,7 +28,7 @@ descriptor too (`face.Refs(Face.Instance.Bounds)`); where a second supertype mov
 | `StepEntityReaders.cs` | Typed reads chosen by the descriptor's type: `Number`, `Integer`, `Boolean`, `Enum`, `Text`, `Measure` (LENGTH_MEASURE(25.4) or a bare number), `Ref`, `Numbers`, `Integers`, `Refs`; null for absent, `$` or `*`, `InvalidDataException` for the wrong kind of value |
 | `StepStrings.cs` | P21 6.4.3 string decoding: `''`, `\`, `\S\`, `\PA\`, `\X\`, `\X2\`, `\X4\`; other code pages stay raw |
 | `StepEnumItems.cs` | A file's `.ITEM.` to the generated enum member |
-| `StepSchemaIndex.cs` | An entity name token to its descriptor, without allocating |
+| `StepSchemaIndex.cs` | An entity name token, long or ISO short (`StepShortNames.tsv`, from `generate-step-short-names.py`), to its descriptor, without allocating |
 | `StepTokenLists.cs` | The n-th element of a list token without building the list |
 
 Tests: `tests/data/Ara3D.StepTypes.Tests`.

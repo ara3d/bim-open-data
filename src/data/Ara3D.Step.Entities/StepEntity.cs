@@ -59,7 +59,7 @@ public readonly struct StepEntity
             return position >= 0 && Definition.AttributesToken.TryElementAt(Model.Document, position, out value);
         }
         foreach (var part in Definition.PartialEntities(Model.Document))
-            if (part.NameToken.Span.MatchesName(attribute.Entity))
+            if (StepSchemaIndex.Find(part.NameToken)?.EntityName == attribute.Entity)
                 return part.AttributesToken.TryElementAt(Model.Document, attribute.OwnPosition, out value);
         value = default;
         return false;
