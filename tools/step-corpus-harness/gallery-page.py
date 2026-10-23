@@ -207,10 +207,11 @@ def auto_verdict(j: dict) -> str:
     assembled mesh is closed and oriented and the version 1 contract holds."""
     unmeshed = j.get("unmeshed", [])
     if unmeshed:
-        branches = {u.get("branch") for u in unmeshed}
         if any(u.get("edgesThrew") for u in unmeshed) or j.get("edgesThrew"):
             return "holes"
-        if "not-simple" in branches:
+        if any(u.get("exception") not in ("", None, "undiscretized") for u in unmeshed):
+            return "threw"
+        if any(u.get("branch") == "not-simple" or "parameter tolerance" in (u.get("message") or "") for u in unmeshed):
             return "not-simple"
         return "threw"
     c = j["check"]
