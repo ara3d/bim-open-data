@@ -4,7 +4,9 @@
     python gallery-page.py page <folder> [out.html] [--previous <folder of an earlier run's .json>] [--label <text>] [--compare-time]
 
 Each case in CASES names its GLB stem, its source and flags, its group, verdict, ticket, title, and a sentence on what
-it shows. A source is `witness:<Name>[:x]`, `corpus:<path in the u-blox library>` or `sample:<path in data/step-samples>`,
+it shows. A verdict of 'auto' is read from the sidecar by auto_verdict (what did not mesh and why, else closed and
+oriented and the contract), so the operations group never carries a hand-typed verdict; the page's status table
+(summary) counts cases, passes, faces meshed, triangles and face time per group from the same manifest. A source is `witness:<Name>[:x]`, `corpus:<path in the u-blox library>` or `sample:<path in data/step-samples>`,
 then any gallery-mode flags; corpus and sample cases run with --warmup. `run` writes <stem>.glb and <stem>.json per case.
 `page` reads the sidecars, so the page never carries a count the mesher did not produce; with --previous it adds what
 changed since that run (faces meshed, edges and checks, and with --compare-time the warm whole-file time when both
@@ -47,6 +49,50 @@ CASES = [
      "A pinched vertex. The edge checks pass (closed, oriented); only the vertex-component check sees the pinch."),
     ("w-BumpSolid", "witness:BSplinePatchSolid:0.3 --chordal 0.01", "witness", "wrong", "TKT-415", "Bump solid, bump 0.3",
      "A cube whose top is a B-spline patch raised 0.3 in the middle. The four-edge face takes the quad-grid path and comes out as one flat quad: the mesh hash equals the unit box's. The chordal bound is tested along the straight edges, where the deviation is zero, so the bump vanishes. Filed from this gallery as TKT-415; the fix (F1, a grid kept only within the surface chordal bound) is staged, not yet in the library."),
+    ("o-Hexagon", "witness:Hexagon --chordal 0.01", "operation", "auto", "TKT-482", "Hexagonal prism",
+     "Six planes meeting at 120 degrees: the plainest prism beyond the box."),
+    ("o-LBracket", "witness:LBracket --chordal 0.01", "operation", "auto", "TKT-482", "L bracket",
+     "A concave prism: the inner corner is a reflex vertex, so the caps are non-convex polygons."),
+    ("o-Chamfer", "witness:Chamfer --chordal 0.01", "operation", "auto", "TKT-482", "Chamfered edge",
+     "A box with one long edge cut at 45 degrees: a seventh plane, tangent to nothing."),
+    ("o-Fillet", "witness:Fillet --chordal 0.01", "operation", "auto", "TKT-482", "Filleted edge",
+     "A box with one long edge rounded: a quarter cylinder tangent to two planes, the commonest curved face in any part."),
+    ("o-ExtrudedFillet", "witness:ExtrudedFillet --chordal 0.01", "operation", "auto", "TKT-482", "Fillet as an extrusion surface",
+     "The same fillet written as a surface of linear extrusion of its arc, as some exporters write swept faces, instead of a cylinder."),
+    ("o-InnerFillet", "witness:InnerFillet --chordal 0.01", "operation", "auto", "TKT-482", "Inner fillet",
+     "The L bracket with its reflex corner filled: a concave quarter cylinder, its normal reversed."),
+    ("o-Slot", "witness:Slot --chordal 0.01", "operation", "auto", "TKT-482", "Slot",
+     "A stadium-shaped through slot: two half cylinders and two planes bound the hole; the caps carry a four-edge inner loop."),
+    ("o-DShaft", "witness:DShaft --chordal 0.01", "operation", "auto", "TKT-482", "D-shaft",
+     "A cylinder with a flat: the band is one arc face with four edges, meeting a plane along two lines."),
+    ("o-Pyramid", "witness:Pyramid --chordal 0.01", "operation", "auto", "TKT-482", "Pyramid",
+     "Four triangles share the apex, a vertex of valence four; the base is a square."),
+    ("o-BlindHole", "witness:BlindHole --chordal 0.01", "operation", "auto", "TKT-482", "Blind hole",
+     "A round hole that does not go through: the top plane carries a circular inner loop, the wall is a cylinder band with its normal reversed, the floor a disk."),
+    ("o-Boss", "witness:Boss --chordal 0.01", "operation", "auto", "TKT-482", "Boss",
+     "The blind hole's three faces with every normal the other way: a cylinder standing on a plane."),
+    ("o-Counterbore", "witness:Counterbore --chordal 0.01", "operation", "auto", "TKT-482", "Counterbore",
+     "A through hole with a wider mouth: two cylinder bands and an annular shoulder, genus one."),
+    ("o-Countersink", "witness:Countersink --chordal 0.01", "operation", "auto", "TKT-482", "Countersink",
+     "A through hole with a 45 degree cone at its mouth: a cone band between two circles, no apex."),
+    ("o-SphereDimple", "witness:SphereDimple --chordal 0.01", "operation", "auto", "TKT-482", "Spherical dimple",
+     "A shallow spherical pocket in a plane: one sphere face bounded by a single circle, holding a pole, normal reversed."),
+    ("o-SphereDome", "witness:SphereDome --chordal 0.01", "operation", "auto", "TKT-482", "Spherical dome",
+     "The dimple's cap turned up: a sphere face with one circular bound and the pole inside it."),
+    ("o-OpenBox", "witness:OpenBox --chordal 0.01", "operation", "auto", "TKT-482", "Shelled open box",
+     "A box shelled to a 0.3 wall and open at the top: the top face is an annulus with a square inner loop; the cavity's walls and floor face inward."),
+    ("o-Tube", "witness:Tube --chordal 0.01", "operation", "auto", "TKT-482", "Tube",
+     "A cylinder with a coaxial hole: annular caps, an outer band and an inner band whose normal points into the hole."),
+    ("o-ObliqueCut", "witness:ObliqueCut --chordal 0.01", "operation", "auto", "TKT-482", "Oblique cut",
+     "A cylinder cut by a plane at 30 degrees: the cut is an ellipse edge, shared by the band and the cap. ODIN-W160 has such cuts (TKT-409)."),
+    ("o-TorusFillet", "witness:TorusFillet --chordal 0.01", "operation", "auto", "TKT-482", "Rounded puck",
+     "A cylinder whose top edge is rounded: a torus band between the cylinder band and the top disk, tangent to both."),
+    ("o-RevolvedBarrel", "witness:RevolvedBarrel --chordal 0.01", "operation", "auto", "TKT-482", "Revolved barrel",
+     "An arc revolved about the axis, written as a surface of revolution rather than a torus: the revolve operation as exporters write it."),
+    ("o-RevolvedCone", "witness:RevolvedCone --chordal 0.01", "operation", "auto", "TKT-482", "Revolved cone",
+     "A truncated cone written as a revolved line, not a conical surface: the countersink's cone by the other surface kind."),
+    ("o-CrossHole", "witness:CrossHole --chordal 0.01", "operation", "auto", "TKT-482", "Cross hole",
+     "A smaller cylinder bored crosswise through a larger one. The two intersection curves are quartics with no rational form, so they are cubic B-splines through 97 points of the true curve, within 3.5e-7 of both cylinders: the only B-spline edges among the operations, and the gallery's test of the B-spline edge path (TKT-410)."),
     ("c-emmy-w1", "corpus:SHO/EMMY-W1.STEP", "part", "ok", "TKT-323", "EMMY-W1",
      "The smallest fully meshed part, closed and oriented. It took 10.6 s on Oct 19."),
     ("c-nina-b400", "corpus:SHO/NINA-B400.STEP", "part", "ok", "TKT-323", "NINA-B400",
@@ -97,6 +143,7 @@ CASES = [
 
 GROUPS = [
     ("witness", "Primitives the library proves itself on", "The library's own witness models, meshed at a chordal bound of 0.01 on a one-unit model. Each is a law's subject."),
+    ("operation", "First-level operations", "One solid per operation a modeller makes in one step: a chamfer, a fillet, a slot, a hole, a boss, a cut, a revolve. Plato witnesses (sandbox/step-brep-mesh/07-validation/operation-witnesses.library.plato) meshed at a chordal bound of 0.01 on parts one to four units across; each is also a law subject. The verdict is read from the sidecar, not typed."),
     ("part", "Real parts that mesh completely", "u-blox antenna and module models from the corpus, every face meshed, closed and oriented."),
     ("public", "Public samples", "Files from STEP Tools and NIST, fetched by scripts/fetch-step-samples.ps1: the first files outside the u-blox corpus."),
     ("failure", "Failures, each with a ticket", "Corpus files and close-ups where faces are missing or wrong. Red lines are the discretized edges of faces that did not mesh."),
@@ -155,12 +202,47 @@ def change(j: dict, p, compare_time: bool):
     }
 
 
+def auto_verdict(j: dict) -> str:
+    """The verdict a sidecar supports, for a case whose verdict is 'auto': what did not mesh and why, else whether the
+    assembled mesh is closed and oriented and the version 1 contract holds."""
+    unmeshed = j.get("unmeshed", [])
+    if unmeshed:
+        branches = {u.get("branch") for u in unmeshed}
+        if any(u.get("edgesThrew") for u in unmeshed) or j.get("edgesThrew"):
+            return "holes"
+        if "not-simple" in branches:
+            return "not-simple"
+        return "threw"
+    c = j["check"]
+    if not (c["Closed"] and c["Oriented"]) or c["NonManifoldEdges"] or c["MisorientedEdges"]:
+        return "bad-edges"
+    if str((j.get("contract") or {}).get("verdict", "")).startswith("contract broken"):
+        return "wrong"
+    return "ok"
+
+
+def summary(cases: list) -> list:
+    """One row per group and one for all: cases, cases whose verdict is a pass (tone ok), faces meshed of drawn,
+    triangles, and the meshing time of the drawn faces, read from the manifest so the table says what the cards say."""
+    rows = []
+    for key, title, _ in [*GROUPS, ("all", "All", "")]:
+        picked = [c for c in cases if key == "all" or c["group"] == key]
+        rows.append({
+            "group": title, "cases": len(picked), "ok": sum(1 for c in picked if VERDICTS[c["verdict"]][1] == "ok"),
+            "meshed": sum(c["meshed"] for c in picked), "drawn": sum(c["drawn"] for c in picked),
+            "triangles": sum(c["triangles"] for c in picked), "ms": sum((c["drawnMs"] or c["ms"]) for c in picked),
+        })
+    return rows
+
+
 def manifest(folder: Path, previous, compare_time: bool):
     out = []
     for stem, source, group, verdict, ticket, title, blurb in CASES:
         j = json.loads((folder / f"{stem}.json").read_text(encoding="utf-8"))
         prev = previous / f"{stem}.json" if previous else None
         c = j["check"]
+        if verdict == "auto":
+            verdict = auto_verdict(j)
         out.append({
             "source": source, "warm": j.get("warm", False), "drawnMs": j.get("drawnMs"),
             "change": change(j, json.loads(prev.read_text(encoding="utf-8")) if prev and prev.exists() else None, compare_time),
@@ -235,6 +317,12 @@ section>p{margin:0;color:var(--fg2);max-width:90ch}
 .label{font-size:12px;color:var(--fg3);margin:6px 0 0}
 footer{font-size:11.5px;color:var(--fg3);border-top:1px solid var(--line);padding-top:10px;line-height:1.6}
 footer code{font-family:var(--mono)}
+.summary{border-collapse:collapse;margin-top:10px;font-size:13px}
+.summary th,.summary td{text-align:right;padding:3px 10px;border-bottom:1px solid var(--line2)}
+.summary th:first-child,.summary td:first-child{text-align:left}
+.summary th{color:var(--fg3);font-weight:500}
+.summary tr:last-child td{font-weight:600;border-top:1px solid var(--line)}
+.summary .pass-all{color:var(--ok)}.summary .pass-some{color:var(--warn)}
 @media (max-width:760px){.viewer{grid-template-columns:1fr}.side{border-left:0;border-top:1px solid var(--line)}.stage{height:40vh;min-height:260px}}
 @media (prefers-reduced-motion:reduce){.card{transition:none}}
 </style>
@@ -247,6 +335,7 @@ footer code{font-family:var(--mono)}
     <span style="--c:#b8c2d1">plane</span><span style="--c:#eb6834">cylinder</span><span style="--c:#eda100">cone</span><span style="--c:#1baf7a">sphere</span><span style="--c:#e87ba4">torus</span><span style="--c:#008300">revolution</span><span style="--c:#6250d6">extrusion</span><span style="--c:#2a78d6">B-spline</span><span style="--c:#e34948">edges of unmeshed faces</span>
   </div>
   <p class="label">__LABEL__</p>
+  <table class="summary" id="summary"><thead><tr><th>Group</th><th>Cases</th><th>Pass</th><th>Faces meshed</th><th>Triangles</th><th>Face time</th></tr></thead><tbody></tbody></table>
 </header>
 
 <div class="viewer" id="viewer">
@@ -272,6 +361,7 @@ footer code{font-family:var(--mono)}
 </div>
 
 <script id="manifest" type="application/json">__MANIFEST__</script>
+<script id="summary-rows" type="application/json">__SUMMARY__</script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -303,6 +393,16 @@ footer code{font-family:var(--mono)}
     return `<div class="chg">${head}${parts.length ? ': ' + parts.join(', ') : '.'}</div>`;
   }
 
+  // The status table: rows made by the page script from the same manifest as the cards.
+  const tbody = document.querySelector('#summary tbody');
+  for (const r of JSON.parse(document.getElementById('summary-rows').textContent)) {
+    const tr = document.createElement('tr');
+    const tone = r.ok === r.cases ? 'pass-all' : r.ok ? 'pass-some' : '';
+    const t = r.ms >= 1000 ? (r.ms / 1000).toFixed(1) + ' s' : r.ms.toFixed(0) + ' ms';
+    tr.innerHTML = `<td>${r.group}</td><td class="num">${r.cases}</td><td class="num ${tone}">${r.ok} / ${r.cases}</td><td class="num">${fmt(r.meshed)} / ${fmt(r.drawn)}</td><td class="num">${fmt(r.triangles)}</td><td class="num">${t}</td>`;
+    tbody.appendChild(tr);
+  }
+
   // Cards
   const sections = document.getElementById('sections');
   for (const [key, title, intro] of groups) {
@@ -323,7 +423,7 @@ footer code{font-family:var(--mono)}
     }
     sections.appendChild(s);
   }
-  document.getElementById('foot').innerHTML = `${cases.length} cases, ${(cases.reduce((a, c) => a + c.glbBytes, 0) / 1048576).toFixed(1)} MB of GLB, written by <code>step-corpus-harness gallery</code> from the library compiled at bim-open-toolkit 8984df4b, the corpus run of 2026-10-21. Corpus files use the host's chordal bound; witnesses use 0.01 on a one-unit model. Not shown: ELLA-W1, where every edge throws the stub and no face meshes, and NINA-B222-W1x2, which does not finish edge discretization (TKT-414).`;
+  document.getElementById('foot').innerHTML = `${cases.length} cases, ${(cases.reduce((a, c) => a + c.glbBytes, 0) / 1048576).toFixed(1)} MB of GLB, written by <code>step-corpus-harness gallery</code>: __LABEL__. Corpus files use the host's chordal bound; witnesses and operations use 0.01 on a model one to four units across. Not shown: ELLA-W1, where every edge throws the stub and no face meshes, and NINA-B222-W1x2, which does not finish edge discretization (TKT-414).`;
 
   // Shared loader and cache
   const loader = new THREE.GLTFLoader();
@@ -443,10 +543,12 @@ footer code{font-family:var(--mono)}
 
 
 def page(folder: Path, previous, label: str, out: Path, compare_time: bool):
-    html = (PAGE.replace("__MANIFEST__", json.dumps(manifest(folder, previous, compare_time)))
+    cases = manifest(folder, previous, compare_time)
+    html = (PAGE.replace("__MANIFEST__", json.dumps(cases))
+            .replace("__SUMMARY__", json.dumps(summary(cases)))
             .replace("__GROUPS__", json.dumps(GROUPS))
             .replace("__VERDICTS__", json.dumps(VERDICTS))
-            .replace("__LABEL__", label))
+            .replace("__LABEL__", label or "an unlabelled run"))
     out.write_text(html, encoding="utf-8")
     for stem, *_ in CASES:
         glb = folder / f"{stem}.glb"
