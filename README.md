@@ -138,3 +138,11 @@ BIM Open Data is one of the BIM Open repositories, alongside [BIM Open Flow](htt
 ## License
 
 MIT. See `LICENSE`. The sample buildings in `samples/public/` and `samples/nrc/` keep their own licences (CC BY 4.0 and MIT); see `samples/public/NOTICE.md`.
+
+## STEP parsing and meshing
+
+The STEP entity model, EXPRESS types, decoder, mesher host, generated Plato C#,
+tests, regeneration script, and corpus harness moved with history to
+[plato-brep](https://github.com/cdiggins/plato-brep) on 2026-10-23 (TKT-1000).
+Build and run them there. The token parser stays in Ara3D SDK;
+`src/data/Ara3D.MeshKernel` stays here for the IFC and STEP meshers.
